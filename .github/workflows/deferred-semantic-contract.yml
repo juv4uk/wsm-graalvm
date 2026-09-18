@@ -10,6 +10,7 @@ on:
       - "src/main/java/wsm/graalvm/SemanticMechanismTable.java"
       - "src/test/java/wsm/graalvm/DeferredSemanticMechanismContract.java"
       - "scripts/test-deferred-semantic.sh"
+      - "scripts/test-tier1.sh"
       - ".github/workflows/deferred-semantic-contract.yml"
   pull_request:
     paths:
@@ -20,6 +21,7 @@ on:
       - "src/main/java/wsm/graalvm/SemanticMechanismTable.java"
       - "src/test/java/wsm/graalvm/DeferredSemanticMechanismContract.java"
       - "scripts/test-deferred-semantic.sh"
+      - "scripts/test-tier1.sh"
       - ".github/workflows/deferred-semantic-contract.yml"
 
 jobs:
