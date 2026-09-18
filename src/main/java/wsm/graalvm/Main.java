@@ -18,8 +18,10 @@ public final class Main {
         Path rootDir = Path.of(args[2]);
 
         try (org.graalvm.polyglot.Context context = org.graalvm.polyglot.Context.newBuilder("wsm")
+                .allowExperimentalOptions(true)
                 .option("wsm.registryPath", registry)
                 .allowHostAccess(org.graalvm.polyglot.HostAccess.ALL)
+                .allowExperimentalOptions(true)
                 .option("wsm.registryPath", registry)
                 .build()) {
             String code = Files.readString(Path.of(file));

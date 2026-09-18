@@ -61,13 +61,14 @@ public abstract class WsmNode extends com.oracle.truffle.api.nodes.Node {
 
     public static final class LambdaNode extends WsmNode {
         private final String[] params;
-        @Children private final WsmNode[] body;
+        private final Object[] bodyDatum;
         private final Environment env;
-        LambdaNode(String[] params, WsmNode[] body, Environment env) {
-            this.params = params; this.body = body; this.env = env;
+        private final Compiler compiler;
+        LambdaNode(String[] params, Object[] bodyDatum, Environment env, Compiler compiler) {
+            this.params = params; this.bodyDatum = bodyDatum; this.env = env; this.compiler = compiler;
         }
         @Override public Object executeGeneric(VirtualFrame frame) {
-            return new Closure(params, body, env);
+            return new Closure(params, bodyDatum, env, compiler);
         }
     }
 

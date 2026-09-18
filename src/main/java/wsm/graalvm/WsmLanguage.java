@@ -21,7 +21,8 @@ import java.util.List;
         name = "WSM my-lisp",
         implementationName = "wsm-graalvm",
         version = "M0",
-        defaultMimeType = "text/x-wsm"
+        defaultMimeType = "text/x-wsm",
+        characterMimeTypes = { "text/x-wsm" }
 )
 public final class WsmLanguage extends TruffleLanguage<Void> {
 
@@ -44,9 +45,12 @@ public final class WsmLanguage extends TruffleLanguage<Void> {
             throw new IllegalArgumentException(
                     "missing system property wsm.registryPath (numeric registry authority)");
         }
-        CanonRegistry registry = new CanonRegistry().load(registryPath);
+        CanonRegistry registry = CanonRegistryLoader.load(registryPath);
         Compiler compiler = new Compiler(registry);
-        List<WsmNode> forms = compiler.compileProgram(new Reader(code).readAll());
+        List<Object> forms0 = new Reader(code).readAll();
+        // issue #9 gate 5: append the self-verdict form `(canon-conforms?)`
+        forms0.add(new Value.Pair(new Reader.Token("canon-conforms?"), Value.NIL));
+        List<WsmNode> forms = compiler.compileProgram(forms0);
         ProgramBodyNode body = new ProgramBodyNode(forms);
         BodyRoot root = new BodyRoot(this, body);
         return root.getCallTarget();

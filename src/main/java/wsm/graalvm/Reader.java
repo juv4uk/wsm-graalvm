@@ -22,8 +22,10 @@ public final class Reader {
 
     private final String text;
     private int pos;
+    private final boolean dataMode; // data files keep opaque tokens even for digits (registry IDs)
 
-    public Reader(String text) { this.text = text; }
+    public Reader(String text) { this(text, false); }
+    public Reader(String text, boolean dataMode) { this.text = text; this.dataMode = dataMode; }
 
     public List<Object> readAll() {
         List<Object> forms = new ArrayList<>();
@@ -101,7 +103,7 @@ public final class Reader {
         String token = text.substring(start, pos);
         if (token.isEmpty()) throw new WsmError(WsmError.Kind.PARSE, "empty token at " + start);
         // exact integer only when no leading zero ambiguity ("0001" is a registry id token)
-        if (token.matches("[+-]?[1-9]\\d*|0")) {
+        if (!dataMode && token.matches("[+-]?[1-9]\\d*|0")) {
             return Long.parseLong(token);
         }
         return new Token(token);

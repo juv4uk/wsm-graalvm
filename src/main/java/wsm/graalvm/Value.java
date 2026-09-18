@@ -2,11 +2,15 @@ package wsm.graalvm;
 
 /** M0 value space: NIL | Symbol | Long(exact integer) | Pair. Records are Pairs of Symbols. */
 public final class Value {
-    public static final Object NIL = new Object() {
-        @Override public String toString() { return "()"; }
-    };
+    public static final Object NIL = new TruffleNil();
 
-    public static final class Symbol {
+    /** NIL is its own interop value; identity is nil == nil everywhere. */
+    public static final class TruffleNil implements com.oracle.truffle.api.interop.TruffleObject {
+        private TruffleNil() {}
+        @Override public String toString() { return "()"; }
+    }
+
+    public static final class Symbol implements com.oracle.truffle.api.interop.TruffleObject {
         public final String name;
         Symbol(String name) { this.name = name; }
         @Override public String toString() { return name; }
@@ -16,7 +20,7 @@ public final class Value {
         @Override public int hashCode() { return name.hashCode(); }
     }
 
-    public static final class Pair {
+    public static final class Pair implements com.oracle.truffle.api.interop.TruffleObject {
         public Object car;
         public Object cdr;
         public Pair(Object car, Object cdr) { this.car = car; this.cdr = cdr; }

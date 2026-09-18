@@ -3,7 +3,7 @@
 # G=/path/to/graalvm-community-... bash scripts/build.sh
 set -euo pipefail
 G=${G:?set G to graalvm-community bin parent}
-REPO=$(dirname "$(readlink -f "$0")/..")
+REPO=$(cd "$(dirname "$0")/.." && pwd)
 "$G/bin/javac" --release 25 \
   -cp "$REPO/third_party/truffle-api.jar:$REPO/third_party/polyglot.jar" \
   -d "$REPO/classes" \

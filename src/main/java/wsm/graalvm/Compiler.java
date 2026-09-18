@@ -18,6 +18,7 @@ public final class Compiler {
     private static final String ID_LAMBDA = "0010";
     private static final String ID_DEFINE = "0011";
     private static final String ID_DEFMACRO = "0012";
+    private static final String ID_DEF_LEGACY = "1000"; // compatibility-only alias of 0011
 
     public Compiler(CanonRegistry registry) {
         this.registry = registry;
@@ -54,17 +55,18 @@ public final class Compiler {
 
     private static boolean isSpecial(String id) {
         return ID_QUOTE.equals(id) || ID_COND.equals(id) || ID_LAMBDA.equals(id)
-                || ID_DEFINE.equals(id) || ID_DEFMACRO.equals(id);
+                || ID_DEFINE.equals(id) || ID_DEF_LEGACY.equals(id) || ID_DEFMACRO.equals(id);
     }
 
     private WsmNode compileList(Object form, Environment env) {
+        // apostrophe sugar after list-wrap: form = (QUOTE_HEAD . datum)
+        if (form instanceof Value.Pair qPair && qPair.car == Reader.QUOTE_HEAD)
+            return new WsmNode.QuoteNode(qPair.cdr);
         List<Object> items = items(form);
         if (items.isEmpty())
             return new WsmNode.ConstantNode(Value.NIL);
 
         Object head = items.get(0);
-        if (head == Reader.QUOTE_HEAD)
-            return quoteForm(items.subList(1, items.size()));
         List<Object> args = items.subList(1, items.size());
 
         if (!(head instanceof Token ht)) {
@@ -80,6 +82,8 @@ public final class Compiler {
         return dispatchSpecial(id, args, env);
     }
 
+
+
     private WsmNode quoteForm(List<Object> argForms) {
         if (argForms.size() != 1)
             throw new WsmError(WsmError.Kind.ARITY, ID_QUOTE + " expects exactly one argument");
@@ -94,7 +98,7 @@ public final class Compiler {
                 yield new WsmNode.QuoteNode(args.get(0));
             }
             case ID_LAMBDA -> compileLambda(args, env);
-            case ID_DEFINE -> compileDefine(args, env);
+            case ID_DEFINE, ID_DEF_LEGACY -> compileDefine(args, env);
             case ID_DEFMACRO -> throw new WsmError(WsmError.Kind.INVALID_FORM,
                     "0012 is not materialized in substrate M0");
             case ID_COND -> compileCond(args, env);
@@ -122,9 +126,9 @@ public final class Compiler {
                         "canonical name is immutable (binder refused): " + binder.spelling());
             names.add(binder.spelling());
         }
-        List<WsmNode> body = new ArrayList<>();
-        for (Object b : args.subList(1, args.size())) body.add(compile(b, env));
-        return new WsmNode.LambdaNode(names.toArray(String[]::new), body.toArray(WsmNode[]::new), env);
+        List<Object> bodyDatum = args.subList(1, args.size());
+        return new WsmNode.LambdaNode(names.toArray(String[]::new),
+                bodyDatum.toArray(new Object[0]), env, this);
     }
 
     private WsmNode compileDefine(List<Object> args, Environment env) {
@@ -153,7 +157,7 @@ public final class Compiler {
             switch (parts.size()) {
                 case 3 -> {
                     tests.add(compile(parts.get(0), env));
-                    expecteds.add(new WsmNode.ConstantNode(parts.get(1)));
+                    expecteds.add(new WsmNode.ConstantNode(datumValue(parts.get(1))));
                     bodies.add(compile(parts.get(2), env));
                 }
                 case 2 -> {
@@ -185,7 +189,22 @@ public final class Compiler {
             cur = p.cdr;
         }
         if (cur != Value.NIL)
-            throw new WsmError(WsmError.Kind.INVALID_FORM, "a dotted pair is not executable code");
+            throw new WsmError(WsmError.Kind.INVALID_FORM,
+                    "a dotted pair is not executable code: " + Printer.print(form));
         return out;
+    }
+
+    /**
+     * #217 expected-result datum: same value shape the test produces —
+     * Tokens become Symbols, exact ints stay exact, nested structure
+     * stays Pairs.
+     */
+    private static Object datumValue(Object form) {
+        if (form instanceof Token t) return Value.symbol(t.spelling());
+        if (form instanceof Long l) return l;
+        if (form == Value.NIL) return Value.NIL;
+        if (form instanceof Value.Pair p)
+            return new Value.Pair(datumValue(p.car), datumValue(p.cdr));
+        throw new WsmError(WsmError.Kind.INVALID_FORM, "unexpected datum");
     }
 }
