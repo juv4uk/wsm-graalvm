@@ -25,6 +25,7 @@ public final class Compiler {
     private static final String ID_DEFINE = "0011";
     private static final String ID_DEFMACRO = "0012";
     private static final String ID_DEF_COMPAT = "1000";
+    private static final String ID_EVAL = "1062";
 
     private final WsmLanguage language;
     private final CanonRegistry registry;
@@ -189,6 +190,7 @@ public final class Compiler {
             case ID_DEFINE, ID_DEF_COMPAT -> compileDefine(args, scope);
             case ID_DEFMACRO -> compileDefmacro(args, scope);
             case ID_COND -> compileCond(args, scope);
+            case ID_EVAL -> compileEval(args, scope);
             default -> {
                 // Preserve every admitted semantic identity as a first-class
                 // callable reference. Mechanism availability is an invocation
@@ -356,6 +358,21 @@ public final class Compiler {
                 || ID_DEFINE.equals(id)
                 || ID_DEFMACRO.equals(id)
                 || ID_DEF_COMPAT.equals(id);
+    }
+
+
+    private WsmNode compileEval(
+            List<Object> args,
+            LexicalScope scope) {
+        if (args.size() != 1) {
+            throw new WsmError(
+                    WsmError.Kind.ARITY,
+                    ID_EVAL + " expects 1 argument");
+        }
+        return new WsmNode.EvalNode(
+                compile(args.get(0), scope),
+                this,
+                scope);
     }
 
     private WsmNode compileCond(
