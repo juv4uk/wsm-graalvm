@@ -6,7 +6,7 @@ import com.oracle.truffle.api.frame.MaterializedFrame;
 /**
  * Runtime lambda closure = executable CallTarget + captured lexical parent.
  */
-public final class Closure implements WsmFunc {
+public final class Closure implements WsmFunc, com.oracle.truffle.api.interop.TruffleObject {
     private final CallTarget target;
     private final MaterializedFrame captured;
 

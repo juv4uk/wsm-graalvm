@@ -80,6 +80,10 @@ public final class Reader {
                     new Value.Pair(datum, Value.NIL));
         }
 
+        if (c == '"') {
+            return readString();
+        }
+
         if (c == '(') {
             pos++;
             return readList(')');
@@ -88,7 +92,7 @@ public final class Reader {
             pos++;
             return readList(']');
         }
-        if (c == '"') return readStringLiteral();
+        if (c == '"') return readString();
         return readAtom();
     }
 
@@ -142,26 +146,27 @@ public final class Reader {
                 || c == ';';
     }
 
-    private Object readStringLiteral() {
-        StringBuilder sb = new StringBuilder();
+    private Object readString() {
         pos++; // opening quote
+        StringBuilder out = new StringBuilder();
         while (pos < text.length()) {
-            char c = text.charAt(pos);
-            if (c == '\\' && pos + 1 < text.length()) {
-                char n = text.charAt(pos + 1);
-                switch (n) {
-                    case '\\', '"' -> sb.append(n);
-                    case 'n' -> sb.append('\n');
-                    case 't' -> sb.append('\t');
-                    default -> sb.append(n);
+            char c = text.charAt(pos++);
+            if (c == '"') return new Value.Str(out.toString());
+            if (c == '\\') {
+                if (pos >= text.length()) {
+                    throw new WsmError(WsmError.Kind.PARSE, "unterminated string escape");
                 }
-                pos += 2;
-            } else if (c == '"') {
-                pos++;
-                return new Value.Str(sb.toString());
+                char escaped = text.charAt(pos++);
+                switch (escaped) {
+                    case 'n' -> out.append('\n');
+                    case 'r' -> out.append('\r');
+                    case 't' -> out.append('\t');
+                    case '"' -> out.append('"');
+                    case '\\' -> out.append('\\');
+                    default -> throw new WsmError(WsmError.Kind.PARSE, "unknown string escape: \\" + escaped);
+                }
             } else {
-                sb.append(c);
-                pos++;
+                out.append(c);
             }
         }
         throw new WsmError(WsmError.Kind.PARSE, "unterminated string literal");
