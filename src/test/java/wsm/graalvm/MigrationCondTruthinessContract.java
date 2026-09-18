@@ -92,6 +92,16 @@ public final class MigrationCondTruthinessContract {
                     "source two-part cond must treat structural-kind pair as false: "
                             + twoPart);
 
+            Object zero =
+                    context.eval(
+                            "wsm",
+                            "(cond (0 (quote zero-truthy)) "
+                                    + "((quote fallback) (quote wrong)))");
+            require(
+                    "zero-truthy".equals(zero.toString()),
+                    "source two-part cond must preserve ordinary numeric zero truthiness: "
+                            + zero);
+
             Object canonical =
                     context.eval(
                             "wsm",
