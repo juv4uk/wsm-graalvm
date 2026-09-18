@@ -26,6 +26,7 @@
 
   (witness
     ("tests/fixtures/conformance.lisp" . (gate M1))
+    ("tests/fixtures/conformance-transition-witness.lisp" . (gate M1 current-outcomes))
     ("contracts/answer-contract.lisp" . (mechanism-budget canon-results))
     ("contracts/exact-q-binary-contract.lisp" . (mechanism-budget numeric-comparisons))
     ("contracts/structural-query-inventory.lisp" . (mechanism-budget producer-ownership))
