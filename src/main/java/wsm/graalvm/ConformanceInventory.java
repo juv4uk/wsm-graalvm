@@ -144,10 +144,15 @@ public final class ConformanceInventory {
     private static String optionalString(Map<String, Object> fields, String key) {
         Object value = fields.get(key);
         if (value == null) return null;
-        if (!(value instanceof String s)) {
-            throw invalid(key + " must be a string");
+        if (value instanceof Value.StringValue s) {
+            return s.value;
         }
-        return s;
+        if (value instanceof String s) {
+            // Retain tolerance for non-Reader callers while the reader contract
+            // makes Value.StringValue the canonical language representation.
+            return s;
+        }
+        throw invalid(key + " must be a string");
     }
 
     private static List<String> symbolList(Object value, String field) {
