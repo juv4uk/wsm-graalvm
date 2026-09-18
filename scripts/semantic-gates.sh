@@ -14,6 +14,7 @@ gate() {
 
 gate "0 authority precedence" "$REPO/scripts/gate-authority-contracts.sh"
 gate "1 real pinned registry" "$REPO/scripts/test-real-registry.sh"
+gate "1b Polyglot registry wiring" "$REPO/scripts/test-polyglot-wiring.sh"
 gate "2 SemanticRef identity" "$REPO/scripts/test-semantic-identity.sh"
 gate "3 ID-only mechanism table" "$REPO/scripts/test-semantic-mechanism-table.sh"
 gate "4 one-way resolver" "$REPO/scripts/test-semantic-resolver.sh"
