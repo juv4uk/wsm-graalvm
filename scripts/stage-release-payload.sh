@@ -36,6 +36,7 @@ cp "$BINARY" "$RUNTIME/"
 
 AUTHORITY="$RUNTIME/my-lisp"
 while IFS= read -r path; do
+  path="${path%$"\r"}"
   [ -n "$path" ] || continue
   case "$path" in \#*) continue ;; esac
   src="$MYLISP/$path"
