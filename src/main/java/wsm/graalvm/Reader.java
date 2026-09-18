@@ -91,7 +91,6 @@ public final class Reader {
             pos++;
             return readList(']');
         }
-        if (c == '"') return readString();
         return readAtom();
     }
 
@@ -199,9 +198,9 @@ public final class Reader {
         if (token.matches("[+-]?[1-9]\\d*|0")) {
             return Value.NumberValue.integer(new java.math.BigInteger(token));
         }
-        if (token.matches("[+-]?(?:\\d+\\.\\d*|\\.\\d+)(?:[eE][+-]?\\d+)?")
+        if (token.matches("[+-]?(?:\\d+[.,]\\d*|[.,]\\d+)(?:[eE][+-]?\\d+)?")
                 || token.matches("[+-]?[1-9]\\d*(?:[eE][+-]?\\d+)")) {
-            return Value.NumberValue.decimal(token);
+            return Value.NumberValue.decimal(token.replace(',', '.'));
         }
         if (token.matches("[+-]?\\d+/\\d+")) {
             String[] parts = token.split("/", -1);
