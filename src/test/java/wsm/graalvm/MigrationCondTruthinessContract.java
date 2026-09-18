@@ -57,10 +57,11 @@ public final class MigrationCondTruthinessContract {
         require(!twoPartSelects(Value.record("structural-relation", "distinct")),
                 "two-part cond: structural distinct must be false");
 
-        require(twoPartSelects(exact(1)), "two-part cond: exact 1 must be true");
-        require(!twoPartSelects(exact(0)), "two-part cond: exact 0 must be false");
+        require(twoPartSelects(exact(1)), "two-part cond: ordinary exact 1 remains truthy");
+        require(twoPartSelects(exact(0)),
+                "two-part cond: ordinary exact 0 remains truthy per pinned conformance");
         require(twoPartSelects(exact(2)),
-                "two-part cond: non-decision exact values retain legacy truthiness");
+                "two-part cond: ordinary exact values retain legacy truthiness");
         require(!twoPartSelects(Value.NIL), "two-part cond: NIL remains false");
         require(twoPartSelects(Value.record("other-domain", "value")),
                 "two-part cond: unrelated records retain legacy truthiness");
