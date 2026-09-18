@@ -73,6 +73,9 @@ jobs:
       - name: M1 — exact-Q primitive comparisons 1014/1015/1016
         run: bash scripts/test-exact-q-comparison.sh
 
+      - name: M1 — canonical explicit-result COND
+        run: bash scripts/test-current-canon-control.sh
+
       - name: M1 — manifest bootstrap closure loader
         run: bash scripts/test-bootstrap-closure-loader.sh
 
