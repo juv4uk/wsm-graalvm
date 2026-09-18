@@ -63,19 +63,31 @@ public final class DeepRecursionProbe {
         String define = spelling(r, "0011");
         String lambda = spelling(r, "0010");
         String cond = spelling(r, "0007");
-        String eq = spelling(r, "0003");
-        String subtract = spelling(r, "1001");
-        String add = spelling(r, "0104");
+        String atom = spelling(r, "0002");
+        String cons = spelling(r, "0004");
+        String cdr = spelling(r, "0006");
+        String quote = spelling(r, "0001");
 
         String recursive = "tail".equals(mode)
-                ? "(deep-loop (" + subtract + " n 1))"
-                : "(" + add + " 1 (deep-loop (" + subtract + " n 1)))";
+                ? "(deep-loop (" + cdr + " xs))"
+                : "(" + cons + " (" + quote + " probe) (deep-loop (" + cdr + " xs)))";
 
-        return "(" + define + " deep-loop (" + lambda + " (n) "
+        return "(" + define + " deep-loop (" + lambda + " (xs) "
                 + "(" + cond
-                + " ((" + eq + " n 0) (identity-relation same) 0)"
-                + " ((" + eq + " n 0) (identity-relation distinct) " + recursive + ")"
+                + " ((" + atom + " xs) (structural-kind empty-list) (" + quote + " ()))"
+                + " ((" + atom + " xs) (structural-kind pair) " + recursive + ")"
                 + ")))";
+    }
+
+    private static String invocation(int depth) {
+        StringBuilder source = new StringBuilder(depth * 6 + 32);
+        source.append("(deep-loop (quote (");
+        for (int i = 0; i < depth; i++) {
+            if (i != 0) source.append(' ');
+            source.append("probe");
+        }
+        source.append(")))");
+        return source.toString();
     }
 
     public static void main(String[] args) throws Exception {
@@ -95,12 +107,12 @@ public final class DeepRecursionProbe {
         BootstrapRuntime.execute(context, definition(context, mode));
 
         try {
-            Object value = BootstrapRuntime.execute(context, "(deep-loop " + depth + ")");
+            Object value = BootstrapRuntime.execute(context, invocation(depth));
             System.out.println(
                     "DEEP-RECURSION-OBSERVED mode=" + mode
                             + " depth=" + depth
                             + " outcome=value"
-                            + " value=" + Printer.print(value));
+                            + " value-kind=" + Printer.print(Value.structuralKind(value)));
         } catch (StackOverflowError overflow) {
             System.out.println(
                     "DEEP-RECURSION-OBSERVED mode=" + mode
