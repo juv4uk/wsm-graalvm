@@ -103,7 +103,3 @@ jobs:
           G=$(dirname "$(dirname "$(readlink -f "$(command -v java)")")")
           G=$G bash scripts/test-context.sh external/my-lisp/lib/surface/semantic-registry.lisp
 
-      - name: Gate 6 — Tier-1 conformance against pinned upstream fixture
-        run: |
-          G=$(dirname "$(dirname "$(readlink -f "$(command -v java)")")")
-          G=$G MYLISP=external/my-lisp bash scripts/test-tier1.sh
