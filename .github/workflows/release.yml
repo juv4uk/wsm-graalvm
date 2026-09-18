@@ -1,79 +1,204 @@
 name: release-build
 
 on:
-  push:
-    tags: [ 'v*' ]
   workflow_dispatch:
+    inputs:
+      version:
+        description: "SemVer without leading v, for example 0.1.0"
+        required: true
+        type: string
+      source_ref:
+        description: "Commit, branch, or tag to release; defaults to current commit"
+        required: false
+        default: ""
+        type: string
+
+permissions:
+  contents: write
 
 jobs:
-  linux-native:
-    name: Linux - native image executable (tar.gz)
+  validate:
+    name: Validate release request
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.meta.outputs.version }}
+      tag: ${{ steps.meta.outputs.tag }}
+      source_sha: ${{ steps.meta.outputs.source_sha }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+          submodules: recursive
+      - id: meta
+        shell: bash
+        env:
+          VERSION_INPUT: ${{ inputs.version }}
+          SOURCE_INPUT: ${{ inputs.source_ref }}
+        run: |
+          set -euo pipefail
+          [[ "$VERSION_INPUT" =~ ^[0-9]+\.[0-9]+\.[0-9]+([.-][0-9A-Za-z.-]+)?$ ]] || {
+            echo "invalid SemVer: $VERSION_INPUT" >&2
+            exit 1
+          }
+          TAG="v$VERSION_INPUT"
+          git fetch origin --tags --force
+          if git show-ref --tags --verify --quiet "refs/tags/$TAG"; then
+            echo "tag already exists: $TAG" >&2
+            exit 1
+          fi
+          SOURCE_REF="$SOURCE_INPUT"
+          if [ -z "$SOURCE_REF" ]; then SOURCE_REF="$GITHUB_SHA"; fi
+          SOURCE_SHA=$(git rev-parse --verify "$SOURCE_REF^{commit}" 2>/dev/null || true)
+          if [ -z "$SOURCE_SHA" ]; then
+            SOURCE_SHA=$(git rev-parse --verify "origin/$SOURCE_REF^{commit}" 2>/dev/null || true)
+          fi
+          [ -n "$SOURCE_SHA" ] || { echo "source ref does not resolve: $SOURCE_REF" >&2; exit 1; }
+          echo "version=$VERSION_INPUT" >> "$GITHUB_OUTPUT"
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "source_sha=$SOURCE_SHA" >> "$GITHUB_OUTPUT"
+
+  semantic-gate:
+    name: Semantic and bootstrap gate
+    needs: validate
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
-        with: { submodules: recursive, fetch-depth: 0 }
-      - name: Pin my-lisp authority
-        run: git -C external/my-lisp fetch origin --quiet
-      - uses: graalvm/setup-graalvm@v1
         with:
-          java-version: '25'
-          distribution: 'graalvm-community'
-          version: '25.3.4.1'
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-      - name: Build release bundle (jvm + native-wsm)
-        env: { }  # no-op; expanded into G
-        run: |
-          MYLISP=external/my-lisp bash scripts/build-release.sh "$(echo ${GITHUB_REF_NAME:-v0.1.0} | sed 's|refs/tags/||')" native
-          # gref manifest push created refuse to bump tag -> safety net path
-          ls -la dist/
-      - name: Verify native witness from bundle root
-        run: |
-          bash scripts/run-canon.sh 2>&1 | tee canon.log
-          grep -q "(canon-conformance satisfied)" canon.log
-      - name: Publish linux bundle to release
-        uses: softprops/action-gh-release@v1
+          ref: ${{ steps.meta.outputs.source_sha }}
+          fetch-depth: 0
+          submodules: recursive
+      - name: Set up GraalVM CE 25.3.4.1
+        uses: graalvm/setup-graalvm@v1
         with:
-          files: dist/wsm-graalvm-*
-          token: ${{ secrets.GITHUB_TOKEN }}
+          java-version: "25"
+          distribution: "graalvm-community"
+          version: "25.3.4.1"
+          github-token: ${{ github.token }}
+      - name: Release package smoke test
+        run: bash scripts/test-package-release.sh
+      - name: Run release gate
+        env:
+          MYLISP: external/my-lisp
+        run: bash scripts/release-gate.sh
 
-  windows-jvm:
-    name: Windows - portable JVM bundle (zip, no native-image)
-    runs-on: windows-latest
+  native:
+    name: Native ${{ matrix.platform }}
+    needs: [validate, semantic-gate]
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: linux-x86_64
+            runner: ubuntu-latest
+            shell: bash
+            binary: native-wsm
+          - platform: windows-x86_64
+            runner: windows-latest
+            shell: bash
+            binary: native-wsm.exe
     steps:
       - uses: actions/checkout@v5
-        with: { submodules: recursive, fetch-depth: 0 }
-      - uses: graalvm/setup-graalvm@v1
         with:
-          java-version: '25'
-          distribution: 'graalvm-community'
-          version: '25.3.4.1'
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-      - name: Pin my-lisp authority
-        shell: pwsh
-        run: git -C external/my-lisp fetch origin --quiet; git -C external/my-lisp checkout origin/main
-      - name: Assemble windows bundle (zip, portable launcher.bat)
-        shell: pwsh
+          ref: ${{ steps.meta.outputs.source_sha }}
+          fetch-depth: 0
+          submodules: recursive
+      - name: Set up GraalVM CE 25.3.4.1
+        uses: graalvm/setup-graalvm@v1
+        with:
+          java-version: "25"
+          distribution: "graalvm-community"
+          version: "25.3.4.1"
+          github-token: ${{ github.token }}
+      - name: Build Native Image
+        shell: ${{ matrix.shell }}
+        env:
+          MYLISP: external/my-lisp
         run: |
-          New-Item -ItemType Directory -Path dist -Force | Out-Null
-          $stage = New-Item -ItemType Directory -Path (Join-Path $env:TEMP "wsm-stage")
-          Copy-Item classes $stage -Recurse -ErrorAction Stop
-          New-Item -ItemType Directory -Path (Join-Path $stage "third_party") -Force | Out-Null
-          foreach ($j in @("truffle-api","polyglot","truffle-runtime","graalvm-collections","nativeimage","truffle-compiler")) {
-            Copy-Item "third_party/$j.jar" (Join-Path $stage "third_party") -ErrorAction SilentlyContinue
-          }
-          Copy-Item CHANGELOG.md, LICENSE, README.md $stage -ErrorAction SilentlyContinue
-          Copy-Item refs\RELEASE-v0.1.0.lisp $stage -ErrorAction SilentlyContinue
-          Copy-Item scripts\run-canon.sh, scripts\fetch-third-party.sh, scripts\build.sh $stage -ErrorAction SilentlyContinue
-          $bat = Join-Path $stage "launch.bat"
-          $line1 = "@echo off"
-          $line2 = "setlocal"
-          $line3 = "set SELF=%~dp0"
-          $line4 = "java --enable-native-access=ALL-UNNAMED -Dpolyglot.engine.WarnInterpreterOnly=false -Dwsm.registryPath=\"%SELF%external\\my-lisp\\lib\\surface\\semantic-registry.lisp\" -Dtruffle.class.path.append=\"%SELF%classes\" -cp \"%SELF%classes;%SELF%third_party\\truffle-api.jar;%SELF%third_party\\polyglot.jar;%SELF%third_party\\truffle-runtime.jar;%SELF%third_party\\graalvm-collections.jar;%SELF%third_party\\nativeimage.jar;%SELF%third_party\\truffle-compiler.jar\" wsm.graalvm.Main \"%SELF%external\\my-lisp\\lib\\canon.lisp\" \"%SELF%external\\my-lisp\\lib\\surface\\semantic-registry.lisp\" \"%SELF%\""
-          $lines = @($line1, $line2, $line3, $line4)
-          $lines | Set-Content -Path $bat -Encoding ASCII
-          Compress-Archive -Path ($stage\*) -DestinationPath dist/wsm-graalvm-windows-jvm.zip -Force
-      - name: Publish windows bundle to release
-        uses: softprops/action-gh-release@v1
+          bash scripts/build-native.sh
+          test -f "${{ matrix.binary }}"
+      - name: Verify exact authority pin
+        shell: ${{ matrix.shell }}
+        run: |
+          PIN=$(git -C external/my-lisp rev-parse HEAD)
+          MANIFEST_PIN=$(sed -n 's/^[[:space:]]*(pin \. "\([0-9a-f]\{40\}\)").*/\1/p' refs/lisp-dependency-manifest.lisp)
+          test "$PIN" = "$MANIFEST_PIN"
+      - name: Package release
+        shell: ${{ matrix.shell }}
+        env:
+          VERSION: ${{ needs.validate.outputs.version }}
+          PLATFORM: ${{ matrix.platform }}
+          BINARY: ${{ matrix.binary }}
+          SOURCE_SHA: ${{ steps.meta.outputs.source_sha }}
+        run: |
+          MYLISP_PIN=$(git -C external/my-lisp rev-parse HEAD)
+          python scripts/package-release.py --version "$VERSION" --platform "$PLATFORM" --binary "$BINARY" --upstream external/my-lisp --upstream-pin "$MYLISP_PIN" --repo-sha "$SOURCE_SHA" --out dist
+      - uses: actions/upload-artifact@v4
         with:
-          files: dist/wsm-graalvm-windows-jvm.zip
-          token: ${{ secrets.GITHUB_TOKEN }}
+          name: release-${{ matrix.platform }}
+          path: |
+            dist/wsm-graalvm-*.zip
+            dist/wsm-graalvm-*.zip.sha256
+            dist/wsm-graalvm-*.binary.sha256
+            dist/assets/*
+          if-no-files-found: error
+
+  publish:
+    name: Publish GitHub Release
+    needs: [validate, native]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ steps.meta.outputs.source_sha }}
+          fetch-depth: 0
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: release-*
+          path: dist
+          merge-multiple: true
+      - name: Verify complete asset set
+        env:
+          VERSION: ${{ needs.validate.outputs.version }}
+        run: |
+          set -euo pipefail
+          test -f "dist/assets/wsm-graalvm-$VERSION-linux-x86_64"
+          test -f "dist/wsm-graalvm-$VERSION-linux-x86_64.zip"
+          test -f "dist/assets/wsm-graalvm-$VERSION-windows-x86_64.exe"
+          test -f "dist/wsm-graalvm-$VERSION-windows-x86_64.zip"
+          test -f "dist/wsm-graalvm-$VERSION-linux-x86_64.zip.sha256"
+          test -f "dist/wsm-graalvm-$VERSION-windows-x86_64.zip.sha256"
+      - name: Create tag and publish release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ needs.validate.outputs.version }}
+          TAG: ${{ steps.meta.outputs.tag }}
+          SOURCE_SHA: ${{ steps.meta.outputs.source_sha }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin --tags --force
+          if git show-ref --tags --verify --quiet "refs/tags/$TAG"; then
+            echo "tag appeared before publish; refusing partial release" >&2
+            exit 1
+          fi
+          cat > release-notes.md <<EOF
+# wsm-graalvm $TAG
+
+Source commit: $SOURCE_SHA
+
+Native Image artifacts: Linux x86_64 and Windows x86_64.
+
+Each archive contains the exact pinned my-lisp authority slice, README, LICENSE, launcher, release metadata, and SHA256 checksums.
+EOF
+          ASSETS=(
+            "dist/assets/wsm-graalvm-$VERSION-linux-x86_64"
+            "dist/wsm-graalvm-$VERSION-linux-x86_64.zip"
+            "dist/wsm-graalvm-$VERSION-linux-x86_64.zip.sha256"
+            "dist/wsm-graalvm-$VERSION-linux-x86_64.binary.sha256"
+            "dist/assets/wsm-graalvm-$VERSION-windows-x86_64.exe"
+            "dist/wsm-graalvm-$VERSION-windows-x86_64.zip"
+            "dist/wsm-graalvm-$VERSION-windows-x86_64.zip.sha256"
+            "dist/wsm-graalvm-$VERSION-windows-x86_64.binary.sha256"
+          )
+          gh release create "$TAG" --target "$SOURCE_SHA" --title "wsm-graalvm $TAG" --notes-file release-notes.md "${ASSETS[@]}"
