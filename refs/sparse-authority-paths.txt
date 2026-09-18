@@ -1,0 +1,10 @@
+language-contract.lisp
+my-lisp-constitution.lisp
+lib/canon.lisp
+lib/core.lisp
+lib/macro.lisp
+lib/meta-eval.lisp
+lib/surface/semantic-registry.lisp
+lib/machine/authority-boundary.lisp
+tests/fixtures/conformance.lisp
+knowledge/guard-reference.lisp
