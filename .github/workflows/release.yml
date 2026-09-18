@@ -184,7 +184,24 @@ jobs:
             echo "tag appeared during release; refusing partial publish" >&2
             exit 1
           fi
-          printf '%s\n'             "# wsm-graalvm $TAG"             ""             "Source commit: $SOURCE_REF"             "Both Linux x86_64 and Windows x86_64 Native Image packages passed the release gate and platform builds."             ""             "Each package contains the exact pinned my-lisp authority inputs, README, LICENSE, runner scripts, release metadata, and SHA256 checksums." > release-notes.md
-          gh release create "$TAG"             --target "$SOURCE_REF"             --title "wsm-graalvm $TAG"             --notes-file release-notes.md             dist/wsm-graalvm-${VERSION}-linux-x86_64
-            dist/wsm-graalvm-${VERSION}-linux-x86_64.zip             dist/wsm-graalvm-${VERSION}-linux-x86_64.zip.sha256             dist/wsm-graalvm-${VERSION}-linux-x86_64.binary.sha256             dist/wsm-graalvm-${VERSION}-windows-x86_64.exe
+          cat > release-notes.md <<EOF
+# wsm-graalvm $TAG
+
+Source commit: $SOURCE_REF
+
+Both Linux x86_64 and Windows x86_64 Native Image packages passed the semantic release gate and platform builds.
+
+Each package contains the exact pinned my-lisp authority inputs, README, LICENSE, runner scripts, release/source metadata, and SHA256 checksums.
+EOF
+          ASSETS=(
+            "dist/wsm-graalvm-${VERSION}-linux-x86_64"
+            "dist/wsm-graalvm-${VERSION}-linux-x86_64.zip"
+            "dist/wsm-graalvm-${VERSION}-linux-x86_64.zip.sha256"
+            "dist/wsm-graalvm-${VERSION}-linux-x86_64.binary.sha256"
+            "dist/wsm-graalvm-${VERSION}-windows-x86_64.exe"
+            "dist/wsm-graalvm-${VERSION}-windows-x86_64.zip"
+            "dist/wsm-graalvm-${VERSION}-windows-x86_64.zip.sha256"
+            "dist/wsm-graalvm-${VERSION}-windows-x86_64.binary.sha256"
+          )
+          gh release create "$TAG" --target "$SOURCE_REF" --title "wsm-graalvm $TAG" --notes-file release-notes.md "${ASSETS[@]}"
             dist/wsm-graalvm-${VERSION}-windows-x86_64.zip             dist/wsm-graalvm-${VERSION}-windows-x86_64.zip.sha256             dist/wsm-graalvm-${VERSION}-windows-x86_64.binary.sha256
