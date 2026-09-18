@@ -161,6 +161,46 @@ jobs:
           New-Item -ItemType Directory -Force -Path dist\installer | Out-Null
           & $iscc.FullName "/DSourceDir=$payload" "/DOutputDir=$(Resolve-Path dist\installer)" "/DVersion=$env:VERSION" "installer\windows\wsm-graalvm.iss"
           Get-ChildItem dist\installer
+      - name: Smoke-test Linux packages
+        if: matrix.platform == 'linux-x86_64'
+        shell: bash
+        env:
+          VERSION: ${{ needs.validate.outputs.version }}
+        run: |
+          set -euo pipefail
+          printf '%s\n' '(canon-conforms?)' > dist/package-smoke.lisp
+          sudo dpkg -i "dist/deb/wsm-graalvm-$VERSION-linux-x86_64.deb"
+          sudo /usr/bin/wsm dist/package-smoke.lisp > dist/deb-smoke.log 2>&1
+          grep -q "canon-conformance satisfied" dist/deb-smoke.log
+          grep -q "$VERSION" "/usr/lib/wsm-graalvm/$VERSION/RELEASE.txt"
+          sudo dpkg -r wsm-graalvm
+          test ! -e "/usr/lib/wsm-graalvm/$VERSION"
+          sudo rpm -i "dist/rpm/wsm-graalvm-$VERSION-linux-x86_64.rpm"
+          sudo /usr/bin/wsm dist/package-smoke.lisp > dist/rpm-smoke.log 2>&1
+          grep -q "canon-conformance satisfied" dist/rpm-smoke.log
+          grep -q "$VERSION" "/usr/lib/wsm-graalvm/$VERSION/RELEASE.txt"
+          sudo rpm -e wsm-graalvm
+          test ! -e "/usr/lib/wsm-graalvm/$VERSION"
+
+      - name: Smoke-test Windows installer
+        if: matrix.platform == 'windows-x86_64'
+        shell: pwsh
+        env:
+          VERSION: ${{ needs.validate.outputs.version }}
+        run: |
+          $ErrorActionPreference = "Stop"
+          $installer = Resolve-Path "dist\installer\wsm-graalvm-$env:VERSION-windows-x86_64-installer.exe"
+          $program = Join-Path $env:RUNNER_TEMP "package-smoke.lisp"
+          Set-Content -Path $program -Value "(canon-conforms?)" -Encoding utf8
+          Start-Process -FilePath $installer -ArgumentList "/VERYSILENT","/SUPPRESSMSGBOXES","/NORESTART","/SP-" -Wait -NoNewWindow
+          $installDir = Join-Path $env:ProgramFiles "WSM\$env:VERSION"
+          Test-Path (Join-Path $installDir "wsm.cmd")
+          Select-String -Path (Join-Path $installDir "RELEASE.txt") -Pattern $env:VERSION
+          & (Join-Path $installDir "run.cmd") $program 2>&1 | Tee-Object -FilePath (Join-Path $env:RUNNER_TEMP "windows-smoke.log")
+          Select-String -Path (Join-Path $env:RUNNER_TEMP "windows-smoke.log") -Pattern "canon-conformance satisfied"
+          Start-Process -FilePath (Join-Path $installDir "unins000.exe") -ArgumentList "/VERYSILENT","/SUPPRESSMSGBOXES","/NORESTART" -Wait -NoNewWindow
+          if (Test-Path $installDir) { throw "installer uninstall left files behind" }
+
       - name: Hash every distributable artifact
         shell: bash
         run: |
