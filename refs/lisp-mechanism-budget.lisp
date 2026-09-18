@@ -17,6 +17,12 @@
   (mechanism "0006" substrate-required
     (meaning-source . "lib/canon.lisp"))
 
+  (mechanism "1001" substrate-required
+    (meaning-source . "tests/fixtures/conformance.lisp")
+    (identity-source . "lib/surface/semantic-registry.lisp")
+    (evidence . "tests/fixtures/conformance.lisp")
+    (note . "Exact-rational subtraction/negation is a numeric substrate mechanism; Lisp-owned S1 fixtures define the observable results."))
+
   (mechanism "1014" substrate-required
     (meaning-source . "contracts/exact-q-binary-contract.lisp")
     (identity-source . "lib/surface/semantic-registry.lisp"))
