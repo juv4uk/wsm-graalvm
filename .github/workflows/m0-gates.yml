@@ -49,6 +49,9 @@ jobs:
       - name: Gate 4b — focused Truffle frame witnesses
         run: bash scripts/test-truffle-frames.sh
 
+      - name: M1 — sequential Lisp macro/bootstrap
+        run: bash scripts/test-sequential-bootstrap.sh
+
       - name: M1 — pinned Lisp dependency closure
         run: bash scripts/check-lisp-dependency-manifest.sh
 
