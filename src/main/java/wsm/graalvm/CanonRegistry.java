@@ -45,7 +45,7 @@ public final class CanonRegistry {
                         && ap.cdr instanceof Token statusToken) {
                     if (statusToken.spelling().toLowerCase().equals("stable")) {
                         faceMap.put(markerToken.spelling(), "'");
-                        this.spellingToId.put("'", id);
+                        putMapping(this.spellingToId, "'", id);
                     }
                     continue;
                 }
@@ -54,7 +54,7 @@ public final class CanonRegistry {
                     String marker = ((Token) fields.get(0)).spelling();
                     String spelling = ((Token) fields.get(1)).spelling();
                     faceMap.put(marker, spelling);
-                    this.spellingToId.put(spelling, id);
+                    putMapping(this.spellingToId, spelling, id);
                 }
                 // compatibility-only surfaces register as secondary routes
                 // (e.g. id 1000 `def` -> canonical 0011); they can never
@@ -62,7 +62,7 @@ public final class CanonRegistry {
                 if (status.equals("compatibility-only") && fields.size() >= 2
                         && fields.get(0) instanceof Token cMarker
                         && fields.get(1) instanceof Token cSpelling) {
-                    this.spellingToId.putIfAbsent(cSpelling.spelling(), id);
+                    putMappingIfAbsent(this.spellingToId, cSpelling.spelling(), id);
                 }
             }
             this.rows.put(id, new Row(id, faceMap));
