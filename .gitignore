@@ -4,3 +4,4 @@ third_party/*.jar
 third_party/*.sha256
 *.class
 target/
+third_party/truffle-compiler-extracted/

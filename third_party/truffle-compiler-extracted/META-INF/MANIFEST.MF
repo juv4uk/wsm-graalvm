@@ -1,6 +1,0 @@
-Manifest-Version: 1.0
-Name: truffle-compiler
-Specification-Version: 25.3.4.1
-Specification-Vendor: Oracle Corporation
-Implementation-Version: 25.3.4.1
-Implementation-Vendor: Oracle Corporation
