@@ -133,7 +133,19 @@ public final class Tier1Harness {
                         "expected error " + fixture.error() + " but expression succeeded");
             }
 
-            String probe = "(cond ((equal? " + fixture.expr() + " (quote "
+            List<Object> expressionForms =
+                    new Reader(fixture.expr()).readAll();
+            if (expressionForms.isEmpty()) {
+                throw new AssertionError("fixture expression is empty");
+            }
+
+            for (int i = 0; i < expressionForms.size() - 1; i++) {
+                context.eval("wsm", sourceOf(expressionForms.get(i)));
+            }
+
+            String finalExpr =
+                    sourceOf(expressionForms.get(expressionForms.size() - 1));
+            String probe = "(cond ((equal? " + finalExpr + " (quote "
                     + fixture.expected()
                     + ")) (quote tier1-ok)) "
                     + "(t (undefined-symbol)))";
@@ -146,6 +158,10 @@ public final class Tier1Harness {
                                 + mismatch.getMessage());
             }
         }
+    }
+
+    private static String sourceOf(Object readerForm) {
+        return Printer.print(ReaderDatum.toValue(readerForm));
     }
 
     private static String unescape(String raw) {
