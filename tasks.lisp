@@ -53,6 +53,7 @@
   ((priority . 10.0) (capabilities . (graalvm truffle compiler frames macro-bootstrap)) (origin . wsm-graalvm)
    (depends-on . (GRAALVM-M1-NATIVE-IMAGE-WITNESS))
    (issue . 160)
+   (done . (t . "current-main M0 run 35368800960: real Lisp bootstrap cutover passed, including source-level let witness; resolved without Java let semantics."))
    (description . "Resolve source-level Lisp-owned let expansion losing lexical scope on Graal while the raw expansion witness is green. Fix only compiler/Truffle frame plumbing; no Java let semantics.")))
 
  ("GRAALVM-P0-RELEASE-ARTIFACT-CONTRACT" .
