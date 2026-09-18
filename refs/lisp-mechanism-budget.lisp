@@ -33,9 +33,10 @@
     (evidence . "contracts/exact-q-binary-contract.lisp")
     (note . "removed from Java table on main before this ledger landed"))
 
-  (mechanism "1022" lisp-defined-retire-java
+  (retired "1022" lisp-defined
     (meaning-source . "lib/core.lisp")
-    (evidence . "contracts/structural-query-inventory.lisp"))
+    (evidence . "contracts/structural-query-inventory.lisp")
+    (note . "Java mechanism retired after current-main Lisp-owned equal? witness"))
 
   (mechanism "1043" substrate-required
     (meaning-source . "lib/core.lisp string-append peer derivation")
