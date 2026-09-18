@@ -1,6 +1,7 @@
 package wsm.graalvm;
 
 import java.math.BigInteger;
+import org.graalvm.polyglot.Context;
 
 /** Focused witness for the migration-only two-part cond bridge. */
 public final class MigrationCondTruthinessContract {
@@ -35,6 +36,11 @@ public final class MigrationCondTruthinessContract {
     }
 
     public static void main(String[] args) {
+        if (args.length != 1) {
+            throw new IllegalArgumentException(
+                    "usage: MigrationCondTruthinessContract <semantic-registry.lisp>");
+        }
+
         require(twoPartSelects(Value.record("structural-kind", "empty-list")),
                 "two-part cond: empty-list record must preserve historical truth");
         require(twoPartSelects(Value.record("structural-kind", "atom")),
@@ -69,6 +75,33 @@ public final class MigrationCondTruthinessContract {
                 "canonical three-part cond must match explicit exact zero");
         require(!threePartSelects(exact(0), exact(1)),
                 "canonical three-part cond must not coerce exact decisions");
+
+        // Source-level witnesses prove the Reader -> Compiler -> CondNode path
+        // uses the same temporary bridge and that canonical three-part cond
+        // stays explicit-result matching.
+        System.setProperty("wsm.registryPath", args[0]);
+        try (Context context = Context.newBuilder("wsm").build()) {
+            Object twoPart =
+                    context.eval(
+                            "wsm",
+                            "(cond ((atom (quote (a b))) (quote wrong)) "
+                                    + "((quote fallback) (quote right)))");
+            require(
+                    "right".equals(twoPart.toString()),
+                    "source two-part cond must treat structural-kind pair as false: "
+                            + twoPart);
+
+            Object canonical =
+                    context.eval(
+                            "wsm",
+                            "(cond ((atom (quote (a b))) (structural-kind pair) "
+                                    + "(quote canonical-pair)) "
+                                    + "((quote fallback) fallback (quote wrong)))");
+            require(
+                    "canonical-pair".equals(canonical.toString()),
+                    "source three-part cond must match explicit pair record: "
+                            + canonical);
+        }
 
         System.out.println("MIGRATION-COND-TRUTHINESS-CONTRACT-OK");
     }
