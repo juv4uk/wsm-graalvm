@@ -243,31 +243,32 @@ public abstract class WsmNode extends com.oracle.truffle.api.nodes.Node {
     }
 
     @NodeInfo(shortName = "select")
+    /**
+     * Canonical COND: each clause is (query expected-result expression).
+     *
+     * The query is evaluated; the expected result is materialized as ordinary
+     * Lisp data and compared structurally. There is no generic truth coercion
+     * in the core dispatch path.
+     */
     public static final class CondNode extends WsmNode {
         @Children private final WsmNode[] tests;
         @Children private final WsmNode[] expecteds;
         @Children private final WsmNode[] bodies;
 
-        private final boolean[] legacyTruthiness;
-
         CondNode(
                 WsmNode[] tests,
                 WsmNode[] expecteds,
-                WsmNode[] bodies,
-                boolean[] legacyTruthiness) {
+                WsmNode[] bodies) {
             this.tests = tests;
             this.expecteds = expecteds;
             this.bodies = bodies;
-            this.legacyTruthiness = legacyTruthiness;
         }
 
         @Override public Object executeGeneric(VirtualFrame frame) {
             for (int i = 0; i < tests.length; i++) {
                 Object actual = tests[i].executeGeneric(frame);
-                boolean selected = legacyTruthiness[i]
-                        ? actual != Value.NIL
-                        : Structural.equals(actual, expecteds[i].executeGeneric(frame));
-                if (selected) {
+                Object expected = expecteds[i].executeGeneric(frame);
+                if (Structural.equals(actual, expected)) {
                     return bodies[i].executeGeneric(frame);
                 }
             }
