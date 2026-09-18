@@ -2,9 +2,13 @@ name: native-image-witness
 
 on:
   push:
-    branches: [ main, "**" ]
+    branches: [ main ]
   pull_request:
   workflow_dispatch:
+
+concurrency:
+  group: native-image-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   native-image:
