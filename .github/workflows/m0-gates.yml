@@ -30,6 +30,9 @@ jobs:
       - name: P0 — Lisp-first mechanism budget
         run: bash scripts/check-lisp-mechanism-budget.sh
 
+      - name: P0 — Java public-surface spelling firewall
+        run: bash scripts/check-java-spelling-firewall.sh
+
       - name: Set up GraalVM CE pinned to the runtime the substrate is built for
         uses: graalvm/setup-graalvm@v1
         with:
@@ -97,11 +100,7 @@ jobs:
           rm -rf "$TEST_CLASSES"
           mkdir -p "$TEST_CLASSES"
           CP="classes:third_party/truffle-api.jar:third_party/graalvm-collections.jar:third_party/nativeimage.jar:third_party/polyglot.jar:third_party/truffle-runtime.jar:third_party/truffle-compiler.jar"
-          G="$G" "$G/bin/javac" --release 25 -cp "$CP" -d "$TEST_CLASSES" \
-            src/test/java/wsm/graalvm/ReaderStringContract.java \
-            src/test/java/wsm/graalvm/ConformanceInventoryContract.java \
-            src/test/java/wsm/graalvm/RealTier1InventoryContract.java \
-            src/test/java/wsm/graalvm/TruffleFrameContract.java
+          G="$G" "$G/bin/javac" --release 25 -cp "$CP" -d "$TEST_CLASSES"             src/test/java/wsm/graalvm/ReaderStringContract.java             src/test/java/wsm/graalvm/ConformanceInventoryContract.java             src/test/java/wsm/graalvm/RealTier1InventoryContract.java             src/test/java/wsm/graalvm/TruffleFrameContract.java
           java -cp "$TEST_CLASSES:$CP" wsm.graalvm.ReaderStringContract
           java -cp "$TEST_CLASSES:$CP" wsm.graalvm.ConformanceInventoryContract
           java -cp "$TEST_CLASSES:$CP" wsm.graalvm.RealTier1InventoryContract external/my-lisp/tests/fixtures/conformance.lisp
