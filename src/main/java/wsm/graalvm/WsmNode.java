@@ -37,10 +37,15 @@ public abstract class WsmNode extends com.oracle.truffle.api.nodes.Node {
     public static final class CallNode extends WsmNode {
         @Child private WsmNode fn;
         @Children private final WsmNode[] args;
+        private final SemanticInvocationContext mechanismContext;
 
-        CallNode(WsmNode fn, WsmNode[] args) {
+        CallNode(
+                WsmNode fn,
+                WsmNode[] args,
+                SemanticInvocationContext mechanismContext) {
             this.fn = fn;
             this.args = args;
+            this.mechanismContext = mechanismContext;
         }
 
         @Override public Object executeGeneric(VirtualFrame frame) {
@@ -51,7 +56,10 @@ public abstract class WsmNode extends com.oracle.truffle.api.nodes.Node {
             }
 
             if (f instanceof Value.SemanticRef semantic) {
-                return SemanticMechanismTable.invoke(semantic.id(), argv);
+                return SemanticMechanismTable.invoke(
+                        semantic.id(),
+                        argv,
+                        mechanismContext);
             }
             if (f instanceof WsmFunc func) {
                 return func.call(argv);
