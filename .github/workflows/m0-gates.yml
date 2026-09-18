@@ -1,0 +1,57 @@
+name: m0-gates
+
+on:
+  push:
+    branches: [ main, "**" ]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build-and-gates:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          fetch-depth: 0
+
+      - name: Fetch my-lisp authority pin
+        run: |
+          git -C external/my-lisp fetch origin --quiet
+          SHA=$(git -C external/my-lisp rev-parse HEAD)
+          echo "my-lisp pinned at $SHA"
+
+      - name: Verify authority digests (fail-closed, like scripts/sync-authority.sh)
+        run: |
+          for f in language-contract.lisp my-lisp-constitution.lisp \
+                   lib/canon.lisp lib/surface/semantic-registry.lisp \
+                   tests/fixtures/conformance.lisp; do
+            test -f "external/my-lisp/$f" || { echo "FAIL-CLOSED: missing $f"; exit 1; }
+          done
+          sha256sum external/my-lisp/language-contract.lisp \
+                    external/my-lisp/my-lisp-constitution.lisp \
+                    external/my-lisp/lib/canon.lisp \
+                    external/my-lisp/lib/surface/semantic-registry.lisp \
+                    external/my-lisp/tests/fixtures/conformance.lisp
+
+      - name: Set up GraalVM CE (community)
+        uses: graalvm/setup-graalvm@v1
+        with:
+          java-version: '25'
+          distribution: 'graalvm-community'
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build (javac, interpreter classes)
+        run: |
+          G=$(dirname "$(dirname "$(readlink -f "$(command -v java)")")")
+          G=${G} bash scripts/build.sh
+
+      - name: Gate 5 — (canon-conforms?) → current conformance record
+        run: |
+          G=${G} MYLISP=external/my-lisp bash scripts/run-canon.sh | tee gate5.log
+          grep -q "(canon-conformance satisfied)" gate5.log
+
+      - name: Gate 6+ — tier-1 conformance (next; no silent pass)
+        if: always()
+        run: |
+          echo "not yet implemented; see tasks.lisp GRAALVM-M1-CONFORMANCE-TIER1 (issue #9 gate 6)"

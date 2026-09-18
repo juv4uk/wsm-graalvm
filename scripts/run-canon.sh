@@ -2,7 +2,10 @@
 # Vertical M0 acceptance: evaluate (canon-conforms?) on the real Canon file,
 # consuming the real numeric surface registry. No spellings hardcoded here.
 set -euo pipefail
-G=${G:?set G=graalvm-community path}
+if [ -z "${G:-}" ]; then
+  JBIN=$(readlink -f "$(command -v java)")
+  G=$(dirname "$(dirname "$JBIN")")
+fi
 REPO=$(cd "$(dirname "$0")/.." && pwd)
 MYLISP=$REPO  # authority files reachable via the same-structure symlinks at repo root
 if [ -f "$REPO/lib/canon.lisp" ]; then
@@ -11,5 +14,5 @@ fi  # or local submodule $REPO/external/my-lisp
 "$G/bin/java" -Dpolyglot.engine.WarnInterpreterOnly=false \
   -Dwsm.registryPath="$MYLISP/lib/surface/semantic-registry.lisp" \
   --enable-native-access=ALL-UNNAMED -Dpolyglot.engine.WarnInterpreterOnly=false \
-  -cp "$REPO/classes:$REPO/third_party/graalvm-collections.jar:$REPO/third_party/nativeimage.jar:$REPO/third_party/truffle-api.jar:$REPO/third_party/polyglot.jar:$REPO/third_party/truffle-runtime.jar:$REPO/third_party/graal-sdk.jar:$G/lib/truffle/truffle-compiler.jar:$G/lib/graal/graal-compiler.jar" \
+  -cp "$REPO/classes:$REPO/third_party/graalvm-collections.jar:$REPO/third_party/nativeimage.jar:$REPO/third_party/truffle-api.jar:$REPO/third_party/polyglot.jar:$REPO/third_party/truffle-runtime.jar:$REPO/third_party/truffle-compiler.jar:$REPO/third_party/graal-sdk.jar:$G/lib/truffle/truffle-compiler.jar:$G/lib/graal/graal-compiler.jar" \
   wsm.graalvm.Main "$MYLISP/lib/canon.lisp" "$MYLISP/lib/surface/semantic-registry.lisp" "$MYLISP"
