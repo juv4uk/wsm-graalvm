@@ -20,5 +20,6 @@ gate "3 ID-only mechanism table" "$REPO/scripts/test-semantic-mechanism-table.sh
 gate "4 one-way resolver" "$REPO/scripts/test-semantic-resolver.sh"
 gate "5 current Canon control" "$REPO/scripts/test-current-canon-control.sh"
 gate "6 closed ErrorKind vocabulary" "$REPO/scripts/test-error-kind.sh"
+gate "7 runtime Truffle lexical frames" "$REPO/scripts/test-lexical-frames.sh"
 
 echo "SEMANTIC-GATES-GREEN: optimization may consume these admitted semantics; it may not redefine them."
