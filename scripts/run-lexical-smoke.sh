@@ -56,7 +56,7 @@ TC="$G/lib/truffle/truffle-compiler.jar"
 # expressions individually so each witness has an observable result.
 expected=(42 7 42)
 for i in 0 1 2; do
-  form=$(sed -n "$((i == 0 ? 1 : i == 1 ? 5 : 8)),$((i == 0 ? 3 : i == 1 ? 7 : 12))p" "$TMP")
+  form=$(case "$i" in 0) sed -n '1,3p' "$TMP" ;; 1) sed -n '5,7p' "$TMP" ;; 2) sed -n '9,13p' "$TMP" ;; esac)
   one=$(mktemp --suffix=.lisp)
   trap 'rm -f "$TMP" "$OUT" "$one"' EXIT
   printf '%s\n' "$form" >"$one"
