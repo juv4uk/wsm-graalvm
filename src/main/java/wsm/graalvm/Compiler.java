@@ -112,6 +112,29 @@ public final class Compiler {
     }
 
     private WsmNode compileList(Object form, LexicalScope scope) {
+        return compileList(form, scope, false);
+    }
+
+    private WsmNode compileTail(Object form, LexicalScope scope) {
+        if (form instanceof Value.Pair) {
+            return compileList(form, scope, true);
+        }
+        return compile(form, scope);
+    }
+
+    private WsmNode callNode(
+            WsmNode fn,
+            WsmNode[] args,
+            boolean tailPosition) {
+        return tailPosition
+                ? new WsmNode.TailCallNode(fn, args)
+                : new WsmNode.CallNode(fn, args);
+    }
+
+    private WsmNode compileList(
+            Object form,
+            LexicalScope scope,
+            boolean tailPosition) {
         List<Object> items = items(form);
         if (items.isEmpty()) {
             return new WsmNode.ConstantNode(Value.NIL);
@@ -122,7 +145,8 @@ public final class Compiler {
             return dispatchSemanticHead(
                     ID_QUOTE,
                     items.subList(1, items.size()),
-                    scope);
+                    scope,
+                    tailPosition);
         }
 
         List<Object> args = items.subList(1, items.size());
@@ -139,15 +163,17 @@ public final class Compiler {
             // The admitted set comes from the pinned registry only.
             String id = registry.semanticIdForNumeric(numericHead.numerator().longValueExact());
             if (id != null) {
-                return dispatchSemanticHead(id, args, scope);
+                return dispatchSemanticHead(id, args, scope, tailPosition);
             }
-            return new WsmNode.CallNode(
+            return callNode(
                     compile(head, scope),
-                    compileAll(args, scope));
+                    compileAll(args, scope),
+                    tailPosition);
         } else {
-            return new WsmNode.CallNode(
+            return callNode(
                     compile(head, scope),
-                    compileAll(args, scope));
+                    compileAll(args, scope),
+                    tailPosition);
         }
         if (globals.isMacro(spelling)) {
             Object[] syntaxArgs = new Object[args.size()];
@@ -155,36 +181,41 @@ public final class Compiler {
                 syntaxArgs[i] = ReaderDatum.toValue(args.get(i));
             }
             Object expanded = globals.macro(spelling).expand(syntaxArgs);
-            return compile(expanded, scope);
+            return tailPosition
+                    ? compileTail(expanded, scope)
+                    : compile(expanded, scope);
         }
 
         String id = registry.semanticIdForToken(spelling);
 
         // Canon resolution is immutable and precedes lexical lookup.
         if (id != null && isCanonPrimitive(id)) {
-            return dispatchSemanticHead(id, args, scope);
+            return dispatchSemanticHead(id, args, scope, tailPosition);
         }
 
         // Non-Canon names are ordinary lexical names when bound.
         if (scope.resolveLocal(spelling) != null || globals.isDeclared(spelling)) {
-            return new WsmNode.CallNode(
+            return callNode(
                     symbolNode(spelling, scope),
-                    compileAll(args, scope));
+                    compileAll(args, scope),
+                    tailPosition);
         }
 
         if (id != null) {
-            return dispatchSemanticHead(id, args, scope);
+            return dispatchSemanticHead(id, args, scope, tailPosition);
         }
 
-        return new WsmNode.CallNode(
+        return callNode(
                 symbolNode(spelling, scope),
-                compileAll(args, scope));
+                compileAll(args, scope),
+                tailPosition);
     }
 
     private WsmNode dispatchSemanticHead(
             String id,
             List<Object> args,
-            LexicalScope scope) {
+            LexicalScope scope,
+            boolean tailPosition) {
         return switch (id) {
             case ID_QUOTE -> {
                 if (args.size() != 1) {
@@ -197,15 +228,16 @@ public final class Compiler {
             }
             case ID_LAMBDA -> compileLambda(args, scope);
             case ID_DEFINE, ID_DEF_COMPAT -> compileDefine(args, scope);
-            case ID_COND -> compileCond(args, scope);
+            case ID_COND -> compileCond(args, scope, tailPosition);
             case ID_EVAL -> compileEval(args, scope);
             default -> {
                 // Preserve every admitted semantic identity as a first-class
                 // callable reference. Mechanism availability is an invocation
                 // concern, not a compile-time semantic admission rule.
-                yield new WsmNode.CallNode(
+                yield callNode(
                         new WsmNode.ConstantNode(new Value.SemanticRef(id)),
-                        compileAll(args, scope));
+                        compileAll(args, scope),
+                        tailPosition);
             }
         };
     }
@@ -234,9 +266,13 @@ public final class Compiler {
             restSlot = lambdaScope.declareLocal(params.restName());
         }
 
+        List<Object> bodyForms = args.subList(1, args.size());
         List<WsmNode> body = new ArrayList<>();
-        for (Object form : args.subList(1, args.size())) {
-            body.add(compile(form, lambdaScope));
+        for (int i = 0; i < bodyForms.size(); i++) {
+            Object form = bodyForms.get(i);
+            body.add(i == bodyForms.size() - 1
+                    ? compileTail(form, lambdaScope)
+                    : compile(form, lambdaScope));
         }
 
         FrameDescriptor descriptor = lambdaScope.finishFrame();
@@ -245,11 +281,15 @@ public final class Compiler {
                 descriptor,
                 slots,
                 restSlot,
+                lambdaScope.captureFlagSlot(),
+                lambdaScope.tailArgsSlot(),
+                lambdaScope.tailResultSlot(),
                 body.toArray(WsmNode[]::new));
 
         return new WsmNode.LambdaNode(
                 lambdaRoot.getCallTarget(),
-                !parentScope.isRoot());
+                !parentScope.isRoot(),
+                parentScope.isRoot() ? -1 : parentScope.captureFlagSlot());
     }
 
     private WsmNode compileDefine(
@@ -345,7 +385,8 @@ public final class Compiler {
 
     private WsmNode compileCond(
             List<Object> clauses,
-            LexicalScope scope) {
+            LexicalScope scope,
+            boolean tailPosition) {
         List<WsmNode> tests = new ArrayList<>();
         List<WsmNode> expecteds = new ArrayList<>();
         List<WsmNode> bodies = new ArrayList<>();
@@ -356,7 +397,9 @@ public final class Compiler {
             if (parts.size() == 2) {
                 tests.add(compile(parts.get(0), scope));
                 expecteds.add(new WsmNode.ConstantNode(Value.NIL));
-                bodies.add(compile(parts.get(1), scope));
+                bodies.add(tailPosition
+                        ? compileTail(parts.get(1), scope)
+                        : compile(parts.get(1), scope));
                 truthiness.add(true);
                 continue;
             }
@@ -364,7 +407,9 @@ public final class Compiler {
                 tests.add(compile(parts.get(0), scope));
                 expecteds.add(new WsmNode.ConstantNode(
                         ReaderDatum.toValue(parts.get(1))));
-                bodies.add(compile(parts.get(2), scope));
+                bodies.add(tailPosition
+                        ? compileTail(parts.get(2), scope)
+                        : compile(parts.get(2), scope));
                 truthiness.add(false);
                 continue;
             }
