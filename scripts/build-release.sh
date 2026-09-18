@@ -6,6 +6,10 @@ set -euo pipefail
 REPO=$(cd "$(dirname "$0")/.." && pwd)
 VERSION=${1:?usage: build-release.sh VERSION}
 MYLISP=${MYLISP:-$REPO/external/my-lisp}
+EXPECTED_VERSION=$(tr -d "\r\n " < "$REPO/VERSION")
+case "$VERSION" in
+  *.*.*) [ "$VERSION" = "$EXPECTED_VERSION" ] || { echo "release version mismatch: VERSION=$EXPECTED_VERSION requested=$VERSION" >&2; exit 1; } ;;
+esac
 
 if [[ "${RUNNER_OS:-}" == "Windows" || "$(uname -s 2>/dev/null || true)" =~ ^(MINGW|MSYS|CYGWIN) ]]; then
   PLATFORM="windows-x64"
