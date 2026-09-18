@@ -196,19 +196,19 @@ public final class Compiler {
                     ID_LAMBDA + " expects params and body");
         }
 
-        List<Object> rawParams = items(args.get(0));
+        LambdaParams params = lambdaParams(args.get(0));
         LexicalScope lambdaScope = parentScope.child();
-        int[] slots = new int[rawParams.size()];
+        int[] slots = new int[params.fixedNames().size()];
+        int restSlot = -1;
 
-        for (int i = 0; i < rawParams.size(); i++) {
-            Object raw = rawParams.get(i);
-            if (!(raw instanceof Token binder)) {
-                throw new WsmError(
-                        WsmError.Kind.INVALID_FORM,
-                        ID_LAMBDA + " binder must be a symbol");
-            }
-            ensureBinderAllowed(binder.spelling());
-            slots[i] = lambdaScope.declareLocal(binder.spelling());
+        for (int i = 0; i < params.fixedNames().size(); i++) {
+            String binder = params.fixedNames().get(i);
+            ensureBinderAllowed(binder);
+            slots[i] = lambdaScope.declareLocal(binder);
+        }
+        if (params.restName() != null) {
+            ensureBinderAllowed(params.restName());
+            restSlot = lambdaScope.declareLocal(params.restName());
         }
 
         List<WsmNode> body = new ArrayList<>();
@@ -221,6 +221,7 @@ public final class Compiler {
                 language,
                 descriptor,
                 slots,
+                restSlot,
                 body.toArray(WsmNode[]::new));
 
         return new WsmNode.LambdaNode(
@@ -301,27 +302,74 @@ public final class Compiler {
         List<WsmNode> tests = new ArrayList<>();
         List<WsmNode> expecteds = new ArrayList<>();
         List<WsmNode> bodies = new ArrayList<>();
+        List<Boolean> truthiness = new ArrayList<>();
 
         for (Object clause : clauses) {
             List<Object> parts = items(clause);
-            if (parts.size() != 3) {
-                throw new WsmError(
-                        WsmError.Kind.INVALID_FORM,
-                        ID_COND
-                                + " expects canonical "
-                                + "(query expected-result expression) clauses");
+            if (parts.size() == 2) {
+                tests.add(compile(parts.get(0), scope));
+                expecteds.add(new WsmNode.ConstantNode(Value.NIL));
+                bodies.add(compile(parts.get(1), scope));
+                truthiness.add(true);
+                continue;
             }
-
-            tests.add(compile(parts.get(0), scope));
-            expecteds.add(new WsmNode.ConstantNode(
-                    ReaderDatum.toValue(parts.get(1))));
-            bodies.add(compile(parts.get(2), scope));
+            if (parts.size() == 3) {
+                tests.add(compile(parts.get(0), scope));
+                expecteds.add(new WsmNode.ConstantNode(
+                        ReaderDatum.toValue(parts.get(1))));
+                bodies.add(compile(parts.get(2), scope));
+                truthiness.add(false);
+                continue;
+            }
+            throw new WsmError(
+                    WsmError.Kind.INVALID_FORM,
+                    ID_COND
+                            + " expects canonical (query expected-result expression) "
+                            + "or migration-only (test expression) clauses");
         }
 
+        boolean[] legacyTruthiness = new boolean[truthiness.size()];
+        for (int i = 0; i < truthiness.size(); i++) {
+            legacyTruthiness[i] = truthiness.get(i);
+        }
         return new WsmNode.CondNode(
                 tests.toArray(WsmNode[]::new),
                 expecteds.toArray(WsmNode[]::new),
-                bodies.toArray(WsmNode[]::new));
+                bodies.toArray(WsmNode[]::new),
+                legacyTruthiness);
+    }
+
+    private record LambdaParams(
+            List<String> fixedNames,
+            String restName) {}
+
+    private LambdaParams lambdaParams(Object raw) {
+        if (raw instanceof Token token) {
+            return new LambdaParams(List.of(), token.spelling());
+        }
+
+        List<String> fixedNames = new ArrayList<>();
+        Object cur = raw;
+        while (cur instanceof Value.Pair pair) {
+            if (!(pair.car instanceof Token binder)) {
+                throw new WsmError(
+                        WsmError.Kind.INVALID_FORM,
+                        ID_LAMBDA + " binder must be a symbol");
+            }
+            fixedNames.add(binder.spelling());
+            cur = pair.cdr;
+        }
+
+        String restName = null;
+        if (cur != Value.NIL) {
+            if (!(cur instanceof Token token)) {
+                throw new WsmError(
+                        WsmError.Kind.INVALID_FORM,
+                        ID_LAMBDA + " dotted rest binder must be a symbol");
+            }
+            restName = token.spelling();
+        }
+        return new LambdaParams(fixedNames, restName);
     }
 
     private WsmNode[] compileAll(
