@@ -48,7 +48,7 @@ jobs:
 
       - name: Gate 5 — (canon-conforms?) → current conformance record
         run: |
-          G=${G} MYLISP=external/my-lisp bash scripts/run-canon.sh | tee gate5.log
+          MYLISP=external/my-lisp bash scripts/run-canon.sh 2>&1 | tee gate5.log
           grep -q "(canon-conformance satisfied)" gate5.log
 
       - name: Gate 6+ — tier-1 conformance (next; no silent pass)
