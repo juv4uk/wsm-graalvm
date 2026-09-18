@@ -34,10 +34,10 @@ jobs:
                     external/my-lisp/lib/surface/semantic-registry.lisp \
                     external/my-lisp/tests/fixtures/conformance.lisp
 
-      - name: Set up GraalVM CE (community)
+      - name: Set up GraalVM CE 25.3
         uses: graalvm/setup-graalvm@v1
         with:
-          java-version: '25'
+          version: '25.3'
           distribution: 'graalvm-community'
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
