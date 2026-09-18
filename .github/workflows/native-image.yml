@@ -41,6 +41,7 @@ jobs:
           java-version: '25'
           distribution: 'graalvm-community'
           version: '25.3.4.1'
+          components: 'native-image'
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build and run native Canon witness
