@@ -2,7 +2,7 @@
 ;; Classifications are evidence pointers, not semantic definitions.
 (
   (schema . 1)
-  (max-lisp-defined-java-debt . 1)
+  (max-lisp-defined-java-debt . 0)
 
   (mechanism "0002" substrate-required
     (meaning-source . "lib/canon.lisp")
