@@ -274,11 +274,13 @@ public abstract class WsmNode extends com.oracle.truffle.api.nodes.Node {
             if (x instanceof Value.Symbol sx && y instanceof Value.Symbol sy) {
                 return sx.name.equals(sy.name);
             }
-            if (x instanceof Long lx && y instanceof Long ly) {
-                return lx.equals(ly);
+
+            if (x instanceof Value.StringValue sx && y instanceof Value.StringValue sy) {
+                return sx.value.equals(sy.value);
             }
-            if (x instanceof String sx && y instanceof String sy) {
-                return sx.equals(sy);
+            if (x instanceof Value.NumberValue nx && y instanceof Value.NumberValue ny) {
+                return nx.numerator().equals(ny.numerator())
+                        && nx.denominator().equals(ny.denominator());
             }
             if (x instanceof Value.SemanticRef sx
                     && y instanceof Value.SemanticRef sy) {
