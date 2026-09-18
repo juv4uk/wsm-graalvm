@@ -25,7 +25,8 @@ import java.util.List;
         characterMimeTypes = { "text/x-wsm" }
 )
 public final class WsmLanguage extends TruffleLanguage<WsmContext> {
-    private final ContextReference<WsmContext> contextReference = getContextReference();
+    private static final ContextReference<WsmContext> CONTEXT_REFERENCE =
+            ContextReference.create(WsmLanguage.class);
 
     @Override
     protected WsmContext createContext(com.oracle.truffle.api.TruffleLanguage.Env env) {
@@ -46,7 +47,7 @@ public final class WsmLanguage extends TruffleLanguage<WsmContext> {
             throw new IllegalArgumentException(
                     "missing system property wsm.registryPath (numeric registry authority)");
         }
-        WsmContext context = contextReference.get();
+        WsmContext context = CONTEXT_REFERENCE.get(null);
         Compiler compiler = new Compiler(context.registry(), this, context.globals());
         List<WsmNode> forms = compiler.compileProgram(new Reader(code).readAll());
         ProgramBodyNode body = new ProgramBodyNode(forms);
