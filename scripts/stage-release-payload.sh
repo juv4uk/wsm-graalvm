@@ -48,7 +48,7 @@ GRAALVM_VERSION=${GRAALVM_VERSION:-25.3.4.1} bash "$REPO/scripts/write-release-m
 PIN=$(cat "$OUT/share/doc/wsm-graalvm/MY_LISP_PIN.txt")
 PYTHON=$(command -v python3 2>/dev/null || command -v python 2>/dev/null || true)
 [ -n "$PYTHON" ] || { echo "python3/python is required for SBOM generation" >&2; exit 1; }
-VERSION="$VERSION" WSM_COMMIT="$(git -C "$REPO" rev-parse HEAD)" MY_LISP_PIN="$PIN" PLATFORM="$PLATFORM" GRAALVM_VERSION=${GRAALVM_VERSION:-25.3.4.1} \
+VERSION="$VERSION" WSM_COMMIT="$(git -C "$REPO" rev-parse HEAD)" MY_LISP_PIN="$PIN" PLATFORM="$PLATFORM" GRAALVM_VERSION=${GRAALVM_VERSION:-25.3.4.1} SOURCE_DATE_EPOCH="$(git -C "$REPO" show -s --format=%ct HEAD)" \
   "$PYTHON" "$REPO/scripts/write-release-sbom.py" > "$OUT/share/doc/wsm-graalvm/SBOM.spdx.json"
 cp "$REPO/refs/lisp-dependency-manifest.lisp" "$OUT/share/doc/wsm-graalvm/"
 cp "$REPO/refs/sparse-authority-paths.txt" "$OUT/share/doc/wsm-graalvm/"
