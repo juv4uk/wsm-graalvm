@@ -12,6 +12,12 @@ if ! command -v jar >/dev/null 2>&1; then
   fi
 fi
 
+# Debian/local fallback: mount pinned GraalVM distribution explicitly when
+# none of the runner's PATH probes finds jar/java (Guix profile on local boxes).
+if [ ! -x "$(command -v jar)" ] && [ -d /home/agents/graalvm-community-25.3.4.1+1.1 ]; then
+  export PATH="/home/agents/graalvm-community-25.3.4.1+1.1/bin:$PATH"
+fi
+
 REPO=$(cd "$(dirname "$0")/.." && pwd)
 OUT="$REPO/third_party"
 V="${GRAAL_ARTIFACT_VERSION:-25.3.4.1}"

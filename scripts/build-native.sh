@@ -4,6 +4,11 @@ set -euo pipefail
 REPO=$(cd "$(dirname "$0")/.." && pwd)
 : "${G:=}"
 
+# Debian/local fallback: same pinned distribution on the Guix/Debian host
+if [ -z "$G" ] && [ -d /home/agents/graalvm-community-25.3.4.1+1.1 ]; then
+  G=/home/agents/graalvm-community-25.3.4.1+1.1
+fi
+
 bash "$REPO/scripts/build.sh"
 
 CP="$REPO/classes"

@@ -77,3 +77,7 @@ jobs:
         with:
           files: dist/wsm-graalvm-windows-jvm.zip
           token: ${{ secrets.GITHUB_TOKEN }}
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
