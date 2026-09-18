@@ -23,8 +23,11 @@ public final class ConformanceMain {
 
         Path repo = Path.of(args[2]).toAbsolutePath().normalize();
         String fixturesSource = Files.readString(Path.of(args[0]));
+        Path transitionPath =
+                repo.resolve("external/my-lisp/tests/fixtures/conformance-transition-witness.lisp");
+        String transitionSource = Files.readString(transitionPath);
         List<ConformanceInventory.Fixture> fixtures =
-                ConformanceInventory.selectTier(fixturesSource, 1);
+                ConformanceInventory.selectTierCurrent(fixturesSource, transitionSource, 1);
 
         WsmContext context = bootstrap(repo, args[1]);
 
