@@ -10,12 +10,12 @@ fi
 REPO=$(cd "$(dirname "$0")/.." && pwd)
 bash "$REPO/scripts/fetch-third-party.sh"
 
-MYLISP=${MYLISP:-"$REPO/external/my-lisp"}
+MYLISP=$(bash "$REPO/scripts/resolve-my-lisp.sh")
 CANON="$MYLISP/lib/canon.lisp"
 REGISTRY="$MYLISP/lib/surface/semantic-registry.lisp"
 
-[ -f "$CANON" ] || { echo "missing pinned canon: $CANON" >&2; exit 1; }
-[ -f "$REGISTRY" ] || { echo "missing pinned registry: $REGISTRY" >&2; exit 1; }
+[ -f "$CANON" ] || { echo "missing upstream canon: $CANON" >&2; exit 1; }
+[ -f "$REGISTRY" ] || { echo "missing upstream registry: $REGISTRY" >&2; exit 1; }
 
 TMP=$(mktemp --suffix=.lisp)
 trap 'rm -f "$TMP"' EXIT

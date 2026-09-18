@@ -6,8 +6,8 @@ if [ -z "${G:-}" ]; then
   G=$(dirname "$(dirname "$JBIN")")
 fi
 
-REGISTRY="$REPO/external/my-lisp/lib/surface/semantic-registry.lisp"
-[ -f "$REGISTRY" ] || { echo "missing pinned registry: $REGISTRY" >&2; exit 1; }
+MYLISP=$(bash "$REPO/scripts/resolve-my-lisp.sh")\nREGISTRY="$MYLISP/lib/surface/semantic-registry.lisp"
+[ -f "$REGISTRY" ] || { echo "missing upstream registry: $REGISTRY" >&2; exit 1; }
 
 G="$G" bash "$REPO/scripts/build.sh"
 

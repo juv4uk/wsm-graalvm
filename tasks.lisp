@@ -10,14 +10,14 @@
   ((priority . 9.1) (capabilities . (lisp dependency graph manifest ci)) (origin . wsm-graalvm)
    (depends-on . (GRAALVM-M0-READER-SEVEN-PRIMITIVES))
    (issue . 30)
-   (description . "Declare and fail-closed-check the pinned my-lisp M0/M1 bootstrap closure without copying semantic source. Full-tree classification remains a separate follow-up.")))
+   (description . "Declare and fail-closed-check the live my-lisp M0/M1 bootstrap closure without copying semantic source. Full-tree classification remains a separate follow-up.")))
 
  ("GRAALVM-M1-DEPENDENCY-CLASSIFICATION-EVIDENCE" .
   ((priority . 9.0) (capabilities . (lisp dependency graph evidence ci)) (origin . my-lisp)
    (depends-on . (GRAALVM-M1-DEPENDENCY-MANIFEST))
    (issue . 30)
    (upstream-generator . "juv4uk/my-lisp@scripts/build-dependency-classification.lisp")
-   (description . "Record the source-confirmed pinned dependency-classification artifact as downstream evidence. This does not replace the eventual full reachable *.lisp file classification or introduce a second semantic authority.")))
+   (description . "Record the source-confirmed upstream dependency-classification artifact as downstream evidence. This does not replace the eventual full reachable *.lisp file classification or introduce a second semantic authority.")))
 
  ("GRAALVM-M1-NUMERIC-SEMANTIC-ID-HEAD-RULE" .
   ((priority . 9.4) (capabilities . (lisp semantic-id reader compiler coordination)) (origin . my-lisp)
@@ -36,7 +36,7 @@
   ((priority . 9.0) (capabilities . (truffle conformance lisp fixtures java)) (origin . wsm-graalvm)
    (depends-on . (GRAALVM-M1-CONTEXT-OWNED-RUNTIME-STATE))
    (issue . 27)
-   (description . "Run pinned external/my-lisp/tests/fixtures/conformance.lisp tier-1 fixtures through the substrate's own reader+eval. Report each fixture and fail closed on any expected-value or ErrorKind divergence.")))
+   (description . "Run linked my-lisp tests/fixtures/conformance.lisp tier-1 fixtures through the substrate's own reader+eval. Report each fixture and fail closed on any expected-value or ErrorKind divergence.")))
 
  ("GRAALVM-M1-ERRORKIND-PARITY" .
   ((priority . 8.8) (capabilities . (java truffle lisp errors contract)) (origin . my-lisp)
@@ -47,7 +47,7 @@
   ((priority . 8.7) (capabilities . (graalvm native-image truffle polyglot lisp)) (origin . wsm-graalvm)
    (depends-on . (GRAALVM-M0-READER-SEVEN-PRIMITIVES))
    (issue . 28)
-   (description . "Build a native executable containing the WSM Truffle provider, run the real external/my-lisp/lib/canon.lisp witness, and fail if language discovery or Canon conformance diverges.")))
+   (description . "Build a native executable containing the WSM Truffle provider, run the real linked my-lisp/lib/canon.lisp witness, and fail if language discovery or Canon conformance diverges.")))
 
  ("GRAALVM-M2-TCO-DECISION-ADR" .
   ((priority . 9.0) (capabilities . (truffle jvm tco lisp semantics adr)) (origin . my-lisp)

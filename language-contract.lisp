@@ -1,1 +1,1 @@
-external/my-lisp/language-contract.lisp
+../my-lisp/language-contract.lisp

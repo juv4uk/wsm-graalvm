@@ -10,18 +10,32 @@ jobs:
   native-image:
     name: Native Image — real Canon witness
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: wsm-graalvm
+    env:
+      WSM_LISP_HOME: ${{ github.workspace }}/my-lisp
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout wsm-graalvm
+        uses: actions/checkout@v4
         with:
-          submodules: recursive
+          path: wsm-graalvm
           fetch-depth: 0
-
-      - name: Fetch my-lisp authority pin
+      - name: Resolve Tier-1 upstream evidence pin
+        id: authority
         run: |
-          git -C external/my-lisp fetch origin --quiet
-          SHA=$(git -C external/my-lisp rev-parse HEAD)
-          echo "my-lisp pinned at $SHA"
-
+          PIN=$(sed -n 's/^MY_LISP_PIN=//p' refs/tier1-baseline.properties)
+          test -n "$PIN"
+          echo "pin=$PIN" >> "$GITHUB_OUTPUT"
+      - name: Checkout my-lisp authority beside wsm-graalvm
+        uses: actions/checkout@v4
+        with:
+          repository: juv4uk/my-lisp
+          ref: ${{ steps.authority.outputs.pin }}
+          path: my-lisp
+          fetch-depth: 1
+      - name: Verify sibling my-lisp authority
+        run: bash scripts/verify-authority.sh
       - name: Set up GraalVM CE + Native Image
         uses: graalvm/setup-graalvm@v1
         with:
@@ -29,8 +43,7 @@ jobs:
           distribution: 'graalvm-community'
           version: '25.3.4.1'
           github-token: ${{ secrets.GITHUB_TOKEN }}
-
       - name: Build and run native Canon witness
         run: |
           G=$(dirname "$(dirname "$(readlink -f "$(command -v java)")")")
-          G=$G MYLISP=external/my-lisp bash scripts/build-native.sh
+          G=$G bash scripts/build-native.sh

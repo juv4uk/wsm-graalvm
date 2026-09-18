@@ -3,7 +3,7 @@ set -euo pipefail
 
 REPO=$(cd "$(dirname "$0")/.." && pwd)
 BASELINE="$REPO/refs/tier1-baseline.properties"
-MYLISP="$REPO/external/my-lisp"
+MYLISP=$(bash "$REPO/scripts/resolve-my-lisp.sh")
 CORPUS="$MYLISP/tests/fixtures/conformance.lisp"
 REGISTRY="$MYLISP/lib/surface/semantic-registry.lisp"
 

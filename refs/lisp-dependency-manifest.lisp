@@ -1,12 +1,16 @@
-;; GraalVM consumer manifest for the pinned my-lisp Lisp authority.
+;; GraalVM consumer manifest for the live my-lisp Lisp authority.
 ;;
 ;; This declares the current M0/M1 runtime slice. It is not a copy of Lisp
 ;; semantics. Semantic identity, laws, and source meaning remain upstream.
+;;
+;; Transport is deliberately NOT a Git submodule: wsm-graalvm consumes a
+;; sibling my-lisp working tree (default ../my-lisp; WSM_LISP_HOME may override).
 
 (
-  (schema . 1)
+  (schema . 2)
   (upstream . "juv4uk/my-lisp")
-  (pin . "9ce5101853c0a9f43aacb32a98bb2bc9ab2eec3b")
+  (authority-mode . "sibling-worktree")
+  (default-root . "../my-lisp")
 
   (authority
     ("language-contract.lisp")

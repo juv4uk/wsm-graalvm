@@ -9,21 +9,39 @@ on:
 jobs:
   build-and-gates:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: wsm-graalvm
+    env:
+      WSM_LISP_HOME: ${{ github.workspace }}/my-lisp
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout wsm-graalvm
+        uses: actions/checkout@v4
         with:
-          submodules: recursive
+          path: wsm-graalvm
           fetch-depth: 0
 
-      - name: Fetch my-lisp authority pin
+      - name: Resolve Tier-1 upstream evidence pin
+        id: authority
         run: |
-          git -C external/my-lisp fetch origin --quiet
-          SHA=$(git -C external/my-lisp rev-parse HEAD)
-          echo "my-lisp pinned at $SHA"
+          PIN=$(sed -n 's/^MY_LISP_PIN=//p' refs/tier1-baseline.properties)
+          test -n "$PIN"
+          echo "pin=$PIN" >> "$GITHUB_OUTPUT"
 
-      - name: Verify pinned my-lisp authority
+      - name: Checkout my-lisp authority beside wsm-graalvm
+        uses: actions/checkout@v4
+        with:
+          repository: juv4uk/my-lisp
+          ref: ${{ steps.authority.outputs.pin }}
+          path: my-lisp
+          fetch-depth: 1
+
+      - name: Verify sibling my-lisp authority
         run: |
-          bash scripts/verify-authority.sh external/my-lisp
+          bash scripts/verify-authority.sh
+          test "$(readlink lib)" = "../my-lisp/lib"
+          test "$(readlink tests)" = "../my-lisp/tests"
+
       - name: Set up GraalVM CE pinned to the runtime the substrate is built for
         uses: graalvm/setup-graalvm@v1
         with:
@@ -43,7 +61,7 @@ jobs:
       - name: RED/green — Tier-1 inventory contract
         run: bash scripts/test-conformance-inventory.sh
 
-      - name: RED/green — real pinned Tier-1 inventory
+      - name: RED/green — real upstream Tier-1 inventory
         run: bash scripts/test-real-tier1-inventory.sh
 
       - name: Gate 4b — focused Truffle frame witnesses
@@ -52,10 +70,10 @@ jobs:
       - name: M1 — sequential Lisp macro/bootstrap
         run: bash scripts/test-sequential-bootstrap.sh
 
-      - name: M1 — pinned Lisp dependency closure
+      - name: M1 — Lisp dependency closure
         run: bash scripts/check-lisp-dependency-manifest.sh
 
-      - name: RED/green — pinned variadic lambda F25/F26/F27
+      - name: RED/green — variadic lambda F25/F26/F27
         run: bash scripts/test-variadic-lambda.sh
 
       - name: RED/green — raw Tier-1 ErrorKind parity
@@ -63,7 +81,7 @@ jobs:
 
       - name: Gate 5 — (canon-conforms?) → current conformance record
         run: |
-          MYLISP=external/my-lisp bash scripts/run-canon.sh 2>&1 | tee gate5.log
+          bash scripts/run-canon.sh 2>&1 | tee gate5.log
           grep -q "(canon-conformance satisfied)" gate5.log
 
       - name: M1 — monotonic Tier-1 progress ledger
@@ -71,6 +89,7 @@ jobs:
 
       - name: RED/green contract tests (chatgpt/* migration)
         run: |
+          AUTH=$(bash scripts/resolve-my-lisp.sh)
           G=$(dirname "$(dirname "$(readlink -f "$(command -v java)")")")
           TEST_CLASSES="test-classes-contract-gates"
           rm -rf "$TEST_CLASSES"
@@ -83,23 +102,23 @@ jobs:
             src/test/java/wsm/graalvm/TruffleFrameContract.java
           java -cp "$TEST_CLASSES:$CP" wsm.graalvm.ReaderStringContract
           java -cp "$TEST_CLASSES:$CP" wsm.graalvm.ConformanceInventoryContract
-          java -cp "$TEST_CLASSES:$CP" wsm.graalvm.RealTier1InventoryContract external/my-lisp/tests/fixtures/conformance.lisp
-          java -cp "$TEST_CLASSES:$CP" wsm.graalvm.TruffleFrameContract external/my-lisp/lib/surface/semantic-registry.lisp
+          java -cp "$TEST_CLASSES:$CP" wsm.graalvm.RealTier1InventoryContract "$AUTH/tests/fixtures/conformance.lisp"
+          java -cp "$TEST_CLASSES:$CP" wsm.graalvm.TruffleFrameContract "$AUTH/lib/surface/semantic-registry.lisp"
 
       - name: Gate 6 evidence — full Tier-1 shared-session run
         continue-on-error: true
         run: |
           G=$(dirname "$(dirname "$(readlink -f "$(command -v java)")")")
-          G=$G MYLISP=external/my-lisp bash scripts/test-tier1.sh
+          G=$G bash scripts/test-tier1.sh
 
       - name: Gate 6 evidence status
         if: always()
         run: |
           echo "Full Tier-1 remains visible evidence while incremental M1 gaps remain."
           echo "Merge blocking is the monotonic ledger plus focused semantic gates."
+
       - name: M1 — shared definition frame across Context.eval
-
         run: |
+          AUTH=$(bash scripts/resolve-my-lisp.sh)
           G=$(dirname "$(dirname "$(readlink -f "$(command -v java)")")")
-          G=$G bash scripts/test-context.sh external/my-lisp/lib/surface/semantic-registry.lisp
-
+          G=$G bash scripts/test-context.sh "$AUTH/lib/surface/semantic-registry.lisp"

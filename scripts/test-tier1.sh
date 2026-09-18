@@ -4,10 +4,7 @@ set -euo pipefail
 REPO=$(cd "$(dirname "$0")/.." && pwd)
 : "${G:=}"
 
-if [ -z "${MYLISP:-}" ]; then
-  echo "MYLISP must point at the pinned my-lisp checkout" >&2
-  exit 2
-fi
+MYLISP=$(bash "$REPO/scripts/resolve-my-lisp.sh")
 
 bash "$REPO/scripts/fetch-third-party.sh"
 

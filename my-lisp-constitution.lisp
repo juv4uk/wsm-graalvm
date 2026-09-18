@@ -1,1 +1,1 @@
-external/my-lisp/my-lisp-constitution.lisp
+../my-lisp/my-lisp-constitution.lisp
