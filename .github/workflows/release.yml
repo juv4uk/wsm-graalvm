@@ -1,20 +1,14 @@
 name: release-build
 
 on:
-  pull_request:
-    paths:
-      - ".github/workflows/release.yml"
-      - "scripts/build.sh"
-      - "scripts/build-native.sh"
-      - "scripts/build-release.sh"
-      - "release/**"
-      - "src/main/java/**"
-      - "refs/**"
-      - "VERSION"
   push:
     tags:
       - "v*.*.*"
   workflow_dispatch:
+
+concurrency:
+  group: release-build-${{ github.ref }}
+  cancel-in-progress: true
 
 permissions:
   contents: read
