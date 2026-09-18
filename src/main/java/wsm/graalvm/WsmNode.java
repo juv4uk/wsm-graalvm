@@ -243,81 +243,36 @@ public abstract class WsmNode extends com.oracle.truffle.api.nodes.Node {
     }
 
     @NodeInfo(shortName = "select")
+    /**
+     * Canonical COND: each clause is (query expected-result expression).
+     *
+     * The query is evaluated; the expected result is materialized as ordinary
+     * Lisp data and compared structurally. There is no generic truth coercion
+     * in the core dispatch path.
+     */
     public static final class CondNode extends WsmNode {
         @Children private final WsmNode[] tests;
         @Children private final WsmNode[] expecteds;
         @Children private final WsmNode[] bodies;
 
-        private final boolean[] legacyTruthiness;
-
         CondNode(
                 WsmNode[] tests,
                 WsmNode[] expecteds,
-                WsmNode[] bodies,
-                boolean[] legacyTruthiness) {
+                WsmNode[] bodies) {
             this.tests = tests;
             this.expecteds = expecteds;
             this.bodies = bodies;
-            this.legacyTruthiness = legacyTruthiness;
         }
 
         @Override public Object executeGeneric(VirtualFrame frame) {
             for (int i = 0; i < tests.length; i++) {
                 Object actual = tests[i].executeGeneric(frame);
-                boolean selected = legacyTruthiness[i]
-                        ? migrationOnlyTruthy(actual)
-                        : Structural.equals(actual, expecteds[i].executeGeneric(frame));
-                if (selected) {
+                Object expected = expecteds[i].executeGeneric(frame);
+                if (Structural.equals(actual, expected)) {
                     return bodies[i].executeGeneric(frame);
                 }
             }
             return Value.NIL;
-        }
-
-        /**
-         * Temporary compatibility bridge for historical two-part cond only.
-         *
-         * Canonical three-part clauses never call this path: they compare the
-         * produced domain value structurally against an explicit expected
-         * result. This mapping mirrors pinned my-lisp's
-         * migration_only_cond_truthy and can disappear with two-part cond.
-         */
-        private static boolean migrationOnlyTruthy(Object value) {
-            // Do NOT coerce ordinary exact numeric 0/1 here. Pinned conformance
-            // keeps ordinary numeric zero truthy, while exact-Q 0/1 decisions
-            // are mathematical data whose historical two-part consumers must
-            // migrate to explicit three-part result matching (upstream #613).
-            String[] record = twoSymbolRecord(value);
-            if (record != null) {
-                String kind = record[0];
-                String state = record[1];
-
-                if ("structural-kind".equals(kind)) {
-                    if ("empty-list".equals(state) || "atom".equals(state)) return true;
-                    if ("pair".equals(state)) return false;
-                }
-                if ("identity-relation".equals(kind)) {
-                    if ("same".equals(state)) return true;
-                    if ("distinct".equals(state)) return false;
-                }
-                if ("structural-relation".equals(kind)) {
-                    if ("same".equals(state)) return true;
-                    if ("distinct".equals(state)) return false;
-                }
-            }
-
-            return value != Value.NIL;
-        }
-
-        private static String[] twoSymbolRecord(Object value) {
-            if (!(value instanceof Value.Pair first)
-                    || !(first.car instanceof Value.Symbol kind)
-                    || !(first.cdr instanceof Value.Pair second)
-                    || !(second.car instanceof Value.Symbol state)
-                    || second.cdr != Value.NIL) {
-                return null;
-            }
-            return new String[] {kind.name, state.name};
         }
     }
 
