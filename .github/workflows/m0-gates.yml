@@ -58,6 +58,9 @@ jobs:
       - name: M1 — Lisp-owned semantic 0012 macro peers
         run: bash scripts/test-macro-peer-installer.sh
 
+      - name: M1 — migration-only two-part cond bridge
+        run: bash scripts/test-migration-cond-truthiness.sh
+
       - name: M1 — semantic ID 1062 eval in current environment
         run: bash scripts/test-semantic-eval.sh
 
