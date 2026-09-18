@@ -100,7 +100,7 @@ public final class Tier1Harness {
     private static void runFixture(
             Fixture fixture,
             String registryPath,
-            Path corePath) {
+            Path corePath) throws Exception {
         System.setProperty("wsm.registryPath", registryPath);
         try (Context context = Context.newBuilder("wsm").build()) {
             try {
