@@ -62,7 +62,7 @@ def main() -> int:
     if package.exists():
         shutil.rmtree(package)
     (package / "bin").mkdir(parents=True)
-    (package / "authority" / "lib" / "surface").mkdir(parents=True)
+    (package / "my-lisp").mkdir(parents=True)
 
     binary_name = "wsm-graalvm.exe" if args.platform == "windows-x86_64" else "wsm-graalvm"
     shutil.copy2(binary, package / "bin" / binary_name)
@@ -70,10 +70,12 @@ def main() -> int:
         dst = package / "bin" / binary_name
         dst.chmod(dst.stat().st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
 
-    for rel in authority:
-        dst = package / "authority" / rel
-        dst.parent.mkdir(parents=True, exist_ok=True)
-        shutil.copy2(upstream / rel, dst)
+    shutil.copytree(
+        upstream,
+        package / "my-lisp",
+        ignore=shutil.ignore_patterns(".git"),
+        dirs_exist_ok=True,
+    )
 
     shutil.copy2(root / "README.md", package / "README.md")
     shutil.copy2(root / "LICENSE", package / "LICENSE")
@@ -84,8 +86,8 @@ def main() -> int:
         'HERE=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)\n'
         'TMP=$(mktemp "${TMPDIR:-/tmp}/wsm-graalvm-XXXXXX.lisp")\n'
         'trap "rm -f \"$TMP\"" EXIT HUP INT TERM\n'
-        'cat "$HERE/authority/lib/canon.lisp" "$HERE/authority/lib/macro.lisp" "$HERE/authority/lib/core.lisp" "$1" > "$TMP"\n'
-        '"$HERE/bin/wsm-graalvm" "$TMP" "$HERE/authority/lib/surface/semantic-registry.lisp" "$HERE/authority"\n',
+        'cat "$HERE/my-lisp/lib/canon.lisp" "$HERE/my-lisp/lib/macro.lisp" "$HERE/my-lisp/lib/core.lisp" "$1" > "$TMP"\n'
+        '"$HERE/bin/wsm-graalvm" "$TMP" "$HERE/my-lisp/lib/surface/semantic-registry.lisp" "$HERE/my-lisp"\n',
         encoding="utf-8",
     )
     (package / "run.sh").chmod((package / "run.sh").stat().st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
@@ -96,11 +98,11 @@ def main() -> int:
         'set "HERE=%~dp0"\r\n'
         'set "TMP=%TEMP%\\wsm-graalvm-%RANDOM%%RANDOM%.lisp"\r\n'
         '> "%TMP%" type nul\r\n'
-        'type "%HERE%authority\\lib\\canon.lisp" >> "%TMP%"\r\n'
-        'type "%HERE%authority\\lib\\macro.lisp" >> "%TMP%"\r\n'
-        'type "%HERE%authority\\lib\\core.lisp" >> "%TMP%"\r\n'
+        'type "%HERE%my-lisp\\lib\\canon.lisp" >> "%TMP%"\r\n'
+        'type "%HERE%my-lisp\\lib\\macro.lisp" >> "%TMP%"\r\n'
+        'type "%HERE%my-lisp\\lib\\core.lisp" >> "%TMP%"\r\n'
         'type "%~1" >> "%TMP%"\r\n'
-        '"%HERE%bin\\wsm-graalvm.exe" "%TMP%" "%HERE%authority\\lib\\surface\\semantic-registry.lisp" "%HERE%authority"\r\n'
+        '"%HERE%bin\\wsm-graalvm.exe" "%TMP%" "%HERE%my-lisp\\lib\\surface\\semantic-registry.lisp" "%HERE%authority"\r\n'
         'set "RC=%ERRORLEVEL%"\r\n'
         'del /q "%TMP%" >nul 2>nul\r\n'
         'exit /b %RC%\r\n',
@@ -109,6 +111,26 @@ def main() -> int:
 
     (package / "MY_LISP_PIN.txt").write_text(args.upstream_pin + "\n", encoding="utf-8")
     (package / "RELEASE_SHA.txt").write_text(args.repo_sha + "\n", encoding="utf-8")
+    (package / "RELEASE.txt").write_text(
+        f"version: {args.version}\n"
+        f"platform: {args.platform}\n"
+        f"wsm-commit: {args.repo_sha}\n"
+        f"my-lisp-commit: {args.upstream_pin}\n"
+        "semantic-authority: complete external/my-lisp source\n"
+        "bootstrap: canon -> macro -> core -> user Lisp\n",
+        encoding="utf-8",
+    )
+    (package / "RELEASE.json").write_text(
+        "{\n"
+        f'  "version": "{args.version}",\n'
+        f'  "platform": "{args.platform}",\n'
+        f'  "wsm_commit": "{args.repo_sha}",\n'
+        f'  "my_lisp_commit": "{args.upstream_pin}",\n'
+        '  "semantic_authority": "complete external/my-lisp source",\n'
+        '  "bootstrap": ["canon", "macro", "core", "user-lisp"]\n'
+        "}\n",
+        encoding="utf-8",
+    )
     (package / "RUNNING.txt").write_text(
         f"wsm-graalvm {args.version} ({args.platform})\n\n"
         f"Semantic authority: juv4uk/my-lisp@{args.upstream_pin}\n"
