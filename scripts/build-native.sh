@@ -4,30 +4,38 @@ set -euo pipefail
 REPO=$(cd "$(dirname "$0")/.." && pwd)
 
 if [[ "${RUNNER_OS:-}" == "Windows" || "$(uname -s 2>/dev/null || true)" =~ ^(MINGW|MSYS|CYGWIN) ]]; then
+  WINDOWS_HOST=1
   CP_SEP=';'
   BINARY_SUFFIX='.exe'
 else
+  WINDOWS_HOST=0
   CP_SEP=':'
   BINARY_SUFFIX=''
 fi
 
 G="${G:-${GRAALVM_HOME:-}}"
-if [ -z "$G" ]; then
+if [ -z "$G" ] && [ "$WINDOWS_HOST" -eq 0 ]; then
   JBIN=$(readlink -f "$(command -v java)")
   G=$(dirname "$(dirname "$JBIN")")
 fi
 
 bash "$REPO/scripts/build.sh"
 
-CP="$REPO/classes"
-MODULE_PATH="$REPO/third_party/truffle-api.jar${CP_SEP}$REPO/third_party/truffle-runtime.jar${CP_SEP}$REPO/third_party/truffle-compiler.jar${CP_SEP}$REPO/third_party/polyglot.jar${CP_SEP}$REPO/third_party/collections.jar${CP_SEP}$REPO/third_party/jniutils.jar${CP_SEP}$REPO/third_party/nativeimage.jar${CP_SEP}$REPO/third_party/word.jar"
-
-NATIVE_IMAGE=$(command -v native-image 2>/dev/null || true)
-if [ -z "$NATIVE_IMAGE" ] && [ -x "$G/bin/native-image" ]; then
-  NATIVE_IMAGE="$G/bin/native-image"
-fi
-if [ -z "$NATIVE_IMAGE" ] && [ -x "$G/bin/native-image.cmd" ]; then
-  NATIVE_IMAGE="$G/bin/native-image.cmd"
+if [ "$WINDOWS_HOST" -eq 1 ]; then
+  NATIVE_IMAGE=$(command -v native-image 2>/dev/null || true)
+  REPO_NATIVE=$(cygpath -w "$REPO")
+  CP="$REPO_NATIVE\\classes"
+  MODULE_PATH="$REPO_NATIVE\\third_party\\truffle-api.jar;$REPO_NATIVE\\third_party\\truffle-runtime.jar;$REPO_NATIVE\\third_party\\truffle-compiler.jar;$REPO_NATIVE\\third_party\\polyglot.jar;$REPO_NATIVE\\third_party\\collections.jar;$REPO_NATIVE\\third_party\\jniutils.jar;$REPO_NATIVE\\third_party\\nativeimage.jar;$REPO_NATIVE\\third_party\\word.jar"
+else
+  NATIVE_IMAGE=$(command -v native-image 2>/dev/null || true)
+  if [ -z "$NATIVE_IMAGE" ] && [ -x "$G/bin/native-image" ]; then
+    NATIVE_IMAGE="$G/bin/native-image"
+  fi
+  if [ -z "$NATIVE_IMAGE" ] && [ -x "$G/bin/native-image.cmd" ]; then
+    NATIVE_IMAGE="$G/bin/native-image.cmd"
+  fi
+  CP="$REPO/classes"
+  MODULE_PATH="$REPO/third_party/truffle-api.jar${CP_SEP}$REPO/third_party/truffle-runtime.jar${CP_SEP}$REPO/third_party/truffle-compiler.jar${CP_SEP}$REPO/third_party/polyglot.jar${CP_SEP}$REPO/third_party/collections.jar${CP_SEP}$REPO/third_party/jniutils.jar${CP_SEP}$REPO/third_party/nativeimage.jar${CP_SEP}$REPO/third_party/word.jar"
 fi
 [ -n "$NATIVE_IMAGE" ] || { echo "native-image not found in GraalVM" >&2; exit 1; }
 
