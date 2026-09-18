@@ -24,6 +24,21 @@ public final class ReaderStringContract {
         require(((Value.StringValue) escaped).value.equals("line\n\t\"\\"),
                 "standard escapes must decode deterministically");
 
+        Object commaDecimal = new Reader("12,455").readAll().get(0);
+        Object dotDecimal = new Reader("12.455").readAll().get(0);
+        require(commaDecimal instanceof Value.NumberValue,
+                "decimal comma must read as exact NumberValue");
+        require(commaDecimal.equals(dotDecimal),
+                "12,455 must denote the same exact rational as 12.455");
+
+        Object numericId = new Reader("0001").readAll().get(0);
+        require(numericId instanceof Reader.Token,
+                "numeric semantic IDs with leading zero must remain symbols");
+
+        Object commaSymbol = new Reader("alpha,beta").readAll().get(0);
+        require(commaSymbol instanceof Reader.Token,
+                "nonnumeric comma token must remain a symbol");
+
         System.out.println("READER-STRING-CONTRACT-OK");
     }
 }
