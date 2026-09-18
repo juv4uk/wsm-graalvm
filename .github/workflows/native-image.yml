@@ -12,8 +12,16 @@ concurrency:
 
 jobs:
   native-image:
-    name: Native Image — real Canon witness
-    runs-on: ubuntu-latest
+    name: Native Image — ${{ matrix.platform }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            platform: linux-x64
+          - os: windows-latest
+            platform: windows-x64
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v5
         with:
@@ -21,6 +29,7 @@ jobs:
           fetch-depth: 0
 
       - name: Fetch my-lisp authority pin
+        shell: bash
         run: |
           git -C external/my-lisp fetch origin --quiet
           SHA=$(git -C external/my-lisp rev-parse HEAD)
@@ -35,6 +44,7 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build and run native Canon witness
-        run: |
-          G=$(dirname "$(dirname "$(readlink -f "$(command -v java)")")")
-          G=$G MYLISP=external/my-lisp bash scripts/build-native.sh
+        shell: bash
+        env:
+          MYLISP: external/my-lisp
+        run: bash scripts/build-native.sh
