@@ -1,15 +1,17 @@
 #!/usr/bin/env bash
-# Build the M0 substrate against a local GraalVM distribution.
-# G=/path/to/graalvm-community-... bash scripts/build.sh
 set -euo pipefail
+
+REPO=$(cd "$(dirname "$0")/.." && pwd)
 if [ -z "${G:-}" ]; then
   JBIN=$(readlink -f "$(command -v java)")
   G=$(dirname "$(dirname "$JBIN")")
 fi
-G=${G:?set G to graalvm-community bin parent}
-REPO=$(cd "$(dirname "$0")/.." && pwd)
-"$G/bin/javac" --release 25 \
-  -cp "$REPO/third_party/truffle-api.jar:$REPO/third_party/polyglot.jar:$REPO/third_party/truffle-runtime.jar:$REPO/third_party/graalvm-collections.jar" \
-  -d "$REPO/classes" \
-  $(find "$REPO/src" -name '*.java')
-echo "BUILD-OK (interpreter classes; JIT comes from the GraalVM structural JIT)"
+G=${G:?set G to GraalVM root}
+
+bash "$REPO/scripts/fetch-third-party.sh"
+
+CP="$REPO/third_party/truffle-api.jar:$REPO/third_party/polyglot.jar:$REPO/third_party/truffle-runtime.jar:$REPO/third_party/graalvm-collections.jar"
+
+"$G/bin/javac" --release 25   -cp "$CP"   -d "$REPO/classes"   $(find "$REPO/src" -name '*.java')
+
+echo "BUILD-OK"
