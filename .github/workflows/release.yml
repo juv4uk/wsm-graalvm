@@ -168,6 +168,14 @@ jobs:
           test -f "dist/wsm-graalvm-$VERSION-windows-x86_64.zip"
           test -f "dist/wsm-graalvm-$VERSION-linux-x86_64.zip.sha256"
           test -f "dist/wsm-graalvm-$VERSION-windows-x86_64.zip.sha256"
+          (cd dist && sha256sum -c "wsm-graalvm-$VERSION-linux-x86_64.zip.sha256")
+          (cd dist && sha256sum -c "wsm-graalvm-$VERSION-windows-x86_64.zip.sha256")
+          (cd dist/assets && sha256sum -c "../wsm-graalvm-$VERSION-linux-x86_64.binary.sha256")
+          (cd dist/assets && sha256sum -c "../wsm-graalvm-$VERSION-windows-x86_64.binary.sha256")
+          LINUX_PIN=$(unzip -p "dist/wsm-graalvm-$VERSION-linux-x86_64.zip" MY_LISP_PIN.txt)
+          WINDOWS_PIN=$(unzip -p "dist/wsm-graalvm-$VERSION-windows-x86_64.zip" MY_LISP_PIN.txt)
+          test -n "$LINUX_PIN"
+          test "$LINUX_PIN" = "$WINDOWS_PIN"
       - name: Create tag and publish release
         env:
           GH_TOKEN: ${{ github.token }}
