@@ -43,7 +43,7 @@ public final class RealLispBootstrapContract {
         WsmContext context = new WsmContext(closure.registryPath().toString());
         context.initialize();
 
-        Object canonResult = BootstrapRuntime.execute(
+        Object canonResult = BootstrapRuntime.executeAuthoritySource(
                 context,
                 Files.readString(repo.resolve("external/my-lisp/lib/canon.lisp")));
         require(canonResult != null, "canon bootstrap returned no value");
@@ -69,7 +69,7 @@ public final class RealLispBootstrapContract {
                 .findFirst()
                 .orElseThrow(() -> new AssertionError("manifest omitted lib/core.lisp"));
 
-        BootstrapRuntime.execute(context, coreSource.text());
+        BootstrapRuntime.executeAuthoritySource(context, coreSource.text());
 
         String defmacro = spelling(context.registry(), "0012");
         String let = spelling(context.registry(), "1141");
