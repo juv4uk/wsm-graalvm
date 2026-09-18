@@ -26,12 +26,13 @@ run_case() {
 
   unzip -tq "$dist/"*.zip
   unzip -p "$dist/"*.zip MY_LISP_PIN.txt | grep -qx 0123456789012345678901234567890123456789
-  unzip -p "$dist/"*.zip run.sh | grep -q "authority/lib/canon.lisp"
-  unzip -p "$dist/"*.zip run.sh | grep -q "authority/lib/macro.lisp"
-  unzip -p "$dist/"*.zip run.sh | grep -q "authority/lib/core.lisp"
-  unzip -p "$dist/"*.zip run.cmd | grep -q "authority\\\\lib\\\\canon.lisp"
-  unzip -p "$dist/"*.zip run.cmd | grep -q "authority\\\\lib\\\\macro.lisp"
-  unzip -p "$dist/"*.zip run.cmd | grep -q "authority\\\\lib\\\\core.lisp"
+  unzip -p "$dist/"*.zip run.sh | grep -q "my-lisp/lib/canon.lisp"
+  unzip -p "$dist/"*.zip run.sh | grep -q "my-lisp/lib/macro.lisp"
+  unzip -p "$dist/"*.zip run.sh | grep -q "my-lisp/lib/core.lisp"
+  unzip -p "$dist/"*.zip run.cmd | grep -q "my-lisp\\\\lib\\\\canon.lisp"
+  unzip -p "$dist/"*.zip run.cmd | grep -q "my-lisp\\\\lib\\\\macro.lisp"
+  unzip -p "$dist/"*.zip run.cmd | grep -q "my-lisp\\\\lib\\\\core.lisp"
+  unzip -p "$dist/"*.zip wsm.cmd | grep -q "run.cmd"
 
   local first second
   first=$(sha256sum "$dist/"*.zip | cut -d" " -f1)
