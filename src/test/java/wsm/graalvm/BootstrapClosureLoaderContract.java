@@ -2,6 +2,7 @@ package wsm.graalvm;
 
 import java.nio.file.Path;
 import java.util.List;
+import org.graalvm.polyglot.Context;
 
 /** Focused contract for manifest-driven bootstrap transport from external/my-lisp. */
 public final class BootstrapClosureLoaderContract {
@@ -45,6 +46,23 @@ public final class BootstrapClosureLoaderContract {
                     source.path().startsWith(authority),
                     "bootstrap source escaped external/my-lisp: " + source.path());
             require(!source.text().isBlank(), "bootstrap source is empty: " + source.path());
+        }
+
+        System.setProperty("wsm.registryPath", closure.registryPath().toString());
+        try (Context context = Context.newBuilder("wsm").build()) {
+            for (BootstrapClosureLoader.Source source : closure.executableSources()) {
+                context.eval("wsm", source.text());
+            }
+
+            Object canon = context.eval("wsm", "(canon-conforms?)");
+            require(
+                    "(canon-conformance satisfied)".equals(canon.toString()),
+                    "manifest bootstrap must preserve Canon witness, got: " + canon);
+
+            Object identity = context.eval("wsm", "(identity 42)");
+            require(
+                    "42".equals(identity.toString()),
+                    "current upstream core identity must execute, got: " + identity);
         }
 
         System.out.println("BOOTSTRAP-CLOSURE-LOADER-OK");
