@@ -20,7 +20,7 @@ public final class ReaderDatum {
                     && pair.cdr instanceof Value.Pair quoted
                     && quoted.cdr == Value.NIL) {
                 return new Value.Pair(
-                        Value.symbol("quote"),
+                        Value.symbol("0001"),
                         new Value.Pair(toValue(quoted.car), Value.NIL));
             }
             return new Value.Pair(toValue(pair.car), toValue(pair.cdr));
