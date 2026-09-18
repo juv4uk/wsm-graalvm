@@ -19,7 +19,9 @@ fi
 [ -f "$TC" ] || cp "$REPO/third_party/truffle-compiler.jar" "$REPO/third_party/truffle-compiler.jar" 2>/dev/null || true
 REPO=$(cd "$(dirname "$0")/.." && pwd)
 "$G/bin/javac" --release 25 \
-  -cp "$REPO/third_party/truffle-api.jar:$REPO/third_party/polyglot.jar:$REPO/third_party/truffle-runtime.jar:$REPO/third_party/graalvm-collections.jar:$TC" \
+  -cp "$REPO/third_party/truffle-api.jar:$REPO/third_party/polyglot.jar:$REPO/third_party/truffle-runtime.jar:$REPO/third_party/graalvm-collections.jar:$REPO/third_party/nativeimage.jar:$TC" \
   -d "$REPO/classes" \
-  $(find "$REPO/src" -name '*.java')
+  $(find "$REPO/src" -name '*.java' -not -path '*resources*')
+mkdir -p "$REPO/classes/META-INF/services"
+cp -r "$REPO/src/main/resources/META-INF/services/." "$REPO/classes/META-INF/services/"
 echo "BUILD-OK (interpreter classes; JIT comes from the GraalVM structural JIT)"
