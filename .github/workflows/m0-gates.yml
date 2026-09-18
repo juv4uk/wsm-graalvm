@@ -49,6 +49,15 @@ jobs:
       - name: Gate 4b — focused Truffle frame witnesses
         run: bash scripts/test-truffle-frames.sh
 
+      - name: M1 — pinned Lisp dependency closure
+        run: bash scripts/check-lisp-dependency-manifest.sh
+
+      - name: RED/green — pinned variadic lambda F25/F26/F27
+        run: bash scripts/test-variadic-lambda.sh
+
+      - name: RED/green — raw Tier-1 ErrorKind parity
+        run: bash scripts/test-tier1-error-parity.sh
+
       - name: Gate 5 — (canon-conforms?) → current conformance record
         run: |
           MYLISP=external/my-lisp bash scripts/run-canon.sh 2>&1 | tee gate5.log
