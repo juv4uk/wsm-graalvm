@@ -204,4 +204,3 @@ EOF
             "dist/wsm-graalvm-${VERSION}-windows-x86_64.binary.sha256"
           )
           gh release create "$TAG" --target "$SOURCE_REF" --title "wsm-graalvm $TAG" --notes-file release-notes.md "${ASSETS[@]}"
-            dist/wsm-graalvm-${VERSION}-windows-x86_64.zip             dist/wsm-graalvm-${VERSION}-windows-x86_64.zip.sha256             dist/wsm-graalvm-${VERSION}-windows-x86_64.binary.sha256
