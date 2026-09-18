@@ -64,14 +64,16 @@ public final class SemanticEvalContract {
                     "44".equals(text(closureCall)),
                     "1062 must preserve Closure values, got: " + closureCall);
 
-            Object macroValue =
+            Object macroIdentity =
                     context.eval(
                             "wsm",
-                            "(eval (make-macro (lambda (x) x)))");
+                            "(define eval-contract-macro "
+                                    + "(make-macro (lambda (x) x))) "
+                                    + "(eq (eval eval-contract-macro) eval-contract-macro)");
             require(
-                    macroValue instanceof GlobalBindings.MacroValue,
-                    "1062 must preserve Macro values, got: " + macroValue);
-
+                    "(identity-relation same)".equals(text(macroIdentity)),
+                    "1062 must preserve Macro values as the same Lisp object, got: "
+                            + macroIdentity);
             try {
                 context.eval("wsm", "(eval)");
                 throw new AssertionError("1062 arity-0 must fail");
