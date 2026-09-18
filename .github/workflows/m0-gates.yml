@@ -36,6 +36,9 @@ jobs:
       - name: M1 — path-identical Lisp mirror
         run: bash scripts/check-lisp-mirror.sh
 
+      - name: M1 — compile path-identical canonical Lisp mirror
+        run: bash scripts/test-mirror-canonical-library.sh
+
       - name: Set up GraalVM CE pinned to the runtime the substrate is built for
         uses: graalvm/setup-graalvm@v1
         with:
