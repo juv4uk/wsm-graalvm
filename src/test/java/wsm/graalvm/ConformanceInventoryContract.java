@@ -18,6 +18,17 @@ public final class ConformanceInventoryContract {
         }
     }
 
+    private static void expectInvalidCurrent(String source, String transitions) {
+        try {
+            ConformanceInventory.selectTierCurrent(source, transitions, 1);
+            throw new AssertionError("expected malformed transition overlay to fail closed");
+        } catch (WsmError error) {
+            require(
+                    error.kind == WsmError.Kind.INVALID_FORM,
+                    "malformed transition must be InvalidForm, got " + error.contractKind());
+        }
+    }
+
     public static void main(String[] args) {
         String source = """
             ((expr . "(quote radio)") (expected . "radio") (tier . 1)
@@ -54,6 +65,35 @@ public final class ConformanceInventoryContract {
         expectInvalid("((expected . \"x\") (tier . 1))");
         expectInvalid("((expr . \"x\") (expected . \"x\") (error . \"Type\") (tier . 1))");
         expectInvalid("((expr . \"x\") (tier . 1))");
+
+        String transitions = """
+            ((supersedes-expr . "(quote radio)")
+             (expr . "(quote current-radio)")
+             (expected . "current-radio"))
+            """;
+        List<ConformanceInventory.Fixture> current =
+                ConformanceInventory.selectTierCurrent(source, transitions, 1);
+        require(current.size() == 2, "transition projection must preserve Tier-1 cardinality");
+        require(current.get(0).id().equals("F01"), "transition must preserve fixture ID");
+        require(current.get(0).expr().equals("(quote current-radio)"),
+                "transition must own current expression");
+        require(current.get(0).expected().equals("current-radio"),
+                "transition must own current expected value");
+        require("constitutive".equals(current.get(0).role()),
+                "historical classification metadata must remain visible");
+        require(current.get(1).expr().equals("(undefined-symbol)"),
+                "unrelated fixture must remain unchanged");
+
+        expectInvalidCurrent(
+                source,
+                "((supersedes-expr . \"(missing)\") (expr . \"x\") (expected . \"x\"))");
+        expectInvalidCurrent(
+                source,
+                transitions + transitions);
+        expectInvalidCurrent(
+                source,
+                "((supersedes-expr . \"(quote radio)\") (expr . \"x\")"
+                        + " (expected . \"x\") (error . \"Type\"))");
 
         System.out.println("CONFORMANCE-INVENTORY-CONTRACT-OK selected=" + fixtures.size());
     }
