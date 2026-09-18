@@ -323,47 +323,40 @@ public final class Compiler {
                 scope);
     }
 
+    /**
+     * Canonical COND dispatch only.
+     *
+     * A clause is (query expected-result expression). The query is evaluated,
+     * the expected result is materialized as Lisp DATA (never executed), and
+     * the two values are compared structurally. Historical two-part clauses
+     * are migration debt and do not define Graal's core semantics.
+     */
     private WsmNode compileCond(
             List<Object> clauses,
             LexicalScope scope) {
         List<WsmNode> tests = new ArrayList<>();
         List<WsmNode> expecteds = new ArrayList<>();
         List<WsmNode> bodies = new ArrayList<>();
-        List<Boolean> truthiness = new ArrayList<>();
 
         for (Object clause : clauses) {
             List<Object> parts = items(clause);
-            if (parts.size() == 2) {
-                tests.add(compile(parts.get(0), scope));
-                expecteds.add(new WsmNode.ConstantNode(Value.NIL));
-                bodies.add(compile(parts.get(1), scope));
-                truthiness.add(true);
-                continue;
+            if (parts.size() != 3) {
+                throw new WsmError(
+                        WsmError.Kind.INVALID_FORM,
+                        ID_COND
+                                + " expects canonical (query expected-result expression) clauses");
             }
-            if (parts.size() == 3) {
-                tests.add(compile(parts.get(0), scope));
-                expecteds.add(new WsmNode.ConstantNode(
-                        ReaderDatum.toValue(parts.get(1))));
-                bodies.add(compile(parts.get(2), scope));
-                truthiness.add(false);
-                continue;
-            }
-            throw new WsmError(
-                    WsmError.Kind.INVALID_FORM,
-                    ID_COND
-                            + " expects canonical (query expected-result expression) "
-                            + "or migration-only (test expression) clauses");
+
+            tests.add(compile(parts.get(0), scope));
+            expecteds.add(new WsmNode.ConstantNode(
+                    ReaderDatum.toValue(parts.get(1))));
+            bodies.add(compile(parts.get(2), scope));
         }
 
-        boolean[] legacyTruthiness = new boolean[truthiness.size()];
-        for (int i = 0; i < truthiness.size(); i++) {
-            legacyTruthiness[i] = truthiness.get(i);
-        }
         return new WsmNode.CondNode(
                 tests.toArray(WsmNode[]::new),
                 expecteds.toArray(WsmNode[]::new),
-                bodies.toArray(WsmNode[]::new),
-                legacyTruthiness);
+                bodies.toArray(WsmNode[]::new));
     }
 
     private record LambdaParams(
