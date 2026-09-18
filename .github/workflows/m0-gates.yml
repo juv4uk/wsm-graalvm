@@ -61,9 +61,6 @@ jobs:
       - name: M1 — semantic ID 1062 eval in current environment
         run: bash scripts/test-semantic-eval.sh
 
-      - name: M1 — semantic ID 1062 eval in current environment
-        run: bash scripts/test-semantic-eval.sh
-
       - name: M1 — pinned Lisp dependency closure
         run: bash scripts/check-lisp-dependency-manifest.sh
 
