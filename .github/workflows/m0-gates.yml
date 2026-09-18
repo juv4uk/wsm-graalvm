@@ -60,7 +60,7 @@ jobs:
       - name: Gate 6a — lexical frame witnesses
         run: |
           MYLISP=external/my-lisp bash scripts/sync-authority.sh
-          G=$(dirname "$(dirname "$(readlink -f "$(command -v java)")")")" \
+          G=$(dirname "$(dirname "$(readlink -f "$(command -v java)")")") \
             MYLISP=external/my-lisp bash scripts/run-lexical-smoke.sh
 
       - name: Gate 6+ — tier-1 conformance (next; no silent pass)
