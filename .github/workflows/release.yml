@@ -131,8 +131,36 @@ jobs:
           BINARY: ${{ matrix.binary }}
           SOURCE_SHA: ${{ needs.validate.outputs.source_sha }}
         run: |
+          set -euo pipefail
           MYLISP_PIN=$(git -C external/my-lisp rev-parse HEAD)
+          GITLINK_PIN=$(git ls-tree HEAD external/my-lisp | awk '{print $3}')
+          test "$MYLISP_PIN" = "$GITLINK_PIN"
           python scripts/package-release.py --version "$VERSION" --platform "$PLATFORM" --binary "$BINARY" --upstream external/my-lisp --upstream-pin "$MYLISP_PIN" --repo-sha "$SOURCE_SHA" --out dist
+      - name: Build Linux Debian and RPM packages
+        if: matrix.platform == 'linux-x86_64'
+        shell: bash
+        env:
+          VERSION: ${{ needs.validate.outputs.version }}
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y dpkg-dev rpm
+          PAYLOAD="dist/wsm-graalvm-$VERSION-linux-x86_64"
+          bash scripts/package-deb.sh "$VERSION" "$PAYLOAD" dist/deb
+          bash scripts/package-rpm.sh "$VERSION" "$PAYLOAD" dist/rpm
+      - name: Build Windows installer
+        if: matrix.platform == 'windows-x86_64'
+        shell: pwsh
+        env:
+          VERSION: ${{ needs.validate.outputs.version }}
+        run: |
+          $ErrorActionPreference = "Stop"
+          winget install --id JRSoftware.InnoSetup.7 -e --silent --accept-source-agreements --accept-package-agreements
+          $iscc = Get-ChildItem "C:\Program Files*\Inno Setup 7\ISCC.exe" -ErrorAction Stop | Select-Object -First 1
+          $payload = (Resolve-Path "dist\wsm-graalvm-$env:VERSION-windows-x86_64").Path
+          New-Item -ItemType Directory -Force -Path dist\installer | Out-Null
+          & $iscc.FullName "/DSourceDir=$payload" "/DOutputDir=$(Resolve-Path dist\installer)" "/DVersion=$env:VERSION" "installer\windows\wsm-graalvm.iss"
+          Get-ChildItem dist\installer
       - uses: actions/upload-artifact@v4
         with:
           name: release-${{ matrix.platform }}
@@ -140,6 +168,9 @@ jobs:
             dist/wsm-graalvm-*.zip
             dist/wsm-graalvm-*.zip.sha256
             dist/wsm-graalvm-*.binary.sha256
+            dist/deb/*.deb
+            dist/rpm/*.rpm
+            dist/installer/*.exe
             dist/assets/*
           if-no-files-found: error
 
@@ -167,6 +198,9 @@ jobs:
           test -f "dist/assets/wsm-graalvm-$VERSION-windows-x86_64.exe"
           test -f "dist/wsm-graalvm-$VERSION-windows-x86_64.zip"
           test -f "dist/wsm-graalvm-$VERSION-linux-x86_64.zip.sha256"
+          test -f "dist/deb/wsm-graalvm-$VERSION-linux-x86_64.deb"
+          test -f "dist/rpm/wsm-graalvm-$VERSION-linux-x86_64.rpm"
+          test -f "dist/installer/wsm-graalvm-$VERSION-windows-x86_64-installer.exe"
           test -f "dist/wsm-graalvm-$VERSION-windows-x86_64.zip.sha256"
           (cd dist && sha256sum -c "wsm-graalvm-$VERSION-linux-x86_64.zip.sha256")
           (cd dist && sha256sum -c "wsm-graalvm-$VERSION-windows-x86_64.zip.sha256")
@@ -204,7 +238,10 @@ EOF
             "dist/wsm-graalvm-$VERSION-linux-x86_64.zip"
             "dist/wsm-graalvm-$VERSION-linux-x86_64.zip.sha256"
             "dist/wsm-graalvm-$VERSION-linux-x86_64.binary.sha256"
+            "dist/deb/wsm-graalvm-$VERSION-linux-x86_64.deb"
+            "dist/rpm/wsm-graalvm-$VERSION-linux-x86_64.rpm"
             "dist/assets/wsm-graalvm-$VERSION-windows-x86_64.exe"
+            "dist/installer/wsm-graalvm-$VERSION-windows-x86_64-installer.exe"
             "dist/wsm-graalvm-$VERSION-windows-x86_64.zip"
             "dist/wsm-graalvm-$VERSION-windows-x86_64.zip.sha256"
             "dist/wsm-graalvm-$VERSION-windows-x86_64.binary.sha256"
