@@ -49,12 +49,11 @@ final class CanonicalSerializer {
         StringBuilder out = new StringBuilder();
         for (int i = 0; i < value.length(); i++) {
             switch (value.charAt(i)) {
-                case '"' -> out.append("\"");
-                case '\' -> out.append("\\");
-                case '
-' -> out.append("\n");
-                case '' -> out.append("\r");
-                case '	' -> out.append("\t");
+                case '"' -> out.append("\\\"");
+                case '\\' -> out.append("\\\\");
+                case '\n' -> out.append("\\n");
+                case '\r' -> out.append("\\r");
+                case '\t' -> out.append("\\t");
                 default -> out.append(value.charAt(i));
             }
         }
