@@ -22,8 +22,8 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       version: ${{ steps.meta.outputs.version }}
-      tag: ${{ steps.meta.outputs.tag }}
-      source_sha: ${{ steps.meta.outputs.source_sha }}
+      tag: ${{ needs.validate.outputs.tag }}
+      source_sha: ${{ needs.validate.outputs.source_sha }}
     steps:
       - uses: actions/checkout@v5
         with:
@@ -64,7 +64,7 @@ jobs:
     steps:
       - uses: actions/checkout@v5
         with:
-          ref: ${{ steps.meta.outputs.source_sha }}
+          ref: ${{ needs.validate.outputs.source_sha }}
           fetch-depth: 0
           submodules: recursive
       - name: Set up GraalVM CE 25.3.4.1
@@ -100,7 +100,7 @@ jobs:
     steps:
       - uses: actions/checkout@v5
         with:
-          ref: ${{ steps.meta.outputs.source_sha }}
+          ref: ${{ needs.validate.outputs.source_sha }}
           fetch-depth: 0
           submodules: recursive
       - name: Set up GraalVM CE 25.3.4.1
@@ -129,7 +129,7 @@ jobs:
           VERSION: ${{ needs.validate.outputs.version }}
           PLATFORM: ${{ matrix.platform }}
           BINARY: ${{ matrix.binary }}
-          SOURCE_SHA: ${{ steps.meta.outputs.source_sha }}
+          SOURCE_SHA: ${{ needs.validate.outputs.source_sha }}
         run: |
           MYLISP_PIN=$(git -C external/my-lisp rev-parse HEAD)
           python scripts/package-release.py --version "$VERSION" --platform "$PLATFORM" --binary "$BINARY" --upstream external/my-lisp --upstream-pin "$MYLISP_PIN" --repo-sha "$SOURCE_SHA" --out dist
@@ -150,7 +150,7 @@ jobs:
     steps:
       - uses: actions/checkout@v5
         with:
-          ref: ${{ steps.meta.outputs.source_sha }}
+          ref: ${{ needs.validate.outputs.source_sha }}
           fetch-depth: 0
       - uses: actions/download-artifact@v4
         with:
@@ -172,8 +172,8 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           VERSION: ${{ needs.validate.outputs.version }}
-          TAG: ${{ steps.meta.outputs.tag }}
-          SOURCE_SHA: ${{ steps.meta.outputs.source_sha }}
+          TAG: ${{ needs.validate.outputs.tag }}
+          SOURCE_SHA: ${{ needs.validate.outputs.source_sha }}
         shell: bash
         run: |
           set -euo pipefail
