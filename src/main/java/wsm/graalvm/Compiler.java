@@ -423,32 +423,40 @@ public final class Compiler {
             String restName) {}
 
     private LambdaParams lambdaParams(Object raw) {
-        if (raw instanceof Token token) {
-            return new LambdaParams(List.of(), token.spelling());
+        String bare = binderSpelling(raw);
+        if (bare != null) {
+            return new LambdaParams(List.of(), bare);
         }
 
         List<String> fixedNames = new ArrayList<>();
         Object cur = raw;
         while (cur instanceof Value.Pair pair) {
-            if (!(pair.car instanceof Token binder)) {
+            String binder = binderSpelling(pair.car);
+            if (binder == null) {
                 throw new WsmError(
                         WsmError.Kind.INVALID_FORM,
                         ID_LAMBDA + " binder must be a symbol");
             }
-            fixedNames.add(binder.spelling());
+            fixedNames.add(binder);
             cur = pair.cdr;
         }
 
         String restName = null;
         if (cur != Value.NIL) {
-            if (!(cur instanceof Token token)) {
+            restName = binderSpelling(cur);
+            if (restName == null) {
                 throw new WsmError(
                         WsmError.Kind.INVALID_FORM,
                         ID_LAMBDA + " dotted rest binder must be a symbol");
             }
-            restName = token.spelling();
         }
         return new LambdaParams(fixedNames, restName);
+    }
+
+    private static String binderSpelling(Object value) {
+        if (value instanceof Token token) return token.spelling();
+        if (value instanceof Value.Symbol symbol) return symbol.name;
+        return null;
     }
 
     private WsmNode[] compileAll(
