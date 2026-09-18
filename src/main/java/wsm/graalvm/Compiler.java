@@ -54,7 +54,7 @@ public final class Compiler {
             throw new WsmError(WsmError.Kind.INVALID_FORM,
                     "semantic special form is syntax-only: " + id);
         if (SemanticMechanismTable.supports(id))
-            return new WsmNode.ConstantNode(CanonBuiltins.forId(id));
+            return new WsmNode.ConstantNode(new Value.SemanticRef(id));
 
         // A registry identity can exist without being materialized by this
         // substrate yet. Never fall back to treating its source spelling as a
@@ -114,7 +114,7 @@ public final class Compiler {
             default -> {
                 if (SemanticMechanismTable.supports(id)) {
                     yield new WsmNode.CallNode(
-                            new WsmNode.ConstantNode(CanonBuiltins.forId(id)), compileAll(args, env));
+                            new WsmNode.ConstantNode(new Value.SemanticRef(id)), compileAll(args, env));
                 }
                 throw new WsmError(WsmError.Kind.INVALID_FORM, "unroutable id " + id);
             }
