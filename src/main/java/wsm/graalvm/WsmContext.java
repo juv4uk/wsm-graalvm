@@ -17,6 +17,10 @@ final class WsmContext {
 
     void initialize() {
         this.registry = CanonRegistryLoader.load(registryPath);
+        // The pinned my-lisp macro layer explicitly requires this narrow host
+        // substrate before lib/macro.lisp is evaluated. It introduces no
+        // public semantic ID or macro-expansion rule.
+        BootstrapMacroSubstrate.install(globals);
     }
 
     CanonRegistry registry() {
