@@ -21,22 +21,9 @@ jobs:
           SHA=$(git -C external/my-lisp rev-parse HEAD)
           echo "my-lisp pinned at $SHA"
 
-      - name: Verify authority digests (fail-closed, like scripts/sync-authority.sh)
+      - name: Verify pinned my-lisp authority
         run: |
-          for f in language-contract.lisp my-lisp-constitution.lisp \
-                   lib/canon.lisp lib/surface/semantic-registry.lisp \
-                   tests/fixtures/conformance.lisp; do
-            test -f "external/my-lisp/$f" || { echo "FAIL-CLOSED: missing $f"; exit 1; }
-          done
-          cat > authority.sha256 <<'EOF'
-737cc3373abca40ae511ea0114609fdcb7a172b918e69dced615a458ff5818a9  external/my-lisp/language-contract.lisp
-65f0f19cbb7c6a911430754349cc4828c1ce2df9be94a4693c9cece215a12369  external/my-lisp/my-lisp-constitution.lisp
-9b7b10861944b9b51d8b1a33aadb8109c7ee384b8e15d84485de71710007a991  external/my-lisp/lib/canon.lisp
-f64f5ea7341a5f8d2c873d1f5f2731e7b30befda8b6593a9af3a596942e51d72  external/my-lisp/lib/surface/semantic-registry.lisp
-e0b50161d1919f2c26c8c7549b583876acb5cebad437441ed0e1d47514bec3f3  external/my-lisp/tests/fixtures/conformance.lisp
-EOF
-          sha256sum --check authority.sha256
-
+          bash scripts/verify-authority.sh external/my-lisp
       - name: Set up GraalVM CE pinned to the runtime the substrate is built for
         uses: graalvm/setup-graalvm@v1
         with:
