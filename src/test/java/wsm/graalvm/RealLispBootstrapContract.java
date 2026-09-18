@@ -23,6 +23,14 @@ public final class RealLispBootstrapContract {
                 .orElseThrow(() -> new AssertionError("no admitted surface for " + id));
     }
 
+    private static String surface(CanonRegistry registry, String id, String marker) {
+        String spelling = registry.row(id).surfaces().get(marker);
+        if (spelling == null || spelling.isBlank()) {
+            throw new AssertionError("no admitted " + marker + " surface for " + id);
+        }
+        return spelling;
+    }
+
     public static void main(String[] args) throws Exception {
         if (args.length != 1) {
             throw new IllegalArgumentException(
@@ -35,7 +43,7 @@ public final class RealLispBootstrapContract {
         WsmContext context = new WsmContext(closure.registryPath().toString());
         context.initialize();
 
-        Object canonResult = BootstrapRuntime.execute(
+        Object canonResult = BootstrapRuntime.executeAuthoritySource(
                 context,
                 Files.readString(repo.resolve("external/my-lisp/lib/canon.lisp")));
         require(canonResult != null, "canon bootstrap returned no value");
@@ -61,11 +69,12 @@ public final class RealLispBootstrapContract {
                 .findFirst()
                 .orElseThrow(() -> new AssertionError("manifest omitted lib/core.lisp"));
 
-        BootstrapRuntime.execute(context, coreSource.text());
+        BootstrapRuntime.executeAuthoritySource(context, coreSource.text());
 
         String defmacro = spelling(context.registry(), "0012");
         String let = spelling(context.registry(), "1141");
-        String equal = spelling(context.registry(), "1022");
+        String equal = surface(context.registry(), "1022", "en");
+        String ukEqual = surface(context.registry(), "1022", "uk");
         require(
                 peers.contains(defmacro),
                 "registry-selected defmacro peer was not installed: " + defmacro);
@@ -89,6 +98,26 @@ public final class RealLispBootstrapContract {
                 "(structural-relation distinct)".equals(Printer.print(equalDistinct)),
                 "Lisp-owned equal? distinct witness failed: " + Printer.print(equalDistinct));
 
+        // #178: registry peers for a Lisp-owned function must point to the
+        // exact same live Closure object after bootstrap materialization.
+        require(
+                context.globals().lookup(equal) == context.globals().lookup(ukEqual),
+                "EN/UK 1022 peers are not the exact same live Lisp value");
+        Object ukEqualSame = BootstrapRuntime.execute(
+                context,
+                "(" + ukEqual + " (quote (1 2)) (quote (1 2)))");
+        require(
+                "(structural-relation same)".equals(Printer.print(ukEqualSame)),
+                "Lisp-owned UK equal? witness failed: " + Printer.print(ukEqualSame));
+
+        // Snapshot law: later ordinary shadowing of one surface must not
+        // retarget its already-materialized peer.
+        Object sharedEqual = context.globals().lookup(equal);
+        context.globals().define(ukEqual, Value.symbol("later-uk-shadow"));
+        require(
+                context.globals().lookup(equal) == sharedEqual,
+                "later UK shadow retargeted EN 1022 peer");
+
         // let is Lisp-defined in pinned core.lisp. Running it here proves
         // the MacroValue returned by lib/macro.lisp was installed on the
         // 0012 peers before core.lisp was evaluated.
@@ -103,6 +132,7 @@ public final class RealLispBootstrapContract {
                 "REAL-LISP-BOOTSTRAP-GREEN peers=" + peers.size()
                         + " macro=" + defmacro
                         + " let=" + let
-                        + " equal=" + equal);
+                        + " equal=" + equal
+                        + " uk-equal=" + ukEqual);
     }
 }

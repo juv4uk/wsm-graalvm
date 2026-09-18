@@ -20,6 +20,18 @@ final class BootstrapRuntime {
         return new BootstrapRootNode(context, forms).getCallTarget().call();
     }
 
+    /**
+     * Execute pinned authority source, then snapshot all newly-live admitted
+     * registry peers. Ordinary later execute() calls intentionally do not run
+     * peer materialization, preserving normal shadowing semantics.
+     */
+    static Object executeAuthoritySource(WsmContext context, String source) {
+        Object result = execute(context, source);
+        RegistryPeerInstaller.materializeBoundValuePeers(
+                context.registry(), context.globals());
+        return result;
+    }
+
     private static final class BootstrapRootNode extends RootNode {
         @Child private SequentialProgramBodyNode body;
 

@@ -96,7 +96,7 @@ public final class ConformanceMain {
         WsmContext context = new WsmContext(manifestRegistry.toString());
         context.initialize();
 
-        BootstrapRuntime.execute(
+        BootstrapRuntime.executeAuthoritySource(
                 context,
                 Files.readString(repo.resolve("external/my-lisp/lib/canon.lisp")));
 
@@ -126,7 +126,7 @@ public final class ConformanceMain {
                         .orElseThrow(
                                 () -> new IllegalStateException(
                                         "manifest omitted lib/core.lisp"));
-        BootstrapRuntime.execute(context, coreSource.text());
+        BootstrapRuntime.executeAuthoritySource(context, coreSource.text());
 
         return context;
     }

@@ -36,7 +36,7 @@ public final class LetRawExpansionContract {
         WsmContext context = new WsmContext(closure.registryPath().toString());
         context.initialize();
 
-        BootstrapRuntime.execute(
+        BootstrapRuntime.executeAuthoritySource(
                 context,
                 Files.readString(repo.resolve("external/my-lisp/lib/canon.lisp")));
 
@@ -52,11 +52,11 @@ public final class LetRawExpansionContract {
                 context.globals(),
                 (GlobalBindings.MacroValue) macroValue);
 
-        BootstrapClosureLoader.Source coreSource = closure.executableSources().stream()
+        BootstrapClosureLoader.Source coreSource = BootstrapClosureLoader.load(repo).executableSources().stream()
                 .filter(s -> s.path().endsWith("lib/core.lisp"))
                 .findFirst()
                 .orElseThrow();
-        BootstrapRuntime.execute(context, coreSource.text());
+        BootstrapRuntime.executeAuthoritySource(context, coreSource.text());
 
         String let = spelling(context.registry(), "1141");
         GlobalBindings.MacroValue letMacro = context.globals().macro(let);
