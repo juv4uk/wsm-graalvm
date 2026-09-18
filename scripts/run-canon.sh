@@ -14,6 +14,7 @@ if [ -f "$REPO/lib/canon.lisp" ]; then
 fi  # or local submodule $REPO/external/my-lisp
 "$G/bin/java" -Dpolyglot.engine.WarnInterpreterOnly=false \
   -Dwsm.registryPath="$MYLISP/lib/surface/semantic-registry.lisp" \
+  -Dtruffle.class.path.append="$REPO/classes" \
   --enable-native-access=ALL-UNNAMED -Dpolyglot.engine.WarnInterpreterOnly=false \
   -cp "$REPO/classes:$REPO/third_party/graalvm-collections.jar:$REPO/third_party/nativeimage.jar:$REPO/third_party/truffle-api.jar:$REPO/third_party/polyglot.jar:$REPO/third_party/truffle-runtime.jar:$REPO/third_party/truffle-compiler.jar" \
   wsm.graalvm.Main "$MYLISP/lib/canon.lisp" "$MYLISP/lib/surface/semantic-registry.lisp" "$MYLISP"
