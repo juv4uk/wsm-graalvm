@@ -20,7 +20,8 @@ public final class SemanticMechanismTable {
             "0003", SemanticMechanismTable::invoke0003,
             "0004", SemanticMechanismTable::invoke0004,
             "0005", SemanticMechanismTable::invoke0005,
-            "0006", SemanticMechanismTable::invoke0006
+            "0006", SemanticMechanismTable::invoke0006,
+            "1022", SemanticMechanismTable::invoke1022
     );
 
     private SemanticMechanismTable() {}
@@ -68,5 +69,12 @@ public final class SemanticMechanismTable {
             throw new WsmError(WsmError.Kind.TYPE, "0006 expects a pair");
         }
         return pair.cdr;
+    }
+
+    private static Object invoke1022(Object[] args) {
+        WsmError.arity(args, 2, "1022");
+        return WsmNode.Structural.equals(args[0], args[1])
+                ? Value.record("structural-relation", "same")
+                : Value.record("structural-relation", "distinct");
     }
 }
