@@ -1,13 +1,14 @@
 #!/usr/bin/env bash
-# Bootstrap + fail-closed refresh of the sparse authority checkout.
+# Bootstrap + fail-closed refresh of the FULL authority checkout.
 #
-# Guarantees (issue #1, owner amendment: folders not single files):
+# Guarantees (issue #1, owner amendments 2026-09-18):
 # 1. submodule present, initialized, non-empty
 # 2. fail-closed on any missing authority file
 # 3. fetch-first, fast-forward only (agents work in parallel)
-# 4. sparse scope = four Lisp-bearing trees/files, mirroring my-lisp
-#    structure (lib/, tests/, contracts/, knowledge/ + root contracts)
-# 5. digests listed post-sync for lib/registry-refs.lisp verification
+# 4. FULL checkout (no sparse scope) — consumer sees the whole my-lisp
+#    Lisp surface, including dynamic (load ...) dependencies; digests
+#    verified against refs/registry-refs.lisp are the proof
+# 5. digests listed post-sync for refs/registry-refs.lisp verification
 set -euo pipefail
 REPO=$(cd "$(dirname "$0")/.." && pwd)
 E=$REPO/external/my-lisp
@@ -24,13 +25,6 @@ FILES=(
   tests/fixtures/conformance.lisp
 )
 
-EXPECTED_SC='/contracts/
-/knowledge/
-/language-contract.lisp
-/lib/
-/my-lisp-constitution.lisp/
-/tests/'
-
 fail() { echo "sync-authority FAIL-CLOSED: $*" >&2; exit 1; }
 
 [ -d "$E" ] || fail "submodule external/my-lisp missing"
@@ -39,21 +33,13 @@ fail() { echo "sync-authority FAIL-CLOSED: $*" >&2; exit 1; }
 
 git -C "$E" fetch origin --quiet || fail "git fetch inside submodule failed"
 
-SCOPE=$(cd "$E" && git sparse-checkout list 2>/dev/null | sort || true)
-if [ "$SCOPE" != "/contracts/
-/knowledge/
-/language-contract.lisp
-/lib/
-/my-lisp-constitution.lisp
-/tests/" ]; then
-  echo "sparse scope drifted; restoring the six-path authority circle" >&2
-  git -C "$E" sparse-checkout set --no-cone \
-    '/language-contract.lisp' '/my-lisp-constitution.lisp' \
-    '/lib/' '/tests/' '/contracts/' '/knowledge/' >/dev/null 2>&1
+# owner amendment (second pass): FULL checkout — no sparse scope.
+# The substrate needs the whole my-lisp Lisp surface; digests below
+# remain the verification instrument.
+git -C "$E" sparse-checkout disable >/dev/null 2>&1 || true
+if [ "$(cd "$E" && git config core.sparseCheckout || true)" = "true" ]; then
+  fail "sparseCheckout still enabled after disable"
 fi
-SCOPE=$(cd "$E" && git sparse-checkout list 2>/dev/null | sort)
-SC_COUNT=$(echo "$SCOPE" | grep -c '[^ ]')
-[ "$SC_COUNT" = "6" ] || fail "sparse scope must keep exactly six authority paths, got: $SC_COUNT" 
 
 for f in "${FILES[@]}"; do
   [ -f "$REPO/external/my-lisp/$f" ] || fail "authority file absent after checkout: $f"
