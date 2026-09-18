@@ -1,14 +1,13 @@
 package wsm.graalvm;
 
-import wsm.graalvm.Reader.Token;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
 /**
- * Registry consumption keyed ONLY by numeric semantic identity.
- * Surfaces are data: the map keeps every stable surface spelling of an id,
- * and code never mentions words — only ids ("0004"), never "cons"/"car".
+ * Mechanical projection from the Lisp-owned semantic registry to numeric IDs.
+ *
+ * This class owns no language meaning. It only answers:
+ * "which admitted semantic ID does this token spelling denote?"
  */
 public final class CanonRegistry {
     public record Row(String id, Map<String, String> surfaces) {}
@@ -19,86 +18,115 @@ public final class CanonRegistry {
     public CanonRegistry() {}
 
     public CanonRegistry load(String registrySource) {
-        CanonRegistry reg = new CanonRegistry();
-        List<Object> forms = new Reader(registrySource, true).readAll();
-        if (forms.isEmpty()) throw new WsmError(WsmError.Kind.PARSE, "registry empty");
-        Object form = forms.get(0);
-        if (form == null) throw new WsmError(WsmError.Kind.PARSE, "registry empty (no forms)");
-        if (!(form instanceof Value.Pair head)
-                || !(head.car instanceof Token t) || !t.spelling().equals("sr/1"))
-            throw new WsmError(WsmError.Kind.PARSE, "registry must start with (sr/1 ...), got first-form=" + form);
-        for (Object rowO : rows(head.cdr)) {
-            Value.Pair row = (Value.Pair) rowO;
-            String id = ((Token) row.car).spelling();
+        CanonRegistry out = new CanonRegistry();
+        List<Object> forms = new RegistrySexpReader(registrySource).readAll();
+        if (forms.size() != 1 || !(forms.get(0) instanceof List<?> top)
+                || top.isEmpty() || !"sr/1".equals(top.get(0))) {
+            throw new WsmError(
+                    WsmError.Kind.PARSE,
+                    "registry must contain exactly one (sr/1 ...) form");
+        }
+
+        for (int i = 1; i < top.size(); i++) {
+            Object rowObject = top.get(i);
+            if (!(rowObject instanceof List<?> row)
+                    || row.isEmpty()
+                    || !(row.get(0) instanceof String id)
+                    || !id.matches("\\d+")) {
+                throw new WsmError(WsmError.Kind.PARSE, "malformed registry row");
+            }
+
             Map<String, String> faceMap = new java.util.LinkedHashMap<>();
-            for (Object surfaceO : rows(row.cdr)) {
-                Value.Pair surface = (Value.Pair) surfaceO;
-                List<Object> fields = cellList(surface);                // surface shape: (marker spelling status) — status filter:
-                // only "stable" is machinery-resting surface here.
-                // Special case (issue #8): the sym surface `'` is APOSTROPHE
-                // sugar; as reader data it desugars into (QUOTE_HEAD spelling).
-                if (fields.size() == 2
-                        && fields.get(0) instanceof Token markerToken
-                        && fields.get(1) instanceof Value.Pair ap
-                        && ap.car == Reader.QUOTE_HEAD
-                        && ap.cdr instanceof Token statusToken) {
-                    if (statusToken.spelling().toLowerCase().equals("stable")) {
-                        faceMap.put(markerToken.spelling(), "'");
-                        this.spellingToId.put("'", id);
-                    }
+
+            // Opaque machine ID is itself an admitted runtime route.
+            putMapping(out.spellingToId, id, id);
+
+            for (int j = 1; j < row.size(); j++) {
+                Object surfaceObject = row.get(j);
+                if (!(surfaceObject instanceof List<?> surface)
+                        || surface.size() < 3
+                        || !(surface.get(0) instanceof String marker)
+                        || !(surface.get(1) instanceof String spelling)
+                        || !(surface.get(surface.size() - 1) instanceof String statusRaw)) {
+                    throw new WsmError(
+                            WsmError.Kind.PARSE,
+                            "malformed registry surface for " + id);
+                }
+
+                String status = statusRaw.toLowerCase();
+                if ("—".equals(spelling) || !isAdmitted(status)) {
                     continue;
                 }
-                String status = ((Token) fields.get(fields.size() - 1)).spelling().toLowerCase();
-                if (status.equals("stable") && fields.size() >= 2) {
-                    String marker = ((Token) fields.get(0)).spelling();
-                    String spelling = ((Token) fields.get(1)).spelling();
-                    faceMap.put(marker, spelling);
-                    this.spellingToId.put(spelling, id);
-                }
-                // compatibility-only surfaces register as secondary routes
-                // (e.g. id 1000 `def` -> canonical 0011); they can never
-                // replace a stable spelling of the same identity.
-                if (status.equals("compatibility-only") && fields.size() >= 2
-                        && fields.get(0) instanceof Token cMarker
-                        && fields.get(1) instanceof Token cSpelling) {
-                    this.spellingToId.putIfAbsent(cSpelling.spelling(), id);
-                }
+
+                faceMap.put(marker, spelling);
+                putMapping(out.spellingToId, spelling, id);
             }
-            this.rows.put(id, new Row(id, faceMap));
+
+            if (out.rows.putIfAbsent(id, new Row(id, faceMap)) != null) {
+                throw new WsmError(
+                        WsmError.Kind.PARSE,
+                        "duplicate semantic id: " + id);
+            }
         }
-        return this;
+
+        return out;
     }
 
-    public static CanonRegistry registry(Map<String, Row> rowsIn, Map<String, String> spellIn) {
+    public static CanonRegistry registry(
+            Map<String, Row> rowsIn,
+            Map<String, String> spellIn) {
         CanonRegistry reg = new CanonRegistry();
-        for (Map.Entry<String, Row> e : rowsIn.entrySet()) reg.rows.put(e.getKey(), e.getValue());
-        reg.spellingToId.putAll(spellIn);
+        for (Map.Entry<String, Row> e : rowsIn.entrySet()) {
+            reg.rows.put(e.getKey(), e.getValue());
+            putMapping(reg.spellingToId, e.getKey(), e.getKey());
+        }
+        for (Map.Entry<String, String> e : spellIn.entrySet()) {
+            putMapping(reg.spellingToId, e.getKey(), e.getValue());
+        }
         return reg;
     }
 
     public Row row(String id) {
         Row r = rows.get(id);
-        if (r == null) throw new WsmError(WsmError.Kind.INVALID_FORM, "unknown semantic id " + id);
+        if (r == null) {
+            throw new WsmError(
+                    WsmError.Kind.INVALID_FORM,
+                    "unknown semantic id " + id);
+        }
         return r;
     }
 
-    public String idForSpelling(String spelling) { return spellingToId.get(spelling); }
-
-    public java.util.Set<String> ids() { return rows.keySet(); }
-
-    private static Iterable<Object> rows(Object list) {
-        List<Object> out = new ArrayList<>();
-        Object cur = list;
-        while (cur instanceof Value.Pair p) { out.add(p.car); cur = p.cdr; }
-        return out;
+    /**
+     * Resolve an admitted language surface OR the numeric machine ID itself.
+     * Returns null for ordinary user-level symbols.
+     */
+    public String semanticIdForToken(String spelling) {
+        return spellingToId.get(spelling);
     }
 
-    private static List<Object> cellList(Object list) {
-        List<Object> out = new ArrayList<>();
-        Object cur = list;
-        while (cur instanceof Value.Pair p) { out.add(p.car); cur = p.cdr; }
-        if (cur != Value.NIL)
-            throw new WsmError(WsmError.Kind.PARSE, "improper request in registry row");
-        return out;
+    @Deprecated
+    public String idForSpelling(String spelling) {
+        return semanticIdForToken(spelling);
+    }
+
+    public java.util.Set<String> ids() {
+        return java.util.Collections.unmodifiableSet(rows.keySet());
+    }
+
+    private static boolean isAdmitted(String status) {
+        return status.equals("stable") || status.equals("compatibility-only");
+    }
+
+    private static void putMapping(
+            Map<String, String> index,
+            String spelling,
+            String id) {
+        String previous = index.putIfAbsent(spelling, id);
+        if (previous != null && !previous.equals(id)) {
+            throw new WsmError(
+                    WsmError.Kind.PARSE,
+                    "semantic registry surface collision: " + spelling
+                            + " maps to both " + previous + " and " + id);
+        }
     }
 }

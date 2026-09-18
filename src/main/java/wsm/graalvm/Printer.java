@@ -7,6 +7,7 @@ public final class Printer {
         if (v == Value.NIL) return "()";
         if (v instanceof Value.Symbol s) return s.name;
         if (v instanceof Long l) return Long.toString(l);
+        if (v instanceof Value.SemanticRef semantic) return "#<semantic-ref " + semantic.id() + ">";
         if (v instanceof Value.Pair p) {
             StringBuilder sb = new StringBuilder("(");
             if (p.car instanceof Value.Symbol marker && marker.name.equals("0001")
