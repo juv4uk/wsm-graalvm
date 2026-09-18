@@ -129,7 +129,7 @@ public final class Compiler {
             if (!(pRaw instanceof Token t))
                 throw new WsmError(WsmError.Kind.INVALID_FORM, ID_LAMBDA + " binder must be a symbol");
             Token binder = (Token) pRaw;
-            String binderId = registry.idForSpelling(binder.spelling());
+            String binderId = registry.semanticIdForToken(binder.spelling());
             if (binderId != null)
                 throw new WsmError(WsmError.Kind.INVALID_FORM,
                         "canonical name is immutable (binder refused): " + binder.spelling());
@@ -145,7 +145,7 @@ public final class Compiler {
             throw new WsmError(WsmError.Kind.ARITY, ID_DEFINE + " expects 2 arguments");
         if (!(args.get(0) instanceof Token nameToken))
             throw new WsmError(WsmError.Kind.INVALID_FORM, ID_DEFINE + " binder must be a symbol");
-        String binderId = registry.idForSpelling(nameToken.spelling());
+        String binderId = registry.semanticIdForToken(nameToken.spelling());
         if (binderId != null)
             throw new WsmError(WsmError.Kind.INVALID_FORM,
                     "canonical name is immutable (binder refused): " + nameToken.spelling());
