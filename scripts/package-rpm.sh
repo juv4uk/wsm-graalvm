@@ -18,7 +18,7 @@ Name:           wsm-graalvm
 Version:        $PKG_VERSION
 Release:        1
 Summary:        WSM Lisp runtime on GraalVM
-License:        Proprietary
+License:        WSM-VOLNIST
 BuildArch:      x86_64
 %description
 Native WSM runtime executing the pinned my-lisp semantic authority.
