@@ -101,8 +101,8 @@ public final class Compiler {
                         WsmError.Kind.INVALID_FORM,
                         "special form is syntax-only: " + id);
             }
-            // Preserve upstream identity through compilation even when this
-            // substrate has not materialized the corresponding mechanism yet.
+            // Preserve upstream semantic identity through compilation even
+            // when this substrate has not materialized its mechanism yet.
             return new WsmNode.ConstantNode(new Value.SemanticRef(id));
         }
 
@@ -215,3 +215,247 @@ public final class Compiler {
         int restSlot = -1;
 
         for (int i = 0; i < params.fixedNames().size(); i++) {
+            String binder = params.fixedNames().get(i);
+            ensureBinderAllowed(binder);
+            slots[i] = lambdaScope.declareLocal(binder);
+        }
+        if (params.restName() != null) {
+            ensureBinderAllowed(params.restName());
+            restSlot = lambdaScope.declareLocal(params.restName());
+        }
+
+        List<WsmNode> body = new ArrayList<>();
+        for (Object form : args.subList(1, args.size())) {
+            body.add(compile(form, lambdaScope));
+        }
+
+        FrameDescriptor descriptor = lambdaScope.finishFrame();
+        LambdaRootNode lambdaRoot = new LambdaRootNode(
+                language,
+                descriptor,
+                slots,
+                restSlot,
+                body.toArray(WsmNode[]::new));
+
+        return new WsmNode.LambdaNode(
+                lambdaRoot.getCallTarget(),
+                !parentScope.isRoot());
+    }
+
+    private WsmNode compileDefmacro(List<Object> args, LexicalScope scope) {
+        if (!scope.isRoot()) {
+            throw new WsmError(
+                    WsmError.Kind.INVALID_FORM,
+                    ID_DEFMACRO + " must be defined at top level");
+        }
+        if (args.size() < 3) {
+            throw new WsmError(
+                    WsmError.Kind.ARITY,
+                    ID_DEFMACRO + " expects name, params and body");
+        }
+        if (!(args.get(0) instanceof Token nameToken)) {
+            throw new WsmError(
+                    WsmError.Kind.INVALID_FORM,
+                    ID_DEFMACRO + " binder must be a symbol");
+        }
+
+        String name = nameToken.spelling();
+        ensureBinderAllowed(name);
+        LambdaParams params = lambdaParams(args.get(1));
+        LexicalScope macroScope = scope.child();
+        int[] slots = new int[params.fixedNames().size()];
+        int restSlot = -1;
+
+        for (int i = 0; i < params.fixedNames().size(); i++) {
+            ensureBinderAllowed(params.fixedNames().get(i));
+            slots[i] = macroScope.declareLocal(params.fixedNames().get(i));
+        }
+        if (params.restName() != null) {
+            ensureBinderAllowed(params.restName());
+            restSlot = macroScope.declareLocal(params.restName());
+        }
+
+        List<WsmNode> body = new ArrayList<>();
+        for (Object form : args.subList(2, args.size())) {
+            body.add(compile(form, macroScope));
+        }
+
+        FrameDescriptor descriptor = macroScope.finishFrame();
+        LambdaRootNode root = new LambdaRootNode(
+                language,
+                descriptor,
+                slots,
+                restSlot,
+                body.toArray(WsmNode[]::new));
+        globals.defineMacro(name, new Closure(root.getCallTarget(), null));
+        return new WsmNode.ConstantNode(Value.NIL);
+    }
+
+    private WsmNode compileDefine(
+            List<Object> args,
+            LexicalScope scope) {
+        if (args.size() != 2) {
+            throw new WsmError(
+                    WsmError.Kind.ARITY,
+                    ID_DEFINE + " expects 2 arguments");
+        }
+        if (!(args.get(0) instanceof Token nameToken)) {
+            throw new WsmError(
+                    WsmError.Kind.INVALID_FORM,
+                    ID_DEFINE + " binder must be a symbol");
+        }
+
+        String name = nameToken.spelling();
+        ensureBinderAllowed(name);
+
+        if (scope.isRoot()) {
+            // Declare before compiling the value so recursive top-level
+            // closures resolve their own name through shared globals.
+            globals.declare(name);
+            return new WsmNode.GlobalDefineNode(
+                    name,
+                    compile(args.get(1), scope),
+                    globals);
+        }
+
+        // Same rule for local recursive definitions: the frame slot exists
+        // before the lambda value is compiled/captured.
+        int slot = scope.declareLocal(name);
+        return new WsmNode.LocalDefineNode(
+                slot,
+                compile(args.get(1), scope));
+    }
+
+    private void ensureBinderAllowed(String spelling) {
+        String id = registry.semanticIdForToken(spelling);
+        if (id != null && isCanonPrimitive(id)) {
+            throw new WsmError(
+                    WsmError.Kind.INVALID_FORM,
+                    "Canon 0+7 spelling is immutable (binder refused): "
+                            + spelling);
+        }
+    }
+
+    private static boolean isCanonPrimitive(String id) {
+        return ID_QUOTE.equals(id)
+                || ID_ATOM.equals(id)
+                || ID_EQ.equals(id)
+                || ID_CONS.equals(id)
+                || ID_CAR.equals(id)
+                || ID_CDR.equals(id)
+                || ID_COND.equals(id);
+    }
+
+    private static boolean isCanonSyntax(String id) {
+        return ID_QUOTE.equals(id) || ID_COND.equals(id);
+    }
+
+    private static boolean isSpecial(String id) {
+        return isCanonSyntax(id)
+                || ID_LAMBDA.equals(id)
+                || ID_DEFINE.equals(id)
+                || ID_DEFMACRO.equals(id)
+                || ID_DEF_COMPAT.equals(id);
+    }
+
+    private WsmNode compileCond(
+            List<Object> clauses,
+            LexicalScope scope) {
+        List<WsmNode> tests = new ArrayList<>();
+        List<WsmNode> expecteds = new ArrayList<>();
+        List<WsmNode> bodies = new ArrayList<>();
+        List<Boolean> truthiness = new ArrayList<>();
+
+        for (Object clause : clauses) {
+            List<Object> parts = items(clause);
+            if (parts.size() == 2) {
+                tests.add(compile(parts.get(0), scope));
+                expecteds.add(new WsmNode.ConstantNode(Value.NIL));
+                bodies.add(compile(parts.get(1), scope));
+                truthiness.add(true);
+                continue;
+            }
+            if (parts.size() == 3) {
+                tests.add(compile(parts.get(0), scope));
+                expecteds.add(new WsmNode.ConstantNode(
+                        ReaderDatum.toValue(parts.get(1))));
+                bodies.add(compile(parts.get(2), scope));
+                truthiness.add(false);
+                continue;
+            }
+            throw new WsmError(
+                    WsmError.Kind.INVALID_FORM,
+                    ID_COND
+                            + " expects canonical (query expected-result expression) "
+                            + "or migration-only (test expression) clauses");
+        }
+
+        boolean[] legacyTruthiness = new boolean[truthiness.size()];
+        for (int i = 0; i < truthiness.size(); i++) {
+            legacyTruthiness[i] = truthiness.get(i);
+        }
+        return new WsmNode.CondNode(
+                tests.toArray(WsmNode[]::new),
+                expecteds.toArray(WsmNode[]::new),
+                bodies.toArray(WsmNode[]::new),
+                legacyTruthiness);
+    }
+
+    private record LambdaParams(
+            List<String> fixedNames,
+            String restName) {}
+
+    private LambdaParams lambdaParams(Object raw) {
+        if (raw instanceof Token token) {
+            return new LambdaParams(List.of(), token.spelling());
+        }
+
+        List<String> fixedNames = new ArrayList<>();
+        Object cur = raw;
+        while (cur instanceof Value.Pair pair) {
+            if (!(pair.car instanceof Token binder)) {
+                throw new WsmError(
+                        WsmError.Kind.INVALID_FORM,
+                        ID_LAMBDA + " binder must be a symbol");
+            }
+            fixedNames.add(binder.spelling());
+            cur = pair.cdr;
+        }
+
+        String restName = null;
+        if (cur != Value.NIL) {
+            if (!(cur instanceof Token token)) {
+                throw new WsmError(
+                        WsmError.Kind.INVALID_FORM,
+                        ID_LAMBDA + " dotted rest binder must be a symbol");
+            }
+            restName = token.spelling();
+        }
+        return new LambdaParams(fixedNames, restName);
+    }
+
+    private WsmNode[] compileAll(
+            List<Object> argForms,
+            LexicalScope scope) {
+        WsmNode[] out = new WsmNode[argForms.size()];
+        for (int i = 0; i < argForms.size(); i++) {
+            out[i] = compile(argForms.get(i), scope);
+        }
+        return out;
+    }
+
+    static List<Object> items(Object form) {
+        List<Object> out = new ArrayList<>();
+        Object cur = form;
+        while (cur instanceof Value.Pair p) {
+            out.add(p.car);
+            cur = p.cdr;
+        }
+        if (cur != Value.NIL) {
+            throw new WsmError(
+                    WsmError.Kind.INVALID_FORM,
+                    "a dotted pair is not executable code");
+        }
+        return out;
+    }
+}
