@@ -62,6 +62,29 @@ public abstract class WsmNode extends com.oracle.truffle.api.nodes.Node {
         }
     }
 
+    /**
+     * 1062 EVAL: evaluate a Lisp datum in the same WSM compiler/context and
+     * current Truffle lexical frame. No fresh Polyglot Context or string
+     * serialization boundary is introduced.
+     */
+    public static final class EvalNode extends WsmNode {
+        @Child private WsmNode datum;
+        private final Compiler compiler;
+        private final LexicalScope scope;
+
+        EvalNode(WsmNode datum, Compiler compiler, LexicalScope scope) {
+            this.datum = datum;
+            this.compiler = compiler;
+            this.scope = scope;
+        }
+
+        @Override public Object executeGeneric(VirtualFrame frame) {
+            Object form = datum.executeGeneric(frame);
+            WsmNode executable = compiler.compile(form, scope);
+            return executable.executeGeneric(frame);
+        }
+    }
+
     /** Read a binding from the current or an enclosing Truffle lexical frame. */
     public static final class LocalReadNode extends WsmNode {
         private final int depth;
