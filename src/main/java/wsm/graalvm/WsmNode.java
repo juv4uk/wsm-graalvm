@@ -265,13 +265,57 @@ public abstract class WsmNode extends com.oracle.truffle.api.nodes.Node {
             for (int i = 0; i < tests.length; i++) {
                 Object actual = tests[i].executeGeneric(frame);
                 boolean selected = legacyTruthiness[i]
-                        ? actual != Value.NIL
+                        ? migrationOnlyCondTruthy(actual)
                         : Structural.equals(actual, expecteds[i].executeGeneric(frame));
                 if (selected) {
                     return bodies[i].executeGeneric(frame);
                 }
             }
             return Value.NIL;
+        }
+
+        /**
+         * Temporary bridge for historical two-part COND only.
+         *
+         * Mirrors pinned my-lisp migration_only_cond_truthy exactly for the
+         * value shapes Graal currently represents. Canonical three-part COND
+         * never calls this adapter.
+         */
+        private static boolean migrationOnlyCondTruthy(Object value) {
+            if (value instanceof Value.NumberValue number
+                    && number.denominator().equals(java.math.BigInteger.ONE)) {
+                if (number.numerator().signum() == 0) return false;
+                if (number.numerator().equals(java.math.BigInteger.ONE)) return true;
+            }
+
+            String[] record = twoSymbolRecord(value);
+            if (record != null) {
+                return switch (record[0]) {
+                    case "structural-kind" -> switch (record[1]) {
+                        case "empty-list", "atom" -> true;
+                        case "pair" -> false;
+                        default -> value != Value.NIL;
+                    };
+                    case "identity-relation", "structural-relation" -> switch (record[1]) {
+                        case "same" -> true;
+                        case "distinct" -> false;
+                        default -> value != Value.NIL;
+                    };
+                    default -> value != Value.NIL;
+                };
+            }
+            return value != Value.NIL;
+        }
+
+        private static String[] twoSymbolRecord(Object value) {
+            if (!(value instanceof Value.Pair first)
+                    || !(first.car instanceof Value.Symbol kind)
+                    || !(first.cdr instanceof Value.Pair second)
+                    || !(second.car instanceof Value.Symbol state)
+                    || second.cdr != Value.NIL) {
+                return null;
+            }
+            return new String[] {kind.name, state.name};
         }
     }
 
