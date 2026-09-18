@@ -104,7 +104,7 @@ public final class ConformanceInventory {
         while (cursor instanceof Value.Pair cell) {
             if (!(cell.car instanceof Value.NumberValue n)
                     || !n.denominator().equals(java.math.BigInteger.ONE)
-                    || !n.numerator().bitLengthIsLessThan(63)) {
+                    || n.numerator().bitLength() > 62) {
                 throw invalid(field + " must be a bounded integer list");
             }
             out.add(n.numerator().longValue());
