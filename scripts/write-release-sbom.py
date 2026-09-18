@@ -30,7 +30,7 @@ doc = {
             "downloadLocation": "NOASSERTION",
             "filesAnalyzed": False,
             "licenseConcluded": "NOASSERTION",
-            "licenseDeclared": "LicenseRef-WOLNIST",
+            "licenseDeclared": "NOASSERTION",
             "supplier": "Organization: WSM Project",
             "externalRefs": [
                 {"referenceCategory": "OTHER", "referenceType": "git", "referenceLocator": wsm_commit},
