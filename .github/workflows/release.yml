@@ -68,7 +68,12 @@ jobs:
         shell: bash
         env:
           MYLISP: external/my-lisp
-        run: bash scripts/build-release.sh "${GITHUB_REF_NAME#v}"
+        run: |
+          VERSION="0.1.0-dev"
+          if [[ "${GITHUB_REF_NAME}" =~ ^v[0-9]+\\.[0-9]+\\.[0-9]+$ ]]; then
+            VERSION="${GITHUB_REF_NAME#v}"
+          fi
+          bash scripts/build-release.sh "$VERSION"
 
       - name: Smoke-test staged Linux bundle
         if: runner.os == 'Linux'
