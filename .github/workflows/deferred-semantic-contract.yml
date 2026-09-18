@@ -41,6 +41,8 @@ jobs:
         run: bash scripts/test-deferred-semantic.sh
       - name: Executable string boundary contract
         run: bash scripts/test-executable-string.sh
+      - name: Sequential Lisp bootstrap contract
+        run: bash scripts/test-sequential-bootstrap.sh
       - name: Diagnostic — real Tier-1 after deferred routing
         continue-on-error: true
         run: |
