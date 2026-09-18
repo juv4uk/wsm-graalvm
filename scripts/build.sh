@@ -2,20 +2,35 @@
 set -euo pipefail
 
 REPO=$(cd "$(dirname "$0")/.." && pwd)
+
+if [[ "${RUNNER_OS:-}" == "Windows" || "$(uname -s 2>/dev/null || true)" =~ ^(MINGW|MSYS|CYGWIN) ]]; then
+  CP_SEP=';'
+else
+  CP_SEP=':'
+fi
+
+if [ -z "${G:-}" ]; then
+  G="${GRAALVM_HOME:-}"
+fi
 if [ -z "${G:-}" ]; then
   JBIN=$(readlink -f "$(command -v java)")
   G=$(dirname "$(dirname "$JBIN")")
 fi
 G=${G:?set G to GraalVM root}
 
+JAVAC="$G/bin/javac"
+if [ ! -x "$JAVAC" ]; then
+  JAVAC=$(command -v javac)
+fi
+
 bash "$REPO/scripts/fetch-third-party.sh"
 
-CP="$REPO/third_party/truffle-api.jar:$REPO/third_party/polyglot.jar:$REPO/third_party/truffle-runtime.jar:$REPO/third_party/graalvm-collections.jar"
+CP="$REPO/third_party/truffle-api.jar${CP_SEP}$REPO/third_party/polyglot.jar${CP_SEP}$REPO/third_party/truffle-runtime.jar${CP_SEP}$REPO/third_party/graalvm-collections.jar"
 
 rm -rf "$REPO/classes"
 mkdir -p "$REPO/classes"
 
-"$G/bin/javac" --release 25 \
+"$JAVAC" --release 25 \
   -cp "$CP" \
   -d "$REPO/classes" \
   $(find "$REPO/src/main/java" -name '*.java')
