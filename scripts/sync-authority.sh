@@ -3,13 +3,14 @@
 #
 # Owner rule:
 #   external/my-lisp is a pinned Git submodule. Its working tree exposes only
-#   the explicitly admitted Lisp authority/runtime/witness paths listed in
-#   refs/sparse-authority-paths.txt.
+#   the Lisp authority/runtime/witness paths derived from
+#   refs/lisp-dependency-manifest.lisp.
 set -euo pipefail
 
 REPO=$(cd "$(dirname "$0")/.." && pwd)
 E="$REPO/external/my-lisp"
 ALLOWLIST="$REPO/refs/sparse-authority-paths.txt"
+GENERATOR="$REPO/scripts/build-sparse-authority-allowlist.sh"
 
 fail() {
   echo "sync-authority FAIL-CLOSED: $*" >&2
@@ -17,6 +18,20 @@ fail() {
 }
 
 [ -f "$ALLOWLIST" ] || fail "missing sparse allowlist: $ALLOWLIST"
+[ -x "$GENERATOR" ] || fail "missing sparse allowlist generator: $GENERATOR"
+
+GENERATED=$(mktemp)
+EXPECTED=$(mktemp)
+ACTUAL=$(mktemp)
+trap 'rm -f "$GENERATED" "$EXPECTED" "$ACTUAL"' EXIT
+
+bash "$GENERATOR" > "$GENERATED"
+cmp -s "$GENERATED" "$ALLOWLIST"   || {
+    echo "Generated sparse allowlist differs from committed allowlist:" >&2
+    diff -u "$ALLOWLIST" "$GENERATED" >&2 || true
+    fail "refs/sparse-authority-paths.txt is stale"
+  }
+
 mapfile -t FILES < <(sed '/^[[:space:]]*$/d' "$ALLOWLIST")
 [ "${#FILES[@]}" -gt 0 ] || fail "sparse allowlist is empty"
 
@@ -37,8 +52,6 @@ done
 [ -f "$E/.git" ] || fail "submodule not initialized (no .git file)"
 [ -n "$(ls -A "$E" 2>/dev/null)" ]   || fail "submodule empty; run: git submodule update --init external/my-lisp"
 
-# The superproject gitlink is the dependency pin. Fetch may discover upstream
-# changes, but this command never advances the submodule beyond that pin.
 git -C "$E" fetch origin --quiet   || fail "git fetch inside submodule failed"
 
 PIN=$(git -C "$REPO" ls-files -s external/my-lisp | awk '{print $2}')
@@ -46,8 +59,6 @@ HEAD=$(git -C "$E" rev-parse HEAD)
 [ -n "$PIN" ] || fail "cannot read submodule gitlink pin"
 [ "$HEAD" = "$PIN" ]   || fail "submodule HEAD $HEAD differs from superproject pin $PIN"
 
-# Exact non-cone patterns keep the upstream tree structure while materializing
-# only the paths admitted by the versioned allowlist.
 printf '/%s\n' "${FILES[@]}"   | git -C "$E" sparse-checkout set --no-cone --stdin >/dev/null   || fail "cannot enable exact sparse checkout"
 
 git -C "$E" sparse-checkout reapply >/dev/null   || fail "cannot reapply exact sparse checkout"
@@ -60,10 +71,6 @@ CONE=$(git -C "$E" config --bool core.sparseCheckoutCone || true)
 for f in "${FILES[@]}"; do
   [ -f "$E/$f" ] || fail "required sparse authority file absent: $f"
 done
-
-EXPECTED=$(mktemp)
-ACTUAL=$(mktemp)
-trap 'rm -f "$EXPECTED" "$ACTUAL"' EXIT
 
 printf '%s\n' "${FILES[@]}" | LC_ALL=C sort -u > "$EXPECTED"
 find "$E" -type f ! -path "$E/.git" -printf '%P\n' | LC_ALL=C sort -u > "$ACTUAL"
@@ -80,6 +87,7 @@ echo "Sparse authority checkout OK:"
 echo "  pin=$HEAD"
 echo "  materialized-lisp-files=${#FILES[@]}"
 echo "  allowlist=refs/sparse-authority-paths.txt"
+echo "  source=refs/lisp-dependency-manifest.lisp"
 
 for f in "${FILES[@]}"; do
   D=$(sha256sum "$E/$f" | cut -d' ' -f1)
