@@ -37,9 +37,9 @@ public final class ErrorKindContract {
         require(WsmError.closedVocabulary().equals(expected),
                 "closed ErrorKind vocabulary drifted");
 
-        Environment env = new Environment(null);
+        GlobalBindings globals = new GlobalBindings();
         WsmError unknown = expect(
-                () -> env.lookup("never-defined"),
+                () -> globals.lookup("never-defined"),
                 WsmError.Kind.UNKNOWN_SYMBOL);
         require(unknown.getMessage().startsWith("UnknownSymbol:"),
                 "observable message must expose contract spelling");
