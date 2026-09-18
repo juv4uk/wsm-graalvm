@@ -1,0 +1,37 @@
+name: deferred-semantic-contract
+
+on:
+  push:
+    paths:
+      - "src/main/java/wsm/graalvm/Compiler.java"
+      - "src/main/java/wsm/graalvm/SemanticMechanismTable.java"
+      - "src/test/java/wsm/graalvm/DeferredSemanticMechanismContract.java"
+      - "scripts/test-deferred-semantic.sh"
+      - ".github/workflows/deferred-semantic-contract.yml"
+  pull_request:
+    paths:
+      - "src/main/java/wsm/graalvm/Compiler.java"
+      - "src/main/java/wsm/graalvm/SemanticMechanismTable.java"
+      - "src/test/java/wsm/graalvm/DeferredSemanticMechanismContract.java"
+      - "scripts/test-deferred-semantic.sh"
+      - ".github/workflows/deferred-semantic-contract.yml"
+
+jobs:
+  deferred-semantic:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          fetch-depth: 0
+      - name: Verify pinned my-lisp authority
+        run: bash scripts/verify-authority.sh external/my-lisp
+      - name: Set up GraalVM
+        uses: graalvm/setup-graalvm@v1
+        with:
+          java-version: "25"
+          distribution: "graalvm-community"
+          version: "25.3.4.1"
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Deferred semantic mechanism contract
+        run: bash scripts/test-deferred-semantic.sh
