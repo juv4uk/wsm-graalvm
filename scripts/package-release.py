@@ -102,7 +102,7 @@ def main() -> int:
         'type "%HERE%my-lisp\\lib\\macro.lisp" >> "%TMP%"\r\n'
         'type "%HERE%my-lisp\\lib\\core.lisp" >> "%TMP%"\r\n'
         'type "%~1" >> "%TMP%"\r\n'
-        '"%HERE%bin\\wsm-graalvm.exe" "%TMP%" "%HERE%my-lisp\\lib\\surface\\semantic-registry.lisp" "%HERE%authority"\r\n'
+        '"%HERE%bin\\wsm-graalvm.exe" "%TMP%" "%HERE%my-lisp\\lib\\surface\\semantic-registry.lisp" "%HERE%my-lisp"\r\n'
         'set "RC=%ERRORLEVEL%"\r\n'
         'del /q "%TMP%" >nul 2>nul\r\n'
         'exit /b %RC%\r\n',
