@@ -80,6 +80,9 @@ jobs:
       - name: M1 — manifest bootstrap closure loader
         run: bash scripts/test-bootstrap-closure-loader.sh
 
+      - name: M1 — real Lisp let raw expansion
+        run: bash scripts/test-let-raw-expansion.sh
+
       - name: M1 — real Lisp bootstrap cutover
         run: bash scripts/test-real-lisp-bootstrap.sh
 
