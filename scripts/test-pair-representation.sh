@@ -28,10 +28,7 @@ import sys
 
 text = Path(sys.argv[1]).read_text()
 start = text.index("public static final class Pair")
-end = text.index("
-    }
-
-    public record SemanticRef", start)
+end = text.index("\n    }\n\n    public record SemanticRef", start)
 pair_block = text[start:end]
 if "equals(" in pair_block or "hashCode(" in pair_block:
     raise SystemExit("Pair representation must not define equals/hashCode")
