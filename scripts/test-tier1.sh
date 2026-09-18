@@ -40,6 +40,7 @@ public final class Tier1Harness {
 
         List<Fixture> fixtures = parseFixtures(Files.readAllLines(fixturePath));
         int passed = 0;
+        int failed = 0;
 
         for (Fixture fixture : fixtures) {
             try {
@@ -47,13 +48,20 @@ public final class Tier1Harness {
                 passed++;
                 System.out.println("PASS line=" + fixture.line);
             } catch (Throwable failure) {
+                failed++;
                 System.err.println("FAIL line=" + fixture.line
                         + " expr=" + fixture.expr);
                 System.err.println("  " + failure.getMessage());
-                throw failure;
             }
         }
 
+        System.out.println("TIER1-SUMMARY passed=" + passed
+                + " failed=" + failed
+                + " total=" + fixtures.size());
+        if (failed != 0) {
+            throw new AssertionError("Tier-1 conformance diverged on "
+                    + failed + " fixture(s)");
+        }
         System.out.println("TIER1-GREEN " + passed + "/" + fixtures.size());
     }
 
@@ -95,13 +103,19 @@ public final class Tier1Harness {
                 try {
                     context.eval("wsm", fixture.expr());
                 } catch (org.graalvm.polyglot.PolyglotException expectedFailure) {
-                    String message = expectedFailure.getMessage();
-                    if (message != null && message.contains(fixture.error())) {
+                    Throwable host = expectedFailure.isHostException()
+                            ? expectedFailure.asHostException()
+                            : expectedFailure;
+                    String observed = host instanceof WsmError error
+                            ? error.contractKind()
+                            : expectedFailure.getMessage();
+                    if (fixture.error().equals(observed)
+                            || (observed != null && observed.contains(fixture.error()))) {
                         return;
                     }
                     throw new AssertionError(
                             "expected error " + fixture.error()
-                                    + " but observed " + message);
+                                    + " but observed " + observed);
                 }
                 throw new AssertionError(
                         "expected error " + fixture.error() + " but expression succeeded");
