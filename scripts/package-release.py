@@ -84,10 +84,7 @@ def main() -> int:
         "#!/usr/bin/env sh\n"
         "set -eu\n"
         'HERE=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)\n'
-        'TMP=$(mktemp "${TMPDIR:-/tmp}/wsm-graalvm-XXXXXX.lisp")\n'
-        'trap "rm -f \"$TMP\"" EXIT HUP INT TERM\n'
-        'cat "$HERE/my-lisp/lib/canon.lisp" "$HERE/my-lisp/lib/macro.lisp" "$HERE/my-lisp/lib/core.lisp" "$1" > "$TMP"\n'
-        '"$HERE/bin/wsm-graalvm" "$TMP" "$HERE/my-lisp/lib/surface/semantic-registry.lisp" "$HERE/my-lisp"\n',
+        '"$HERE/bin/wsm-graalvm" "$HERE/my-lisp/lib/canon.lisp" "$HERE/my-lisp/lib/macro.lisp" "$HERE/my-lisp/lib/core.lisp" "$1" "$HERE/my-lisp/lib/surface/semantic-registry.lisp" "$HERE/my-lisp"\n',
         encoding="utf-8",
     )
     (package / "run.sh").chmod((package / "run.sh").stat().st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
@@ -96,16 +93,8 @@ def main() -> int:
         "@echo off\r\n"
         "setlocal\r\n"
         'set "HERE=%~dp0"\r\n'
-        'set "TMP=%TEMP%\\wsm-graalvm-%RANDOM%%RANDOM%.lisp"\r\n'
-        '> "%TMP%" type nul\r\n'
-        'type "%HERE%my-lisp\\lib\\canon.lisp" >> "%TMP%"\r\n'
-        'type "%HERE%my-lisp\\lib\\macro.lisp" >> "%TMP%"\r\n'
-        'type "%HERE%my-lisp\\lib\\core.lisp" >> "%TMP%"\r\n'
-        'type "%~1" >> "%TMP%"\r\n'
-        '"%HERE%bin\\wsm-graalvm.exe" "%TMP%" "%HERE%my-lisp\\lib\\surface\\semantic-registry.lisp" "%HERE%my-lisp"\r\n'
-        'set "RC=%ERRORLEVEL%"\r\n'
-        'del /q "%TMP%" >nul 2>nul\r\n'
-        'exit /b %RC%\r\n',
+        '"%HERE%bin\\wsm-graalvm.exe" "%HERE%my-lisp\\lib\\canon.lisp" "%HERE%my-lisp\\lib\\macro.lisp" "%HERE%my-lisp\\lib\\core.lisp" "%~1" "%HERE%my-lisp\\lib\\surface\\semantic-registry.lisp" "%HERE%my-lisp"\r\n'
+        'exit /b %ERRORLEVEL%\r\n',
         encoding="utf-8",
     )
 

@@ -20,12 +20,20 @@ ACTUAL_PIN=$(git -C "$MYLISP" rev-parse HEAD)
 
 bash "$REPO/scripts/build.sh"
 
-CP="$REPO/classes:$REPO/third_party/truffle-api.jar:$REPO/third_party/polyglot.jar:$REPO/third_party/truffle-runtime.jar:$REPO/third_party/graalvm-collections.jar"
+CP="$REPO/classes"
+for j in "$REPO"/third_party/*.jar; do
+  [ -f "$j" ] && CP="$CP:$j"
+done
 TEST_CLASSES="$REPO/test-classes-ledger"
 rm -rf "$TEST_CLASSES"
 mkdir -p "$TEST_CLASSES"
 
-"$JAVA_HOME/bin/javac" --release 25 -cp "$CP" -d "$TEST_CLASSES" "$REPO/src/test/java/wsm/graalvm/Tier1ErrorParityContract.java"
+if [ -z "${G:-}" ]; then
+  JBIN=$(readlink -f "$(command -v java)")
+  G=$(dirname "$(dirname "$JBIN")")
+fi
+G=${G:?GraalVM root is required}
+"$G/bin/javac" --release 25 -cp "$CP" -d "$TEST_CLASSES" "$REPO/src/test/java/wsm/graalvm/Tier1ErrorParityContract.java"
 
 set +e
 VALUE_REPORT=$(java -cp "$CP" -Dtruffle.class.path.append="$REPO/classes" wsm.graalvm.ConformanceMain "$CORPUS" "$REGISTRY" "$REPO" 2>&1)
@@ -47,7 +55,7 @@ SKIPPED=$(number_from "$VALUE_SUMMARY" skipped-expected-error)
 FAIL=$(number_from "$VALUE_SUMMARY" fail)
 
 set +e
-ERROR_REPORT=$("$JAVA_HOME/bin/java" -cp "$TEST_CLASSES:$CP" -Dtruffle.class.path.append="$REPO/classes" wsm.graalvm.Tier1ErrorParityContract "$CORPUS" "$REGISTRY" 2>&1)
+ERROR_REPORT=$("$G/bin/java" -cp "$TEST_CLASSES:$CP" -Dtruffle.class.path.append="$REPO/classes" wsm.graalvm.Tier1ErrorParityContract "$CORPUS" "$REGISTRY" 2>&1)
 ERROR_STATUS=$?
 set -e
 printf '%s\n' "$ERROR_REPORT"

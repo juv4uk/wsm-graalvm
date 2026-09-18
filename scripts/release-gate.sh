@@ -15,7 +15,7 @@ manifest_pin() {
   sed -n 's/^[[:space:]]*(pin \. "\([0-9a-f]\{40\}\)").*/\1/p' "$REPO/refs/lisp-dependency-manifest.lisp"
 }
 
-[ -d "$MYLISP/.git" ] || { echo "RELEASE-GATE FAIL: missing external/my-lisp checkout" >&2; exit 1; }
+[ -d "$MYLISP/.git" ] || [ -f "$MYLISP/.git" ] || { echo "RELEASE-GATE FAIL: missing external/my-lisp checkout" >&2; exit 1; }
 PIN=$(git -C "$MYLISP" rev-parse HEAD)
 MANIFEST_PIN=$(manifest_pin)
 [ "$PIN" = "$MANIFEST_PIN" ] || {
