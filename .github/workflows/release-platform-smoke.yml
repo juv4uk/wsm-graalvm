@@ -1,0 +1,57 @@
+name: release-platform-smoke
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/release.yml"
+      - "scripts/build-native.sh"
+      - "scripts/build-native-windows.ps1"
+      - "src/**"
+      - "third_party/**"
+      - "external/my-lisp"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  native-image:
+    name: Native Image ${ matrix.platform }
+    strategy:
+      fail-fast: true
+      matrix:
+        include:
+          - platform: linux-x86_64
+            runner: ubuntu-latest
+          - platform: windows-x86_64
+            runner: windows-latest
+    runs-on: ${ matrix.runner }
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          submodules: recursive
+          fetch-depth: 0
+
+      - name: Set up GraalVM CE 25.3.4.1
+        uses: graalvm/setup-graalvm@v1
+        with:
+          java-version: "25"
+          distribution: "graalvm-community"
+          version: "25.3.4.1"
+          github-token: ${ secrets.GITHUB_TOKEN }
+
+      - name: Linux Native Image + Canon witness
+        if: matrix.platform == 'linux-x86_64'
+        shell: bash
+        env:
+          MYLISP: external/my-lisp
+        run: |
+          G="$(dirname "$(dirname "$(readlink -f "$(command -v java)")")")"
+          G="$G" bash scripts/build-native.sh
+
+      - name: Windows Native Image + Canon witness
+        if: matrix.platform == 'windows-x86_64'
+        shell: pwsh
+        env:
+          MYLISP: external/my-lisp
+        run: ./scripts/build-native-windows.ps1
