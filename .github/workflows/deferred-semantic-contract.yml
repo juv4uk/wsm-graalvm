@@ -35,3 +35,8 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
       - name: Deferred semantic mechanism contract
         run: bash scripts/test-deferred-semantic.sh
+      - name: Diagnostic — real Tier-1 after deferred routing
+        continue-on-error: true
+        run: |
+          G=$(dirname "$(dirname "$(readlink -f "$(command -v java)")")")
+          G="$G" MYLISP=external/my-lisp bash scripts/test-tier1.sh
