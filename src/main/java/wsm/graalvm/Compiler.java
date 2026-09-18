@@ -57,7 +57,7 @@ public final class Compiler {
     public WsmNode compile(Object form, LexicalScope scope) {
         if (form instanceof Value.Pair p) return compileList(p, scope);
         if (form instanceof Long l) return new WsmNode.ConstantNode(l);
-        if (form instanceof Value.Str st) return new WsmNode.ConstantNode(st);
+        if (form instanceof String st) return new WsmNode.ConstantNode(new Value.Str(st));
         if (form instanceof Token token) return symbolNode(token.spelling(), scope);
 
         if (form == Value.NIL) return new WsmNode.ConstantNode(Value.NIL);

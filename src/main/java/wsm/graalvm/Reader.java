@@ -151,7 +151,7 @@ public final class Reader {
         StringBuilder out = new StringBuilder();
         while (pos < text.length()) {
             char c = text.charAt(pos++);
-            if (c == '"') return new Value.Str(out.toString());
+            if (c == '"') return out.toString();
             if (c == '\\') {
                 if (pos >= text.length()) {
                     throw new WsmError(WsmError.Kind.PARSE, "unterminated string escape");
