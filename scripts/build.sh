@@ -3,14 +3,29 @@ set -euo pipefail
 
 REPO=$(cd "$(dirname "$0")/.." && pwd)
 if [ -z "${G:-}" ]; then
-  JBIN=$(readlink -f "$(command -v java)")
-  G=$(dirname "$(dirname "$JBIN")")
+  if [ -n "${GRAALVM_HOME:-}" ]; then
+    G="$GRAALVM_HOME"
+  elif [ -n "${JAVA_HOME:-}" ]; then
+    G="$JAVA_HOME"
+  else
+    JBIN=$(command -v java)
+    if command -v readlink >/dev/null 2>&1; then
+      JBIN=$(readlink -f "$JBIN" 2>/dev/null || true)
+    fi
+    [ -n "$JBIN" ] || { echo "missing java for GraalVM discovery" >&2; exit 1; }
+    G=$(cd "$(dirname "$JBIN")/.." && pwd)
+  fi
 fi
-G=${G:?set G to GraalVM root}
+G="${G%/}"
+[ -x "$G/bin/javac" ] || { echo "missing GraalVM javac: $G/bin/javac" >&2; exit 1; }
 
 bash "$REPO/scripts/fetch-third-party.sh"
 
-CP="$REPO/third_party/truffle-api.jar:$REPO/third_party/polyglot.jar:$REPO/third_party/truffle-runtime.jar:$REPO/third_party/graalvm-collections.jar"
+case "$(uname -s 2>/dev/null || true)" in
+  MINGW*|MSYS*|CYGWIN*) PATH_SEP=";" ;;
+  *) PATH_SEP=":" ;;
+esac
+CP="$REPO/third_party/truffle-api.jar${PATH_SEP}$REPO/third_party/polyglot.jar${PATH_SEP}$REPO/third_party/truffle-runtime.jar${PATH_SEP}$REPO/third_party/graalvm-collections.jar"
 
 rm -rf "$REPO/classes"
 mkdir -p "$REPO/classes"
