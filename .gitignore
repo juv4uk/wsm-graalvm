@@ -5,3 +5,12 @@ third_party/*.sha256
 *.class
 target/
 third_party/truffle-compiler-extracted/
+native-wsm
+native-wsm.build/
+dist/
+dist-windows/
+release-my-lisp-pin.txt
+*.deb
+*.rpm
+*.exe
+*.zip
