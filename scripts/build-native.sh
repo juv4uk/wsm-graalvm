@@ -23,6 +23,10 @@ G="${G%/}"
   exit 1
 }
 
+if [ ! -x "$G/bin/native-image" ] && [ -d /home/agents/graalvm-community-25.3.4.1+1.1 ]; then
+  G=/home/agents/graalvm-community-25.3.4.1+1.1
+fi
+
 bash "$REPO/scripts/build.sh"
 
 CP="$REPO/classes"
