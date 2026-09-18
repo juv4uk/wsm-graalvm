@@ -3,10 +3,9 @@ package wsm.graalvm;
 import com.oracle.truffle.api.CallTarget;
 import com.oracle.truffle.api.TruffleLanguage;
 import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.api.nodes.Node.Child;\nimport com.oracle.truffle.api.nodes.RootNode;
+import com.oracle.truffle.api.nodes.Node.Child;
+import com.oracle.truffle.api.nodes.RootNode;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.List;
 
 /**
@@ -26,7 +25,7 @@ import java.util.List;
 public final class WsmLanguage extends TruffleLanguage<Void> {
 
     @Override
-    protected Void createContext(com.oracle.truffle.api.TruffleLanguage.Env env) {
+    protected Void createContext(TruffleLanguage.Env env) {
         return null;
     }
 
@@ -36,36 +35,37 @@ public final class WsmLanguage extends TruffleLanguage<Void> {
     }
 
     @Override
-    protected CallTarget parse(com.oracle.truffle.api.TruffleLanguage.ParsingRequest request)
+    protected CallTarget parse(TruffleLanguage.ParsingRequest request)
             throws IOException {
         String code = request.getSource().getCharacters().toString();
         String registryPath = System.getProperty("wsm.registryPath");
         if (registryPath == null) {
             throw new IllegalArgumentException(
-                    "missing system property wsm.registryPath (numeric registry authority)");
+                    "missing system property wsm.registryPath "
+                            + "(numeric registry authority)");
         }
+
         CanonRegistry registry = CanonRegistryLoader.load(registryPath);
         Compiler compiler = new Compiler(registry, this);
-        List<WsmNode> forms = compiler.compileProgram(new Reader(code).readAll());
+        List<WsmNode> forms =
+                compiler.compileProgram(new Reader(code).readAll());
         ProgramBodyNode body = new ProgramBodyNode(forms);
-        BodyRoot root = new BodyRoot(this, body);
-        return root.getCallTarget();
-    }
-
-    private List<Object> formsOf(String code) {
-        return new Reader(code).readAll();
+        return new BodyRoot(this, body).getCallTarget();
     }
 
     static final class BodyRoot extends RootNode {
         @Child private ProgramBodyNode body;
+
         BodyRoot(WsmLanguage language, ProgramBodyNode body) {
             super(language);
             this.body = body;
         }
+
         @Override
         public Object execute(VirtualFrame frame) {
             Object last = body.run(frame);
-            System.out.println("[wsm-graalvm M0] result: " + Printer.print(last));
+            System.out.println(
+                    "[wsm-graalvm M0] result: " + Printer.print(last));
             return last;
         }
     }
