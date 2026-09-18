@@ -48,10 +48,12 @@ public final class WsmLanguage extends TruffleLanguage<WsmContext> {
             throws IOException {
         String code = request.getSource().getCharacters().toString();
         WsmContext context = CONTEXT_REFERENCE.get(null);
-        Compiler compiler = new Compiler(context.registry(), this, context.globals());
-        List<WsmNode> forms = compiler.compileProgram(new Reader(code).readAll());
-        ProgramBodyNode body = new ProgramBodyNode(forms);
-        BodyRoot root = new BodyRoot(this, body);
+        List<Object> forms = new Reader(code).readAll();
+        BodyRoot root = new BodyRoot(
+                this,
+                context.registry(),
+                context.globals(),
+                forms);
         return root.getCallTarget();
     }
 
@@ -60,14 +62,37 @@ public final class WsmLanguage extends TruffleLanguage<WsmContext> {
     }
 
     static final class BodyRoot extends RootNode {
-        private final ProgramBodyNode body;
-        BodyRoot(WsmLanguage language, ProgramBodyNode body) {
+        private final WsmLanguage language;
+        private final CanonRegistry registry;
+        private final GlobalBindings globals;
+        private final List<Object> forms;
+
+        BodyRoot(
+                WsmLanguage language,
+                CanonRegistry registry,
+                GlobalBindings globals,
+                List<Object> forms) {
             super(language);
-            this.body = body;
+            this.language = language;
+            this.registry = registry;
+            this.globals = globals;
+            this.forms = List.copyOf(forms);
         }
+
         @Override
         public Object execute(VirtualFrame frame) {
-            Object last = body.run(frame);
+            Compiler compiler = new Compiler(registry, language, globals);
+            Object last = Value.NIL;
+
+            // Bootstrap semantics are sequential: an earlier top-level
+            // definition is executed before a later form is compiled. This
+            // lets Lisp-owned functions participate in later macro expansion
+            // without promoting them into host/compiler authority.
+            for (Object form : forms) {
+                WsmNode node = compiler.compile(form, compiler.root());
+                last = node.executeGeneric(frame);
+            }
+
             System.out.println("[wsm-graalvm M0] result: " + Printer.print(last));
             return last;
         }
