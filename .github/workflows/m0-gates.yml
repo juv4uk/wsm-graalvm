@@ -55,6 +55,9 @@ jobs:
           G=$(dirname "$(dirname "$(readlink -f "$(command -v java)")")")
           G=${G} bash scripts/build.sh
 
+      - name: P1 — Pair identity versus structural equality invariant
+        run: bash scripts/test-pair-representation.sh
+
       - name: P0 — registry-derived Ukrainian surface parity
         run: bash scripts/test-uk-surface-parity.sh
 
