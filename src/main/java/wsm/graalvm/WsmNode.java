@@ -265,13 +265,56 @@ public abstract class WsmNode extends com.oracle.truffle.api.nodes.Node {
             for (int i = 0; i < tests.length; i++) {
                 Object actual = tests[i].executeGeneric(frame);
                 boolean selected = legacyTruthiness[i]
-                        ? actual != Value.NIL
+                        ? migrationOnlyCondTruthy(actual)
                         : Structural.equals(actual, expecteds[i].executeGeneric(frame));
                 if (selected) {
                     return bodies[i].executeGeneric(frame);
                 }
             }
             return Value.NIL;
+        }
+
+        /**
+         * Compatibility bridge for the migration-only two-part cond path
+         * already present in pinned my-lisp. Canonical three-part cond above
+         * remains exact structural matching; this adapter exists only so
+         * current Lisp core forms using atom/eq records retain their upstream
+         * branching behavior while those callers migrate.
+         */
+        private static boolean migrationOnlyCondTruthy(Object value) {
+            if (value instanceof Value.NumberValue number
+                    && number.denominator().equals(java.math.BigInteger.ONE)) {
+                if (number.numerator().signum() == 0) return false;
+                if (number.numerator().equals(java.math.BigInteger.ONE)) return true;
+            }
+
+            SymbolRecord record = twoSymbolRecord(value);
+            if (record != null) {
+                return switch (record.kind() + ":" + record.state()) {
+                    case "structural-kind:empty-list",
+                         "structural-kind:atom",
+                         "identity-relation:same",
+                         "structural-relation:same" -> true;
+                    case "structural-kind:pair",
+                         "identity-relation:distinct",
+                         "structural-relation:distinct" -> false;
+                    default -> value != Value.NIL;
+                };
+            }
+            return value != Value.NIL;
+        }
+
+        private record SymbolRecord(String kind, String state) {}
+
+        private static SymbolRecord twoSymbolRecord(Object value) {
+            if (!(value instanceof Value.Pair first)
+                    || !(first.car instanceof Value.Symbol kind)
+                    || !(first.cdr instanceof Value.Pair second)
+                    || !(second.car instanceof Value.Symbol state)
+                    || second.cdr != Value.NIL) {
+                return null;
+            }
+            return new SymbolRecord(kind.name, state.name);
         }
     }
 
