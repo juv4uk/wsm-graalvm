@@ -2,6 +2,10 @@ package wsm.graalvm;
 
 /** M0 value space: NIL | Symbol | Long(exact integer) | Pair. Records are Pairs of Symbols. */
 public final class Value {
+    static final Object UNBOUND = new Object() {
+        @Override public String toString() { return "#<unbound>"; }
+    };
+
     public static final Object NIL = new Object() {
         @Override public String toString() { return "()"; }
     };
