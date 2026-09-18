@@ -41,8 +41,39 @@ case "$(uname -s 2>/dev/null || true)" in
 esac
 MODULE_PATH="$REPO/third_party/truffle-api.jar${PATH_SEP}$REPO/third_party/truffle-runtime.jar${PATH_SEP}$REPO/third_party/truffle-compiler.jar${PATH_SEP}$REPO/third_party/polyglot.jar${PATH_SEP}$REPO/third_party/collections.jar${PATH_SEP}$REPO/third_party/jniutils.jar${PATH_SEP}$REPO/third_party/nativeimage.jar${PATH_SEP}$REPO/third_party/word.jar"
 
-rm -f "$REPO/native-wsm" "$REPO/native-wsm.exe"
-"$G/bin/native-image"   --module-path "$MODULE_PATH"   --no-fallback   --initialize-at-build-time=wsm.graalvm.providers.WsmLanguageProvider   -H:IncludeResources='META-INF/services/com[.]oracle[.]truffle[.]api[.]provider[.]TruffleLanguageProvider'   -cp "$CP"   wsm.graalvm.Main   "$REPO/native-wsm"
+# One CE native-image build dominates the release pipeline wall clock.  The
+# release executable's runtime workload is a small Lisp bootstrap, so we build
+# fast (-Ob) by default and let CI/local iteration stay cheap.  Set
+# NATIVE_IMAGE_OPT_LEVEL=2 (or s) when a fully-optimized runtime binary is
+# required; NATIVE_IMAGE_OPTS appends any extra native-image flags.
+OPT_LEVEL=${NATIVE_IMAGE_OPT_LEVEL:-b}
+PARALLELISM=${NATIVE_IMAGE_PARALLELISM:-$(nproc 2>/dev/null || echo 4)}
+EXTRA_OPTS=${NATIVE_IMAGE_OPTS:-}
+
+build_native_image() {
+  rm -f "$REPO/native-wsm" "$REPO/native-wsm.exe"
+  "$G/bin/native-image"   "--parallelism=$PARALLELISM"   "-O$OPT_LEVEL"   $EXTRA_OPTS   --module-path "$MODULE_PATH"   --no-fallback   --initialize-at-build-time=wsm.graalvm.providers.WsmLanguageProvider   -H:IncludeResources='META-INF/services/com[.]oracle[.]truffle[.]api[.]provider[.]TruffleLanguageProvider'   -cp "$CP"   wsm.graalvm.Main   "$REPO/native-wsm"
+}
+
+# Reuse an existing native-wsm when nothing that feeds the image changed since
+# it was produced.  Inputs: src/**, the pinned third_party jars and the fetch
+# script.  CI checkouts never contain native-wsm (it is gitignored), so this
+# guard only shortens local/iteration cycles.  NATIVE_IMAGE_FORCE=1 bypasses it.
+OUT="$REPO/native-wsm"
+REBUILD=1
+if [ "$REBUILD" = 1 ] && [ -x "$OUT" ] && [ "${NATIVE_IMAGE_FORCE:-0}" != "1" ]; then
+  STALE=$(find "$REPO/src" "$REPO/scripts/fetch-third-party.sh" "$REPO/third_party" \
+          -type f -newer "$OUT" -print -quit 2>/dev/null || true)
+  if [ -z "$STALE" ]; then
+    echo "NATIVE-IMAGE-UP-TO-DATE (skip AOT; NATIVE_IMAGE_FORCE=1 to rebuild)"
+    REBUILD=0
+  else
+    echo "NATIVE-IMAGE-STALE: $STALE"
+  fi
+fi
+if [ "$REBUILD" = 1 ]; then
+  build_native_image
+fi
 
 MYLISP=${MYLISP:-$REPO/external/my-lisp}
 CANON="$MYLISP/lib/canon.lisp"
