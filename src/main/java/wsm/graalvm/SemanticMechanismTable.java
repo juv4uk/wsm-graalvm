@@ -24,8 +24,7 @@ public final class SemanticMechanismTable {
             "1016", SemanticMechanismTable::invoke1016,
             "1022", SemanticMechanismTable::invoke1022,
             "1052", SemanticMechanismTable::invoke1052,
-            "1061", SemanticMechanismTable::invoke1061,
-            "1017", SemanticMechanismTable::invoke1017
+            "1061", SemanticMechanismTable::invoke1061
     );
 
     private SemanticMechanismTable() {}
