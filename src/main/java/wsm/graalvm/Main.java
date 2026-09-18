@@ -18,12 +18,11 @@ public final class Main {
         Path rootDir = Path.of(args[2]);
 
         try (org.graalvm.polyglot.Context context = org.graalvm.polyglot.Context.newBuilder("wsm")
-                .allowExperimentalOptions(true)
-                .option("wsm.registryPath", registry)
                 .allowHostAccess(org.graalvm.polyglot.HostAccess.ALL)
-                .allowExperimentalOptions(true)
-                .option("wsm.registryPath", registry)
                 .build()) {
+            // registry authority source stays a system property (-Dwsm.registryPath);
+            // passing it as a Context option requires engine-side option discovery,
+            // which is exactly what fresh CI runners could not do — dropped
             String code = Files.readString(Path.of(file));
             System.setProperty("wsm.rootDir", rootDir.toString());
             org.graalvm.polyglot.Value result = context.eval(
