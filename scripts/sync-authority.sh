@@ -18,7 +18,7 @@ fail() {
 }
 
 [ -f "$ALLOWLIST" ] || fail "missing sparse allowlist: $ALLOWLIST"
-[ -x "$GENERATOR" ] || fail "missing sparse allowlist generator: $GENERATOR"
+[ -f "$GENERATOR" ] || fail "missing sparse allowlist generator: $GENERATOR"
 
 GENERATED=$(mktemp)
 EXPECTED=$(mktemp)
