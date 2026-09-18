@@ -1,8 +1,4 @@
 package wsm.graalvm;
 
-import java.util.List;
-
-record MacroDefinition(
-        List<String> fixedNames,
-        String restName,
-        List<Object> body) {}
+/** Macro transformer is a normal Truffle callable receiving syntax values. */
+record MacroDefinition(WsmFunc transformer) {}
