@@ -22,7 +22,7 @@ Release:        1
 Summary:        WSM Lisp runtime on GraalVM
 License:        WSM-VOLNIST
 BuildArch:      x86_64
-Requires:       bash
+Requires:       bash, coreutils, glibc, zlib
 
 %description
 Native WSM runtime executing the pinned my-lisp semantic authority.
