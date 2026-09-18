@@ -10,3 +10,4 @@ lib/macro.lisp
 lib/surface/semantic-registry.lisp
 my-lisp-constitution.lisp
 tests/fixtures/conformance.lisp
+tests/fixtures/conformance-transition-witness.lisp
