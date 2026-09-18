@@ -6,8 +6,9 @@ if [ -z "${G:-}" ]; then
   G=$(dirname "$(dirname "$JBIN")")
 fi
 
-CORPUS="$REPO/external/my-lisp/tests/fixtures/conformance.lisp"
-REGISTRY="$REPO/external/my-lisp/lib/surface/semantic-registry.lisp"
+MYLISP=$(bash "$REPO/scripts/resolve-my-lisp.sh")
+CORPUS="$MYLISP/tests/fixtures/conformance.lisp"
+REGISTRY="$MYLISP/lib/surface/semantic-registry.lisp"
 [ -f "$CORPUS" ] || { echo "missing upstream corpus: $CORPUS" >&2; exit 1; }
 [ -f "$REGISTRY" ] || { echo "missing upstream registry: $REGISTRY" >&2; exit 1; }
 
