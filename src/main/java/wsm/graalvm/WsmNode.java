@@ -283,12 +283,10 @@ public abstract class WsmNode extends com.oracle.truffle.api.nodes.Node {
          * migration_only_cond_truthy and can disappear with two-part cond.
          */
         private static boolean migrationOnlyTruthy(Object value) {
-            if (value instanceof Value.NumberValue number
-                    && number.denominator().equals(java.math.BigInteger.ONE)) {
-                if (number.numerator().equals(java.math.BigInteger.ZERO)) return false;
-                if (number.numerator().equals(java.math.BigInteger.ONE)) return true;
-            }
-
+            // Do NOT coerce ordinary exact numeric 0/1 here. Pinned conformance
+            // keeps ordinary numeric zero truthy, while exact-Q 0/1 decisions
+            // are mathematical data whose historical two-part consumers must
+            // migrate to explicit three-part result matching (upstream #613).
             String[] record = twoSymbolRecord(value);
             if (record != null) {
                 String kind = record[0];
