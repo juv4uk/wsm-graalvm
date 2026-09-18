@@ -31,5 +31,10 @@ fetch org.graalvm.truffle truffle-api truffle-api.jar
 fetch org.graalvm.polyglot polyglot polyglot.jar
 fetch org.graalvm.truffle truffle-runtime truffle-runtime.jar
 fetch org.graalvm.truffle truffle-dsl-processor truffle-dsl-processor.jar
+fetch org.graalvm.truffle truffle-compiler truffle-compiler.jar
+fetch org.graalvm.sdk collections collections.jar
+fetch org.graalvm.sdk jniutils jniutils.jar
+fetch org.graalvm.sdk nativeimage nativeimage.jar
+fetch org.graalvm.sdk word word.jar
 
 echo "fetch-third-party: GREEN ($V)"
