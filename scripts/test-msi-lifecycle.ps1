@@ -14,11 +14,11 @@ try {
   $oldMsi = Join-Path $tmp "wsm-graalvm-0.0.9-windows-x86_64.msi"
   if (-not (Test-Path $oldMsi)) { throw "old MSI missing: $oldMsi" }
 
-  Start-Process msiexec.exe -ArgumentList @("/i", $oldMsi, "/qn", "/norestart") -Wait -NoNewWindow
-  if ($LASTEXITCODE -ne 0) { throw "old MSI install failed: $LASTEXITCODE" }
+  $p = Start-Process msiexec.exe -ArgumentList @("/i", $oldMsi, "/qn", "/norestart") -Wait -PassThru
+  if ($p.ExitCode -ne 0) { throw "old MSI install failed: $($p.ExitCode)" }
 
-  Start-Process msiexec.exe -ArgumentList @("/i", $NewMsi, "/qn", "/norestart") -Wait -NoNewWindow
-  if ($LASTEXITCODE -ne 0) { throw "new MSI upgrade failed: $LASTEXITCODE" }
+  $p = Start-Process msiexec.exe -ArgumentList @("/i", $NewMsi, "/qn", "/norestart") -Wait -PassThru
+  if ($p.ExitCode -ne 0) { throw "new MSI upgrade failed: $($p.ExitCode)" }
 
   $release = Get-ChildItem -Path $root -Filter RELEASE.txt -Recurse -ErrorAction Stop | Select-Object -First 1
   $text = Get-Content $release.FullName -Raw
@@ -29,13 +29,8 @@ try {
   & (Join-Path $root "bin\wsm.cmd") $smoke
   if ($LASTEXITCODE -ne 0) { throw "installed WSM launcher failed: $LASTEXITCODE" }
 
-  $product = Get-CimInstance Win32_Product -Filter "Name='WSM/GraalVM'"
-  if ($product) {
-    & msiexec.exe /x $product.IdentifyingNumber /qn /norestart
-    if ($LASTEXITCODE -ne 0) { throw "MSI uninstall failed: $LASTEXITCODE" }
-  } else {
-    throw "installed WSM/GraalVM product not found for uninstall"
-  }
+  $p = Start-Process msiexec.exe -ArgumentList @("/x", $NewMsi, "/qn", "/norestart") -Wait -PassThru
+  if ($p.ExitCode -ne 0) { throw "MSI uninstall failed: $($p.ExitCode)" }
 
   if (Test-Path $root) { throw "install root remains after uninstall: $root" }
   Write-Host "WINDOWS-MSI-LIFECYCLE-OK"
