@@ -51,7 +51,7 @@ for path in "${required[@]}"; do
 done
 
 for path in "lib/canon.lisp" "lib/macro.lisp" "lib/core.lisp"; do
-  grep -Fq "\"$path\"" "$MANIFEST" || fail "bootstrap path absent from manifest: $path"
+  grep -Fq ""$path"" "$MANIFEST" || fail "bootstrap path absent from manifest: $path"
 done
 
 LOAD_ORDER=$(awk '
@@ -62,7 +62,7 @@ LOAD_ORDER=$(awk '
   }
 ' "$MANIFEST")
 
-EXPECTED_LOAD_ORDER=$(printf '%s\n'   "lib/surface/semantic-registry.lisp"   "lib/canon.lisp"   "lib/core.lisp"   "lib/macro.lisp")
+EXPECTED_LOAD_ORDER=$(printf '%s\n'   "lib/surface/semantic-registry.lisp"   "lib/canon.lisp"   "lib/macro.lisp"   "lib/core.lisp")
 
 [ "$LOAD_ORDER" = "$EXPECTED_LOAD_ORDER" ] || {
   echo "Expected bootstrap load order:" >&2
