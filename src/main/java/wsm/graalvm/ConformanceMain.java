@@ -21,7 +21,7 @@ public final class ConformanceMain {
         String registryPath = args[1];
         CanonRegistry registry = CanonRegistryLoader.load(registryPath);
 
-        Reader dataReader = new Reader(fixturesSource, true);
+        Reader dataReader = new Reader(fixturesSource);
         List<Object> records = dataReader.readAll();
 
 int total = 0, pass = 0, skip = 0; int totalSeen = 0;
@@ -41,6 +41,7 @@ int total = 0, pass = 0, skip = 0; int totalSeen = 0;
                     if (field.cdr instanceof Value.Pair tail1) val = tail1.car;
                     if (field.cdr instanceof Value.Str st) val = st;
                     if (field.cdr instanceof Reader.Token t) val = t;
+                    if (field.cdr instanceof Long lv) val = lv;
                     // data-mode reader keeps every plain atom as a Token (lexeme datum)
                     String k;
                     if (key instanceof Value.Symbol sk) k = sk.name;
