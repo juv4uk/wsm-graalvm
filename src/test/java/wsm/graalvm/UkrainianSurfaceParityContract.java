@@ -65,6 +65,20 @@ public final class UkrainianSurfaceParityContract {
         int candidateOnlyUnadmitted = 0;
         int candidateAlsoStable = 0;
 
+        // Candidate markers never create admission. A candidate spelling may
+        // legitimately reuse a spelling already admitted as stable or
+        // compatibility-only for another semantic row.
+        Set<String> globallyAdmittedSpellings = new HashSet<>();
+        for (int i = 1; i < top.size(); i++) {
+            List<?> row = list(top.get(i), "registry row");
+            for (int j = 1; j < row.size(); j++) {
+                Surface s = surface(row.get(j), "global registry surface");
+                if (!"—".equals(s.spelling()) && admitted(s.status())) {
+                    globallyAdmittedSpellings.add(s.spelling());
+                }
+            }
+        }
+
         for (int i = 1; i < top.size(); i++) {
             List<?> row = list(top.get(i), "registry row");
             require(!row.isEmpty(), "empty registry row");
@@ -74,8 +88,7 @@ public final class UkrainianSurfaceParityContract {
             require(id.equals(registry.semanticIdForToken(id)),
                     "opaque numeric ID route missing: " + id);
 
-            Set<String> admittedSpellings = new HashSet<>();
-            java.util.ArrayList<Surface> surfaces = new java.util.ArrayList<>();
+                java.util.ArrayList<Surface> surfaces = new java.util.ArrayList<>();
 
             for (int j = 1; j < row.size(); j++) {
                 Surface s = surface(row.get(j), id);
@@ -117,7 +130,7 @@ public final class UkrainianSurfaceParityContract {
                     // A candidate marker may reuse a spelling already admitted
                     // by another stable/compatibility marker on the SAME ID.
                     // That token is admitted by the stable peer, not by candidate status.
-                    if (admittedSpellings.contains(s.spelling())) {
+                    if (globallyAdmittedSpellings.contains(s.spelling())) {
                         require(id.equals(resolved),
                                 "candidate/stable shared spelling escaped its ID "
                                         + id + ": " + s.spelling());
