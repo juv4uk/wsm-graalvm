@@ -19,6 +19,12 @@
 - Об'єм орієнтовний: reader ~300–500 Java, ~20 AST-класів,
   environment+Canon ~150, LoopNode ~100, errors ~80 (≈1.5–2k рядків)
 
+## M1 — dependency closure
+- `refs/lisp-dependency-manifest.lisp` records the pinned upstream commit and the intentionally admitted M0/M1 Lisp source slice.
+- `scripts/check-lisp-dependency-manifest.sh` fails closed when the manifest pin diverges from the submodule gitlink or required Lisp sources are missing.
+- The dependency manifest is orthogonal to the semantic gates already on `main`: it does not copy semantic source and does not replace the Lisp-owned registry.
+- Full-tree classification remains tracked separately in issue #30; upstream `scripts/build-dependency-classification.lisp` is the source-confirmed fixture dependency analyzer.
+
 ## М2 — семантичні рішення субстрату (до/під час вузлів)
 - TCO: LoopNode у lambda-позиції vs trampoline — ADR
 - Пара: Java-object vs flat-array — ADR з ланцюгом representation
