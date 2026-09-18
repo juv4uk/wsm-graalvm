@@ -46,6 +46,9 @@ jobs:
           G=$(dirname "$(dirname "$(readlink -f "$(command -v java)")")")
           G=${G} bash scripts/build.sh
 
+      - name: Release packaging smoke test
+        run: bash scripts/test-package-release.sh
+
       - name: RED/green — conformance fixture string reader
         run: bash scripts/test-reader-string.sh
 
