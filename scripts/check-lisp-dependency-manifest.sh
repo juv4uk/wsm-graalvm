@@ -12,6 +12,21 @@ fail() { echo "dependency-manifest FAIL-CLOSED: $*" >&2; exit 1; }
 [ -d "$E" ] || fail "authority submodule missing: $E"
 [ -f "$E/.git" ] || fail "authority submodule not initialized"
 
+ALLOWLIST="$REPO/refs/sparse-authority-paths.txt"
+GENERATOR="$REPO/scripts/build-sparse-authority-allowlist.sh"
+
+[ -f "$ALLOWLIST" ] || fail "sparse allowlist missing: $ALLOWLIST"
+[ -f "$GENERATOR" ] || fail "sparse allowlist generator missing: $GENERATOR"
+
+GENERATED=$(mktemp)
+trap 'rm -f "$GENERATED"' EXIT
+bash "$GENERATOR" "$MANIFEST" > "$GENERATED"
+cmp -s "$GENERATED" "$ALLOWLIST" || {
+  echo "Committed sparse allowlist is stale:" >&2
+  diff -u "$ALLOWLIST" "$GENERATED" >&2 || true
+  fail "manifest-derived sparse allowlist drift"
+}
+
 PIN=$(git -C "$REPO" ls-files -s external/my-lisp | awk '{print $2}')
 HEAD=$(git -C "$E" rev-parse HEAD)
 [ -n "$PIN" ] || fail "cannot read external/my-lisp gitlink pin"
