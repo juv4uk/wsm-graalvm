@@ -61,6 +61,9 @@ jobs:
       - name: M1 — pinned Lisp dependency closure
         run: bash scripts/check-lisp-dependency-manifest.sh
 
+      - name: M1 — exact-Q primitive comparisons 1014/1015/1016
+        run: bash scripts/test-exact-q-comparison.sh
+
       - name: M1 — manifest bootstrap closure loader
         run: bash scripts/test-bootstrap-closure-loader.sh
 
