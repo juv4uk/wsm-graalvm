@@ -21,7 +21,7 @@ public final class SequentialMacroBootstrapContract {
               (lambda (x)
                 (cons (quote quote)
                       (cons x (quote ())))))
-            (defmacro wrap x
+            (defmacro wrap (x)
               (make-quoted x))
             (wrap radio)
             """;
