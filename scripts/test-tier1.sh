@@ -133,7 +133,7 @@ public final class Tier1Harness {
                         "expected error " + fixture.error() + " but expression succeeded");
             }
 
-            String probe = "(cond ((equal? (" + fixture.expr() + ") (quote "
+            String probe = "(cond ((equal? " + fixture.expr() + " (quote "
                     + fixture.expected()
                     + ")) (quote tier1-ok)) "
                     + "(t (undefined-symbol)))";
