@@ -22,7 +22,7 @@ jobs:
     secrets: inherit
 
   build:
-    name: Build ${ matrix.platform }
+    name: Build ${{ matrix.platform }}
     needs: release-gate
     strategy:
       fail-fast: true
@@ -32,12 +32,12 @@ jobs:
             runner: ubuntu-latest
           - platform: windows-x86_64
             runner: windows-latest
-    runs-on: ${ matrix.runner }
+    runs-on: ${{ matrix.runner }}
     steps:
       - name: Validate version
         shell: bash
         run: |
-          [[ "${ inputs.version }" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || {
+          [[ "${{ inputs.version }}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || {
             echo "version must be MAJOR.MINOR.PATCH"
             exit 1
           }
@@ -53,7 +53,7 @@ jobs:
           java-version: "25"
           distribution: "graalvm-community"
           version: "25.3.4.1"
-          github-token: ${ secrets.GITHUB_TOKEN }
+          github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build Linux Native Image
         if: matrix.platform == 'linux-x86_64'
@@ -76,7 +76,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          DIST="wsm-graalvm-${ inputs.version }-linux-x86_64"
+          DIST="wsm-graalvm-${{ inputs.version }}-linux-x86_64"
           rm -rf "$DIST"
           mkdir -p "$DIST/bin" "$DIST/my-lisp"
           cp native-wsm "$DIST/bin/wsm-graalvm"
@@ -92,7 +92,7 @@ EOF
           chmod +x "$DIST/bin/wsm-graalvm" "$DIST/bin/wsm-graalvm-run"
           git -C external/my-lisp archive --format=tar HEAD | tar -xf - -C "$DIST/my-lisp"
           PIN="$(git -C external/my-lisp rev-parse HEAD)"
-          printf 'wsm-graalvm %s\nmy-lisp %s\nplatform linux-x86_64\ngraalvm 25.3.4.1\n' "${ inputs.version }" "$PIN" > "$DIST/RELEASE.txt"
+          printf 'wsm-graalvm %s\nmy-lisp %s\nplatform linux-x86_64\ngraalvm 25.3.4.1\n' "${{ inputs.version }}" "$PIN" > "$DIST/RELEASE.txt"
           cp README.md LICENSE "$DIST/"
           tar -czf "$DIST.tar.gz" "$DIST"
 
@@ -100,7 +100,7 @@ EOF
         if: matrix.platform == 'windows-x86_64'
         shell: pwsh
         run: |
-          $Dist = "wsm-graalvm-${ inputs.version }-windows-x86_64"
+          $Dist = "wsm-graalvm-${{ inputs.version }}-windows-x86_64"
           Remove-Item -Recurse -Force -ErrorAction SilentlyContinue $Dist
           New-Item -ItemType Directory -Force "$Dist/bin", "$Dist/my-lisp" | Out-Null
           Copy-Item native-wsm.exe "$Dist/bin/wsm-graalvm.exe"
@@ -117,7 +117,7 @@ EOF
           git -C external/my-lisp archive --format=tar HEAD | tar -xf - -C "$Dist/my-lisp"
           $Pin = git -C external/my-lisp rev-parse HEAD
           @(
-            "wsm-graalvm ${ inputs.version }",
+            "wsm-graalvm ${{ inputs.version }}",
             "my-lisp $Pin",
             "platform windows-x86_64",
             "graalvm 25.3.4.1"
@@ -128,7 +128,7 @@ EOF
       - name: Upload release artifact
         uses: actions/upload-artifact@v4
         with:
-          name: ${ matrix.platform }
+          name: ${{ matrix.platform }}
           path: |
             wsm-graalvm-*.tar.gz
             wsm-graalvm-*.zip
@@ -143,7 +143,7 @@ EOF
       - name: Validate version
         shell: bash
         run: |
-          [[ "${ inputs.version }" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || exit 1
+          [[ "${{ inputs.version }}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || exit 1
 
       - name: Download platform artifacts
         uses: actions/download-artifact@v5
@@ -155,16 +155,16 @@ EOF
         shell: bash
         run: |
           set -euo pipefail
-          test -f "release-assets/wsm-graalvm-${ inputs.version }-linux-x86_64.tar.gz"
-          test -f "release-assets/wsm-graalvm-${ inputs.version }-windows-x86_64.zip"
+          test -f "release-assets/wsm-graalvm-${{ inputs.version }}-linux-x86_64.tar.gz"
+          test -f "release-assets/wsm-graalvm-${{ inputs.version }}-windows-x86_64.zip"
 
       - name: Publish tag and release
         env:
-          GH_TOKEN: ${ secrets.GITHUB_TOKEN }
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh release create "v${ inputs.version }" \
-            --target "${ github.sha }" \
-            --title "wsm-graalvm v${ inputs.version }" \
+          gh release create "v${{ inputs.version }}" \
+            --target "${{ github.sha }}" \
+            --title "wsm-graalvm v${{ inputs.version }}" \
             --generate-notes \
-            release-assets/wsm-graalvm-${ inputs.version }-linux-x86_64.tar.gz \
-            release-assets/wsm-graalvm-${ inputs.version }-windows-x86_64.zip
+            release-assets/wsm-graalvm-${{ inputs.version }}-linux-x86_64.tar.gz \
+            release-assets/wsm-graalvm-${{ inputs.version }}-windows-x86_64.zip
