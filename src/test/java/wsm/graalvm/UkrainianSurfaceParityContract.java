@@ -94,7 +94,6 @@ public final class UkrainianSurfaceParityContract {
                 Surface s = surface(row.get(j), id);
                 surfaces.add(s);
                 if (!"—".equals(s.spelling()) && admitted(s.status())) {
-                    admittedSpellings.add(s.spelling());
                 }
             }
 
