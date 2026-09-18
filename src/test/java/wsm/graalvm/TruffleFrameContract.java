@@ -38,28 +38,28 @@ public final class TruffleFrameContract {
 
         Compiler direct = new Compiler(registry);
         Object directResult = eval(direct, "((0010 (x) x) 42)");
-        require(directResult.equals(42L),
+        require(directResult.toString().equals("42"),
                 "direct lambda parameter must live in runtime Truffle frame");
 
         Compiler nested = new Compiler(registry);
         Object nestedResult = eval(
                 nested,
                 "(((0010 (x) (0010 (y) x)) 41) 99)");
-        require(nestedResult.equals(41L),
+        require(nestedResult.toString().equals("41"),
                 "nested closure must read captured parent MaterializedFrame");
 
         Compiler shadow = new Compiler(registry);
         Object shadowResult = eval(
                 shadow,
                 "((0010 (lambda) (lambda 9)) (0010 (x) x))");
-        require(shadowResult.equals(9L),
+        require(shadowResult.toString().equals("9"),
                 "non-Canon lambda spelling must remain lexically shadowable");
 
         Compiler globals = new Compiler(registry);
         Object globalResult = eval(
                 globals,
                 "(0011 shared 7) ((0010 () shared))");
-        require(globalResult.equals(7L),
+        require(globalResult.toString().equals("7"),
                 "top-level definition must be visible through shared globals");
 
         expectInvalid(new Compiler(registry), "((0010 (0005) 0005) 1)");

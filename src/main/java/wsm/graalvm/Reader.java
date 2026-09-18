@@ -151,7 +151,7 @@ public final class Reader {
         while (pos < text.length()) {
             char c = text.charAt(pos++);
             if (c == '"') {
-                return new Value.StringValue(out.toString());
+                return out.toString();
             }
             if (c != '\\') {
                 out.append(c);

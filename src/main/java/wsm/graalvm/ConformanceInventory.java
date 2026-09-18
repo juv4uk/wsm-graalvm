@@ -31,10 +31,8 @@ public final class ConformanceInventory {
         for (Object form : new Reader(source).readAll()) {
             Map<String, Object> fields = alist(form);
             Object fixtureTier = fields.get("tier");
-            if (!(fixtureTier instanceof Long n)) {
-                throw invalid("fixture tier must be an integer");
-            }
-            if (n != tier) continue;
+            long n2 = tierOf(fixtureTier);
+            if (n2 != tier) continue;
 
             String expr = requiredString(fields, "expr");
             String expected = optionalString(fields, "expected");
@@ -169,10 +167,17 @@ public final class ConformanceInventory {
         List<Long> out = new ArrayList<>();
         Object cursor = value;
         while (cursor instanceof Value.Pair cell) {
-            if (!(cell.car instanceof Long n)) {
+            if (cell.car instanceof Long n) {
+                out.add(n);
+            } else if (cell.car instanceof Value.NumberValue nv
+                    && nv.denominator().equals(java.math.BigInteger.ONE)) {
+                out.add(nv.numerator().longValueExact());
+            } else if (cell.car instanceof Reader.Token t) {
+                try { out.add(Long.parseLong(t.spelling())); }
+                catch (NumberFormatException e) { throw invalid(field + " must be an integer list"); }
+            } else {
                 throw invalid(field + " must be an integer list");
             }
-            out.add(n);
             cursor = cell.cdr;
         }
         if (cursor != Value.NIL) throw invalid(field + " must be a proper integer list");
@@ -188,4 +193,24 @@ public final class ConformanceInventory {
     private static WsmError invalid(String detail) {
         return new WsmError(WsmError.Kind.INVALID_FORM, detail);
     }
-}
+
+    private static long tierOf(Object v) {
+        if (v instanceof Long l) return l;
+        if (v instanceof Value.NumberValue nv) {
+            if (nv.denominator().signum() != 1 || !nv.denominator().equals(java.math.BigInteger.ONE))
+                throw invalid("fixture tier must be an integer, got " + v);
+            return nv.numerator().longValueExact();
+        }
+        if (v instanceof Reader.Token t) {
+            try { return Long.parseLong(t.spelling()); }
+            catch (NumberFormatException e) {
+                throw invalid("fixture tier must be an integer");
+            }
+        }
+        if (v instanceof java.lang.String st) {
+            try { return Long.parseLong(st.trim()); } catch (NumberFormatException e) {
+                throw invalid("fixture tier must be an integer");
+            }
+        }
+        throw invalid("fixture tier must be an integer");
+    }}

@@ -2,6 +2,16 @@
 # Deterministic Truffle/Polyglot API fetch for fresh clones and CI.
 set -euo pipefail
 
+# jar lives in the GraalVM distribution's bin, not the default PATH on CI
+if ! command -v jar >/dev/null 2>&1; then
+  if [ -n "${G:-}" ]; then
+    export PATH="$G/bin:$PATH"
+  else
+    JBIN=$(readlink -f "$(command -v java)")
+    export PATH="$(dirname "$JBIN"):$PATH"
+  fi
+fi
+
 REPO=$(cd "$(dirname "$0")/.." && pwd)
 OUT="$REPO/third_party"
 V="${GRAAL_ARTIFACT_VERSION:-25.3.4.1}"
@@ -23,7 +33,7 @@ fetch() {
   rm -f "$out" "$tmp"
   echo "fetch: $artifact@$V"
   curl --fail --location --silent --show-error     --retry 3 --retry-delay 1     "$M/$rel" -o "$tmp"
-  jar tf "$tmp" >/dev/null
+  unzip -qq -t "$tmp" >/dev/null
   mv "$tmp" "$out"
 }
 
