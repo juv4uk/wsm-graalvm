@@ -21,5 +21,6 @@ gate "4 one-way resolver" "$REPO/scripts/test-semantic-resolver.sh"
 gate "5 current Canon control" "$REPO/scripts/test-current-canon-control.sh"
 gate "6 closed ErrorKind vocabulary" "$REPO/scripts/test-error-kind.sh"
 gate "7 runtime Truffle lexical frames" "$REPO/scripts/test-lexical-frames.sh"
+gate "8 quote identity and apostrophe reader" "$REPO/scripts/test-quote-reader.sh"
 
 echo "SEMANTIC-GATES-GREEN: optimization may consume these admitted semantics; it may not redefine them."
