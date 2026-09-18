@@ -59,6 +59,7 @@ public final class Reader {
         }
         if (c == '(') { pos++; return readList(')'); }
         if (c == '[') { pos++; return readList(']'); }
+        if (c == '"') return readStringLiteral();
         return readAtom();
     }
 
@@ -93,6 +94,31 @@ public final class Reader {
                 || text.charAt(i) == '(' || text.charAt(i) == ')' || text.charAt(i) == ';';
     }
 
+    private Object readStringLiteral() {
+        StringBuilder sb = new StringBuilder();
+        pos++; // opening quote
+        while (pos < text.length()) {
+            char c = text.charAt(pos);
+            if (c == '\\' && pos + 1 < text.length()) {
+                char n = text.charAt(pos + 1);
+                switch (n) {
+                    case '\\', '"' -> sb.append(n);
+                    case 'n' -> sb.append('\n');
+                    case 't' -> sb.append('\t');
+                    default -> sb.append(n);
+                }
+                pos += 2;
+            } else if (c == '"') {
+                pos++;
+                return new Value.Str(sb.toString());
+            } else {
+                sb.append(c);
+                pos++;
+            }
+        }
+        throw new WsmError(WsmError.Kind.PARSE, "unterminated string literal");
+    }
+
     private Object readAtom() {
         int start = pos;
         while (pos < text.length() && text.charAt(pos) != '(' && text.charAt(pos) != ')'
@@ -102,6 +128,10 @@ public final class Reader {
         }
         String token = text.substring(start, pos);
         if (token.isEmpty()) throw new WsmError(WsmError.Kind.PARSE, "empty token at " + start);
+        if (token.isEmpty()) throw new WsmError(WsmError.Kind.PARSE, "empty token at " + start);
+        if (dataMode) {
+            // data-mode reader: strings already returned as Value.Str by readStringLiteral
+        }
         // exact integer only when no leading zero ambiguity ("0001" is a registry id token)
         if (!dataMode && token.matches("[+-]?[1-9]\\d*|0")) {
             return Long.parseLong(token);

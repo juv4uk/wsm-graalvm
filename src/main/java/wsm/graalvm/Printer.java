@@ -6,6 +6,7 @@ public final class Printer {
     public static String print(Object v) {
         if (v == Value.NIL) return "()";
         if (v instanceof Value.Symbol s) return s.name;
+        if (v instanceof Value.Str st) return '"' + st.value.replace("\\", "\\\\").replace("\"", "\\\"") + '"';
         if (v instanceof Long l) return Long.toString(l);
         if (v instanceof Value.Pair p) {
             StringBuilder sb = new StringBuilder("(");

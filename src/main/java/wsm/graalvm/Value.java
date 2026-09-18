@@ -10,6 +10,17 @@ public final class Value {
         @Override public String toString() { return "()"; }
     }
 
+    public static final class Str implements com.oracle.truffle.api.interop.TruffleObject {
+        public final String value;
+        public static final Str EMPTY = new Str("");
+        public Str(String value) { this.value = value; }
+        @Override public String toString() { return '"' + value + '"'; }
+        @Override public boolean equals(Object o) {
+            return o instanceof Str s && s.value.equals(value);
+        }
+        @Override public int hashCode() { return value.hashCode(); }
+    }
+
     public static final class Symbol implements com.oracle.truffle.api.interop.TruffleObject {
         public final String name;
         Symbol(String name) { this.name = name; }

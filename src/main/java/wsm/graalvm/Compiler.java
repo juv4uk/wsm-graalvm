@@ -37,6 +37,7 @@ public final class Compiler {
     public WsmNode compile(Object form, Environment env) {
         if (form instanceof Value.Pair p) return compileList(p, env);
         if (form instanceof Long l) return new WsmNode.ConstantNode(l);
+        if (form instanceof Value.Str st) return new WsmNode.ConstantNode(st);
         if (form instanceof Token token) return symbolNode(token.spelling(), env);
         if (form == Value.NIL) return new WsmNode.ConstantNode(Value.NIL);
         throw new WsmError(WsmError.Kind.INVALID_FORM, "unexpected reader form");
