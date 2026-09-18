@@ -44,7 +44,7 @@ public final class WsmLanguage extends TruffleLanguage<Void> {
             throw new IllegalArgumentException(
                     "missing system property wsm.registryPath (numeric registry authority)");
         }
-        CanonRegistry registry = new CanonRegistry().load(registryPath);
+        CanonRegistry registry = CanonRegistryLoader.load(registryPath);
         Compiler compiler = new Compiler(registry);
         List<WsmNode> forms = compiler.compileProgram(new Reader(code).readAll());
         ProgramBodyNode body = new ProgramBodyNode(forms);
