@@ -23,7 +23,6 @@ public final class Compiler {
 
     private static final String ID_LAMBDA = "0010";
     private static final String ID_DEFINE = "0011";
-    private static final String ID_DEFMACRO = "0012";
     private static final String ID_DEF_COMPAT = "1000";
     private static final String ID_EVAL = "1062";
 
@@ -145,7 +144,7 @@ public final class Compiler {
             for (int i = 0; i < args.size(); i++) {
                 syntaxArgs[i] = ReaderDatum.toValue(args.get(i));
             }
-            Object expanded = globals.macro(spelling).call(syntaxArgs);
+            Object expanded = globals.macro(spelling).expand(syntaxArgs);
             return compile(expanded, scope);
         }
 
@@ -188,7 +187,6 @@ public final class Compiler {
             }
             case ID_LAMBDA -> compileLambda(args, scope);
             case ID_DEFINE, ID_DEF_COMPAT -> compileDefine(args, scope);
-            case ID_DEFMACRO -> compileDefmacro(args, scope);
             case ID_COND -> compileCond(args, scope);
             case ID_EVAL -> compileEval(args, scope);
             default -> {
@@ -242,55 +240,6 @@ public final class Compiler {
         return new WsmNode.LambdaNode(
                 lambdaRoot.getCallTarget(),
                 !parentScope.isRoot());
-    }
-
-    private WsmNode compileDefmacro(List<Object> args, LexicalScope scope) {
-        if (!scope.isRoot()) {
-            throw new WsmError(
-                    WsmError.Kind.INVALID_FORM,
-                    ID_DEFMACRO + " must be defined at top level");
-        }
-        if (args.size() < 3) {
-            throw new WsmError(
-                    WsmError.Kind.ARITY,
-                    ID_DEFMACRO + " expects name, params and body");
-        }
-        if (!(args.get(0) instanceof Token nameToken)) {
-            throw new WsmError(
-                    WsmError.Kind.INVALID_FORM,
-                    ID_DEFMACRO + " binder must be a symbol");
-        }
-
-        String name = nameToken.spelling();
-        ensureBinderAllowed(name);
-        LambdaParams params = lambdaParams(args.get(1));
-        LexicalScope macroScope = scope.child();
-        int[] slots = new int[params.fixedNames().size()];
-        int restSlot = -1;
-
-        for (int i = 0; i < params.fixedNames().size(); i++) {
-            ensureBinderAllowed(params.fixedNames().get(i));
-            slots[i] = macroScope.declareLocal(params.fixedNames().get(i));
-        }
-        if (params.restName() != null) {
-            ensureBinderAllowed(params.restName());
-            restSlot = macroScope.declareLocal(params.restName());
-        }
-
-        List<WsmNode> body = new ArrayList<>();
-        for (Object form : args.subList(2, args.size())) {
-            body.add(compile(form, macroScope));
-        }
-
-        FrameDescriptor descriptor = macroScope.finishFrame();
-        LambdaRootNode root = new LambdaRootNode(
-                language,
-                descriptor,
-                slots,
-                restSlot,
-                body.toArray(WsmNode[]::new));
-        globals.defineMacro(name, new Closure(root.getCallTarget(), null));
-        return new WsmNode.ConstantNode(Value.NIL);
     }
 
     private WsmNode compileDefine(
@@ -356,7 +305,6 @@ public final class Compiler {
         return isCanonSyntax(id)
                 || ID_LAMBDA.equals(id)
                 || ID_DEFINE.equals(id)
-                || ID_DEFMACRO.equals(id)
                 || ID_DEF_COMPAT.equals(id);
     }
 
