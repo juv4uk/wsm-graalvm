@@ -69,7 +69,13 @@ public final class WriteToStringContract {
         require(((Value.StringValue) invoke(rational)).value.equals("1/2"),
                 "exact rational must be reduced canonically");
 
-        expectError(Value.NIL, WsmError.Kind.ARITY);
+        try {
+            SemanticMechanismTable.invoke("1061", new Object[0]);
+            throw new AssertionError("expected Arity");
+        } catch (WsmError error) {
+            require(error.kind == WsmError.Kind.ARITY,
+                    "expected Arity, got " + error.contractKind());
+        }
         expectError(new Value.SemanticRef("0010"), WsmError.Kind.TYPE);
 
         System.out.println("WRITE-TO-STRING-1061-CONTRACT-OK");
