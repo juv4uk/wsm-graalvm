@@ -12,14 +12,16 @@ public final class ReaderStringContract {
 
         Value.Pair outer = (Value.Pair) form;
         Value.Pair exprEntry = (Value.Pair) outer.car;
-        require(exprEntry.cdr instanceof String,
-                "expr value must be a Java String, got " + exprEntry.cdr.getClass().getName());
-        require(exprEntry.cdr.equals("(quote radio)"),
+        require(exprEntry.cdr instanceof Value.StringValue,
+                "expr value must be a language StringValue, got "
+                        + exprEntry.cdr.getClass().getName());
+        require(((Value.StringValue) exprEntry.cdr).value.equals("(quote radio)"),
                 "string literal contents must be preserved exactly");
 
         Object escaped = new Reader("\"line\\n\\t\\\"\\\\\"").readAll().get(0);
-        require(escaped instanceof String, "escaped literal must be String");
-        require(escaped.equals("line\n\t\"\\"),
+        require(escaped instanceof Value.StringValue,
+                "escaped literal must be a language StringValue");
+        require(((Value.StringValue) escaped).value.equals("line\n\t\"\\"),
                 "standard escapes must decode deterministically");
 
         System.out.println("READER-STRING-CONTRACT-OK");
