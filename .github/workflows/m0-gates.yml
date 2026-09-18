@@ -37,6 +37,15 @@ jobs:
           G=$(dirname "$(dirname "$(readlink -f "$(command -v java)")")")
           G=${G} bash scripts/build.sh
 
+      - name: M1 — dependency manifest
+        run: bash scripts/check-lisp-dependency-manifest.sh
+
+      - name: M1 — shared #39 variadic lambda evidence
+        run: bash scripts/test-variadic-lambda.sh
+
+      - name: M1 — shared #39 ErrorKind parity evidence
+        run: bash scripts/test-tier1-error-parity.sh
+
       - name: Gate 5 — (canon-conforms?) → current conformance record
         run: |
           MYLISP=external/my-lisp bash scripts/run-canon.sh 2>&1 | tee gate5.log
