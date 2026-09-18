@@ -86,6 +86,9 @@ jobs:
       - name: M1 — real Lisp bootstrap cutover
         run: bash scripts/test-real-lisp-bootstrap.sh
 
+      - name: M1 — real Lisp let raw expansion
+        run: bash scripts/test-let-raw-expansion.sh
+
       - name: RED/green — pinned variadic lambda F25/F26/F27
         run: bash scripts/test-variadic-lambda.sh
 
