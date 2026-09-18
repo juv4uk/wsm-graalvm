@@ -53,6 +53,9 @@ jobs:
       - name: RED/green — Tier-1 inventory contract
         run: bash scripts/test-conformance-inventory.sh
 
+      - name: RED/green — real pinned Tier-1 inventory
+        run: bash scripts/test-real-tier1-inventory.sh
+
       - name: Gate 5 — (canon-conforms?) → current conformance record
         run: |
           MYLISP=external/my-lisp bash scripts/run-canon.sh 2>&1 | tee gate5.log
