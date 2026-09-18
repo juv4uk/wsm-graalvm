@@ -9,6 +9,9 @@ my_lisp = os.environ["MY_LISP_PIN"]
 platform = os.environ["PLATFORM"]
 graal = os.environ.get("GRAALVM_VERSION", "unknown")
 
+epoch = int(os.environ.get("SOURCE_DATE_EPOCH", "0"))
+created = datetime.fromtimestamp(epoch, timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
+
 doc = {
     "spdxVersion": "SPDX-2.3",
     "dataLicense": "CC0-1.0",
@@ -16,7 +19,7 @@ doc = {
     "name": f"wsm-graalvm-{version}-{platform}",
     "documentNamespace": f"https://wsm-graalvm.invalid/spdx/{wsm_commit}/{platform}",
     "creationInfo": {
-        "created": datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z"),
+        "created": created,
         "creators": ["Tool: wsm-graalvm release tooling"],
     },
     "packages": [
