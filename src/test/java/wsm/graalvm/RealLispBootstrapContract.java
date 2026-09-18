@@ -100,6 +100,10 @@ public final class RealLispBootstrapContract {
         // 0012 peers before core.lisp was evaluated.
         String sourceLet = "(" + let + " ((cutover-value 42)) cutover-value)";
         Object sourceForm = oneForm(sourceLet);
+        Object literalLambdaResult = BootstrapRuntime.execute(
+                context,
+                "((lambda (cutover-value) cutover-value) 42)");
+        System.out.println("CUTOVER-LITERAL-LAMBDA=" + Printer.print(literalLambdaResult));
         Object sourceDatum = ReaderDatum.toValue(sourceForm);
         Object sourceHead = ((Value.Pair) sourceDatum).car;
         System.out.println("CUTOVER-LET-HEAD=" + Printer.print(sourceHead));
