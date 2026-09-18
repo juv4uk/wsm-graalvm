@@ -52,6 +52,11 @@ jobs:
           MYLISP=external/my-lisp bash scripts/run-canon.sh 2>&1 | tee gate5.log
           grep -q "(canon-conformance satisfied)" gate5.log
 
+      - name: M1 — shared definition frame across Context.eval
+        run: |
+          G=$(dirname "$(dirname "$(readlink -f "$(command -v java)")")")
+          G=$G bash scripts/test-context.sh external/my-lisp/lib/surface/semantic-registry.lisp
+
       - name: Gate 6+ — tier-1 conformance (next; no silent pass)
         if: always()
         run: |
