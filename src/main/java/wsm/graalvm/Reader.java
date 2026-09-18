@@ -80,6 +80,10 @@ public final class Reader {
                     new Value.Pair(datum, Value.NIL));
         }
 
+        if (c == '"') {
+            return readString();
+        }
+
         if (c == '(') {
             pos++;
             return readList(')');
@@ -139,6 +143,41 @@ public final class Reader {
                 || c == '(' || c == ')'
                 || c == '[' || c == ']'
                 || c == ';';
+    }
+
+    private String readString() {
+        pos++; // opening quote
+        StringBuilder out = new StringBuilder();
+
+        while (pos < text.length()) {
+            char c = text.charAt(pos++);
+            if (c == '"') return out.toString();
+
+            if (c == '\\') {
+                if (pos >= text.length()) {
+                    throw new WsmError(
+                            WsmError.Kind.PARSE,
+                            "unterminated string escape");
+                }
+                char escaped = text.charAt(pos++);
+                switch (escaped) {
+                    case 'n' -> out.append('\n');
+                    case 'r' -> out.append('\r');
+                    case 't' -> out.append('\t');
+                    case '"' -> out.append('"');
+                    case '\\' -> out.append('\\');
+                    default -> throw new WsmError(
+                            WsmError.Kind.PARSE,
+                            "unknown string escape: \\" + escaped);
+                }
+            } else {
+                out.append(c);
+            }
+        }
+
+        throw new WsmError(
+                WsmError.Kind.PARSE,
+                "unterminated string literal");
     }
 
     private Object readAtom() {
