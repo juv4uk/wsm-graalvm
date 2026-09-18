@@ -55,13 +55,13 @@ $product = Join-Path $root "product.wxs"
 </Wix>
 "@ | Set-Content -Encoding UTF8 $product
 
-& $candle -arch x64 "-dVersion=$Version" "-dPayloadDir=$PayloadDir" -out (Join-Path $root "product.wixobj") $product
+& $candle -ext WixUtilExtension -arch x64 "-dVersion=$Version" "-dPayloadDir=$PayloadDir" -out (Join-Path $root "product.wixobj") $product
 if ($LASTEXITCODE -ne 0) { throw "candle product failed: $LASTEXITCODE" }
-& $candle -arch x64 "-dVersion=$Version" "-dPayloadDir=$PayloadDir" -out (Join-Path $root "payload.wixobj") $harvest
+& $candle -ext WixUtilExtension -arch x64 "-dVersion=$Version" "-dPayloadDir=$PayloadDir" -out (Join-Path $root "payload.wixobj") $harvest
 if ($LASTEXITCODE -ne 0) { throw "candle payload failed: $LASTEXITCODE" }
 
 $msi = Join-Path $OutputDir "wsm-graalvm-$Version-windows-x86_64.msi"
-& $light -out $msi (Join-Path $root "product.wixobj") (Join-Path $root "payload.wixobj")
+& $light -ext WixUtilExtension -out $msi (Join-Path $root "product.wixobj") (Join-Path $root "payload.wixobj")
 if ($LASTEXITCODE -ne 0) { throw "light failed: $LASTEXITCODE" }
 
 Write-Host "MSI-OK $msi"
