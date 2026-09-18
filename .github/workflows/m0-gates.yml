@@ -61,3 +61,34 @@ jobs:
         run: |
           G=$(dirname "$(dirname "$(readlink -f "$(command -v java)")")")
           G=$G MYLISP=external/my-lisp bash scripts/test-tier1.sh
+
+
+  native-image-witness:
+    name: Native Image — real Canon witness
+    runs-on: ubuntu-latest
+    needs: build-and-gates
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          fetch-depth: 0
+
+      - name: Fetch my-lisp authority pin
+        run: |
+          git -C external/my-lisp fetch origin --quiet
+          SHA=$(git -C external/my-lisp rev-parse HEAD)
+          echo "my-lisp pinned at $SHA"
+
+      - name: Set up GraalVM CE + Native Image
+        uses: graalvm/setup-graalvm@v1
+        with:
+          java-version: '25'
+          distribution: 'graalvm-community'
+          version: '25.3.4.1'
+          components: 'native-image'
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and run native Canon witness
+        run: |
+          G=$(dirname "$(dirname "$(readlink -f "$(command -v java)")")")
+          G=$G MYLISP=external/my-lisp bash scripts/build-native.sh
