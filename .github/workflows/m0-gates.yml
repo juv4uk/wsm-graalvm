@@ -70,6 +70,9 @@ jobs:
       - name: M1 — Lisp-owned semantic 0012 macro peers
         run: bash scripts/test-macro-peer-installer.sh
 
+      - name: P0 — registry peer live-value snapshots
+        run: bash scripts/test-registry-peer-installer.sh
+
       - name: M1 — materialized DEFINE binder data-to-code
         run: bash scripts/test-materialized-define-binder.sh
 
