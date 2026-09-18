@@ -41,7 +41,7 @@ public final class WriteToStringContract {
 
         Value.StringValue escaped = (Value.StringValue) invoke(
                 new Value.StringValue("line\n\t\"\\"));
-        String escapedExpected =
+        String escapedExpected = "\"line\\n\\t\\\"\\\\\"";
                 "\"" + "line" + "\\n" + "\\t" + "\\"" + "\\\\" + "\"";
         require(escaped.value.equals(escapedExpected),
                 "string escaping must match canonical wire format: " + escaped.value);
