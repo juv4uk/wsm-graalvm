@@ -147,7 +147,7 @@ def main() -> int:
         "  launcher bootstraps canon -> macro -> core first\n\n"
         "Windows Command Prompt:\n"
         "  run.cmd path\\to\\program.lisp\n"
-        "  launcher bootstraps canon -> macro -> core first\n"
+        "  launcher bootstraps canon -> macro -> core first\n",
         encoding="utf-8",
     )
 
