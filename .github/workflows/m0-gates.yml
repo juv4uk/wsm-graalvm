@@ -15,6 +15,9 @@ jobs:
           submodules: recursive
           fetch-depth: 0
 
+      - name: P0 — fail closed on unexpected gitlinks/submodules
+        run: bash scripts/check-gitlink-topology.sh
+
       - name: Fetch my-lisp authority pin
         run: |
           git -C external/my-lisp fetch origin --quiet
@@ -57,6 +60,9 @@ jobs:
 
       - name: M1 — pinned Lisp dependency closure
         run: bash scripts/check-lisp-dependency-manifest.sh
+
+      - name: M1 — manifest bootstrap closure loader
+        run: bash scripts/test-bootstrap-closure-loader.sh
 
       - name: RED/green — pinned variadic lambda F25/F26/F27
         run: bash scripts/test-variadic-lambda.sh

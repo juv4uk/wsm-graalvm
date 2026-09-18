@@ -20,6 +20,28 @@ final class GlobalBindings {
     GlobalBindings() {
         declare("t");
         define("t", Value.symbol("t"));
+        // Host bootstrap mechanism, mirroring my-lisp macro_substrate install().
+        declare("make-macro");
+        define("make-macro", makeMacroHostBinding());
+    }
+
+    /** MakeMacro mechanism: language-owned defmacro, host-owned closure materializer. */
+    static WsmFunc makeMacroHostBinding() {
+        return args -> {
+            WsmError.arity(args, 1, "make-macro");
+            if (args[0] instanceof WsmFunc closure) return new MacroValue(closure);
+            throw new WsmError(
+                    WsmError.Kind.TYPE,
+                    "make-macro expects an evaluated closure");
+        };
+    }
+
+    /** Minimal Macro value delegating expansion to the captured closure. */
+    public static final class MacroValue
+            implements com.oracle.truffle.api.interop.TruffleObject {
+        private final WsmFunc expand;
+        MacroValue(WsmFunc expand) { this.expand = expand; }
+        public Object expand(Object[] syntaxArgs) { return expand.call(syntaxArgs); }
     }
 
     void declare(String name) {
