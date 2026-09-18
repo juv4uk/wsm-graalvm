@@ -1,57 +1,82 @@
 #!/usr/bin/env bash
-# Release build: JVM bundle (linux/windows portable) + optional native image.
-# Usage: bash scripts/build-release.sh <tag> [native]
+# Build and stage the distributable native-image release bundle.
+# Usage: bash scripts/build-release.sh <version> [native]
 set -euo pipefail
 
 REPO=$(cd "$(dirname "$0")/.." && pwd)
-TAG=${1:?usage: build-release.sh TAG [native]}
+VERSION=${1:?usage: build-release.sh VERSION [native]}
+MODE=${2:-native}
+MYLISP=${MYLISP:-$REPO/external/my-lisp}
 
-if [ -z "${G:-}" ]; then
-  JBIN=$(readlink -f "$(command -v java)")
-  G=$(dirname "$(dirname "$JBIN")")
+if [[ "${RUNNER_OS:-}" == "Windows" || "$(uname -s 2>/dev/null || true)" =~ ^(MINGW|MSYS|CYGWIN) ]]; then
+  PLATFORM="windows-x64"
+  BINARY_SUFFIX=".exe"
+else
+  PLATFORM="linux-x64"
+  BINARY_SUFFIX=""
 fi
 
 bash "$REPO/scripts/build.sh"
 
-STAGE=$(mktemp -d)
-trap 'rm -rf "$STAGE"' EXIT
-OUT="$REPO/dist"
-mkdir -p "$OUT"
-
-cp -r "$REPO/classes" "$STAGE/classes"
-mkdir  "$STAGE/third_party"
-for j in truffle-api polyglot truffle-runtime graalvm-collections nativeimage truffle-compiler; do
-  cp "$REPO/third_party/$j.jar" "$STAGE/third_party/"
-done
-mkdir -p "$STAGE/scripts"
-cp "$REPO/scripts/run-canon.sh" "$REPO/scripts/fetch-third-party.sh" "$REPO/scripts/build.sh" "$STAGE/scripts/" 2>/dev/null || true
-cp "$REPO/refs/RELEASE-$TAG.lisp" "$STAGE/refs-RELEASE.lisp" 2>/dev/null || true
-cp "$REPO/CHANGELOG.md" "$REPO/LICENSE" "$REPO/README.md" "$STAGE/" 2>/dev/null || true
-
-cat > "$STAGE/launch.sh" << 'INNER'
-#!/usr/bin/env bash
-# portable launcher: runs the substrate JVM from any directory.
-set -euo pipefail
-SELF="$(cd "$(dirname "$0")" && pwd)"
-JAVA=$JAVA_HOME/bin/java
-[ -x "$JAVA" ] || JAVA=$(command -v java)
-exec "$JAVA" --enable-native-access=ALL-UNNAMED \
-  -Dpolyglot.engine.WarnInterpreterOnly=false \
-  -Dwsm.registryPath="$SELF/external/my-lisp/lib/surface/semantic-registry.lisp" \
-  -Dtruffle.class.path.append="$SELF/classes" \
-  -cp "$SELF/classes:$SELF/third_party/truffle-api.jar:$SELF/third_party/polyglot.jar:$SELF/third_party/truffle-runtime.jar:$SELF/third_party/graalvm-collections.jar:$SELF/third_party/nativeimage.jar:$SELF/third_party/truffle-compiler.jar" \
-  wsm.graalvm.Main "${1:-$SELF/external/my-lisp/lib/canon.lisp}" \
-                   "$SELF/external/my-lisp/lib/surface/semantic-registry.lisp" \
-                   "$SELF"
-INNER
-chmod +x "$STAGE/launch.sh"
-
-OUT_MARK="jvm"
-if [ "${2:-}" = "native" ]; then
-  bash "$REPO/scripts/build-native.sh"
-  cp "$REPO/native-wsm" "$STAGE/native-wsm"
-  OUT_MARK="native+$jvm"
+if [ "$MODE" = "native" ]; then
+  MYLISP="$MYLISP" RUNNER_OS="${RUNNER_OS:-}" bash "$REPO/scripts/build-native.sh"
+else
+  echo "only native release bundles are supported" >&2
+  exit 2
 fi
 
-tar -czf "$OUT/wsm-graalvm-$TAG-$OUT_MARK.tar.gz" -C "$STAGE" .
-echo "release bundle: $OUT/wsm-graalvm-$TAG-$OUT_MARK.tar.gz"
+STAGE="${STAGE_DIR:-$REPO/.release-stage}"
+OUT="${OUT_DIR:-$REPO/dist}"
+rm -rf "$STAGE" "$OUT"
+mkdir -p "$STAGE/bin" "$STAGE/authority" "$OUT"
+
+BINARY="$REPO/native-wsm$BINARY_SUFFIX"
+[ -f "$BINARY" ] || { echo "missing native image: $BINARY" >&2; exit 1; }
+cp "$BINARY" "$STAGE/bin/"
+
+# Keep the runtime source input exact and traceable. These are consumer inputs,
+# not a second semantic authority.
+cp "$REPO/README.md" "$REPO/CHANGELOG.md" "$REPO/LICENSE" "$REPO/VERSION" "$REPO/refs/RELEASE-v0.1.0.lisp" "$REPO/refs/lisp-dependency-manifest.lisp" "$STAGE/"
+
+while IFS= read -r rel; do
+  [ -n "$rel" ] || continue
+  case "$rel" in
+    */**)
+      echo "wildcard path is not release-materializable: $rel" >&2
+      exit 1
+      ;;
+  esac
+  src="$MYLISP/$rel"
+  [ -f "$src" ] || { echo "missing pinned authority path: $rel" >&2; exit 1; }
+  mkdir -p "$STAGE/authority/$(dirname "$rel")"
+  cp "$src" "$STAGE/authority/$rel"
+done < "$REPO/refs/sparse-authority-paths.txt"
+
+if [ "$PLATFORM" = "windows-x64" ]; then
+  cp "$REPO/release/bin/wsm-graalvm.cmd" "$STAGE/bin/wsm-graalvm.cmd"
+else
+  cp "$REPO/release/bin/wsm-graalvm.sh" "$STAGE/bin/wsm-graalvm"
+  chmod +x "$STAGE/bin/wsm-graalvm"
+fi
+
+cat > "$STAGE/BUILD-METADATA.txt" <<EOF
+wsm-graalvm v$VERSION
+platform=$PLATFORM
+graalvm=${GRAALVM_VERSION:-25.3.4.1}
+my-lisp-pin=$(git -C "$MYLISP" rev-parse HEAD)
+native-binary=$(basename "$BINARY")
+EOF
+
+ARCHIVE_BASE="wsm-graalvm-$VERSION-$PLATFORM"
+if [ "$PLATFORM" = "linux-x64" ]; then
+  tar -czf "$OUT/$ARCHIVE_BASE.tar.gz" -C "$STAGE" .
+  sha256sum "$OUT/$ARCHIVE_BASE.tar.gz" | awk '{print $1}' > "$OUT/$ARCHIVE_BASE.tar.gz.sha256"
+else
+  powershell.exe -NoProfile -Command \
+    "Compress-Archive -Path '$STAGE/*' -DestinationPath '$OUT/$ARCHIVE_BASE.zip' -Force"
+  powershell.exe -NoProfile -Command \
+    "(Get-FileHash '$OUT/$ARCHIVE_BASE.zip' -Algorithm SHA256).Hash.ToLowerInvariant()" \
+    > "$OUT/$ARCHIVE_BASE.zip.sha256"
+fi
+
+echo "RELEASE-BUNDLE-OK $OUT/$ARCHIVE_BASE"
