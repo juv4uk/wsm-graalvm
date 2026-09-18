@@ -9,7 +9,7 @@ fi
 G=${G:?set G to graalvm-community bin parent}
 REPO=$(cd "$(dirname "$0")/.." && pwd)
 "$G/bin/javac" --release 25 \
-  -cp "$REPO/third_party/truffle-api.jar:$REPO/third_party/polyglot.jar" \
+  -cp "$REPO/third_party/truffle-api.jar:$REPO/third_party/polyglot.jar:$REPO/third_party/truffle-runtime.jar:$REPO/third_party/graalvm-collections.jar" \
   -d "$REPO/classes" \
   $(find "$REPO/src" -name '*.java')
 echo "BUILD-OK (interpreter classes; JIT comes from the GraalVM structural JIT)"
