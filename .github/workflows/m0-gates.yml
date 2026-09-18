@@ -52,6 +52,9 @@ jobs:
       - name: M1 — sequential Lisp macro/bootstrap
         run: bash scripts/test-sequential-bootstrap.sh
 
+      - name: M1 — semantic ID 1062 eval in current environment
+        run: bash scripts/test-semantic-eval.sh
+
       - name: M1 — pinned Lisp dependency closure
         run: bash scripts/check-lisp-dependency-manifest.sh
 
@@ -71,9 +74,6 @@ jobs:
 
       - name: M1 — canonical write-to-string semantic ID 1061
         run: bash scripts/test-write-to-string.sh
-
-      - name: M1 — semantic ID 1062 eval in current environment
-        run: bash scripts/test-semantic-eval.sh
 
       - name: RED/green contract tests (chatgpt/* migration)
         run: |
