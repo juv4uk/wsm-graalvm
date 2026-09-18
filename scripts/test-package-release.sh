@@ -32,7 +32,7 @@ run_case() {
 
   first=$(sha256sum "$TMP/$platform/dist/"*.zip | cut -d' ' -f1)
   unzip -tq "$TMP/$platform/dist/"*.zip
-  grep -q "0123456789012345678901234567890123456789" "$TMP/$platform/dist/"*.binary.sha256
+  unzip -p "$TMP/$platform/dist/"*.zip "MY_LISP_PIN.txt" | grep -qx "0123456789012345678901234567890123456789"
   rm -rf "$TMP/$platform/dist"
   mkdir -p "$TMP/$platform/dist"
   python "$REPO/scripts/package-release.py"     --version 9.9.9     --platform "$platform"     --binary "$binary"     --upstream "$TMP/upstream"     --upstream-pin "0123456789012345678901234567890123456789"     --repo-sha "fedcba9876543210fedcba9876543210fedcba98"     --out "$TMP/$platform/dist"
