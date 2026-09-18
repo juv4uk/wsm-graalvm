@@ -2,6 +2,7 @@ package wsm.graalvm;
 
 import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.nodes.Node.Children;
 import com.oracle.truffle.api.nodes.RootNode;
 
 /**
