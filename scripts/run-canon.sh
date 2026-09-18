@@ -7,6 +7,7 @@ if [ -z "${G:-}" ]; then
   G=$(dirname "$(dirname "$JBIN")")
 fi
 REPO=$(cd "$(dirname "$0")/.." && pwd)
+bash "$REPO/scripts/fetch-third-party.sh"
 MYLISP=$REPO  # authority files reachable via the same-structure symlinks at repo root
 if [ -f "$REPO/lib/canon.lisp" ]; then
   MYLISP=${MYLISP:-$REPO/../my-lisp}
