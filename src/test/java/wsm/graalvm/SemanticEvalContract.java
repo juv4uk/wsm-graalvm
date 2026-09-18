@@ -46,6 +46,14 @@ public final class SemanticEvalContract {
             require(
                     "radio".equals(text(datum)),
                     "1062 must execute Lisp datum without string round-trip, got: " + datum);
+
+            Object lambdaDatum =
+                    context.eval(
+                            "wsm",
+                            "(eval (quote ((lambda (x) x) 43)))");
+            require(
+                    "43".equals(text(lambdaDatum)),
+                    "1062 must compile materialized Lisp-symbol binders, got: " + lambdaDatum);
         }
 
         System.out.println("SEMANTIC-EVAL-1062-CONTRACT-OK");
