@@ -8,7 +8,7 @@ The release MUST be built from one immutable WSM commit and one exact `external/
 
 The gitlink is the authority reference. Release jobs MUST NOT silently replace it with a moving branch such as `origin/main`. A release build fails closed when the checked-out submodule HEAD differs from the gitlink recorded by the WSM commit.
 
-The package may contain the pinned `my-lisp` source required by the release bootstrap. It is provenance material and executable input, not a second semantic authority.
+The portable release payload and installable packages MUST carry the complete pinned `my-lisp` source tree (excluding nested `.git` metadata). It is provenance material and executable input, not a second semantic authority.
 
 ## First-release targets
 
@@ -25,7 +25,7 @@ ARM and additional operating systems are follow-up work and MUST NOT alter the v
 Every installable package contains, directly or through its platform launcher:
 - the Native Image WSM executable;
 - the canonical launcher/CLI entry point;
-- the exact pinned `my-lisp` authority source required by bootstrap;
+- the complete pinned `my-lisp` source tree required by bootstrap;
 - `RELEASE.txt` containing release version, WSM commit, my-lisp commit, target platform and GraalVM build version;
 - license and release documentation.
 
