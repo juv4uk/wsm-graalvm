@@ -23,6 +23,12 @@ public final class RealLispBootstrapContract {
                 .orElseThrow(() -> new AssertionError("no admitted surface for " + id));
     }
 
+    private static Object oneForm(String source) {
+        var forms = new Reader(source).readAll();
+        require(forms.size() == 1, "expected one reader form for: " + source);
+        return forms.get(0);
+    }
+
     public static void main(String[] args) throws Exception {
         if (args.length != 1) {
             throw new IllegalArgumentException(
@@ -92,9 +98,23 @@ public final class RealLispBootstrapContract {
         // let is Lisp-defined in pinned core.lisp. Running it here proves
         // the MacroValue returned by lib/macro.lisp was installed on the
         // 0012 peers before core.lisp was evaluated.
-        Object result = BootstrapRuntime.execute(
-                context,
-                "(" + let + " ((cutover-value 42)) cutover-value)");
+        String sourceLet = "(" + let + " ((cutover-value 42)) cutover-value)";
+        Object sourceForm = oneForm(sourceLet);
+        Object sourceDatum = ReaderDatum.toValue(sourceForm);
+        Object sourceHead = ((Value.Pair) sourceDatum).car;
+        System.out.println("CUTOVER-LET-HEAD=" + Printer.print(sourceHead));
+        System.out.println("CUTOVER-IS-MACRO=" + context.globals().isMacro(let));
+        Object sourceExpanded = context.globals().macro(let).expand(
+                new Object[] {
+                    ReaderDatum.toValue(oneForm("((cutover-value 42))")),
+                    ReaderDatum.toValue(oneForm("cutover-value"))
+                });
+        System.out.println("CUTOVER-MANUAL-EXPANDED=" + Printer.print(sourceExpanded));
+        Compiler sourceCompiler = new Compiler(context.registry(), null, context.globals());
+        Object manualResult = sourceCompiler.compile(sourceExpanded, sourceCompiler.root()).executeGeneric(null);
+        System.out.println("CUTOVER-MANUAL-RESULT=" + Printer.print(manualResult));
+
+        Object result = BootstrapRuntime.execute(context, sourceLet);
         require(
                 "42".equals(String.valueOf(result)),
                 "Lisp-owned let macro did not expand/evaluate on Graal: " + result);
