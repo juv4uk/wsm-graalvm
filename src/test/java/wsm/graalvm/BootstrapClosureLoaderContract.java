@@ -97,6 +97,49 @@ public final class BootstrapClosureLoaderContract {
                         error.getMessage().contains("Type"),
                         "wrong error kind for make-macro type: " + error.getMessage());
             }
+
+            Object evalQuoted = context.eval(
+                    "wsm",
+                    "(eval (quote (quote radio)))");
+            require(
+                    "radio".equals(valueText(evalQuoted)),
+                    "eval must execute readable datum through the existing compiler");
+
+            Object evalLexical = context.eval(
+                    "wsm",
+                    "(define eval-local "
+                            + "(lambda (x) (eval (quote x)))) "
+                            + "(eval-local 42)");
+            require(
+                    "42".equals(valueText(evalLexical)),
+                    "eval must see the current lexical frame");
+
+            Object evalClosure = context.eval(
+                    "wsm",
+                    "((eval (lambda (x) x)) 42)");
+            require(
+                    "42".equals(valueText(evalClosure)),
+                    "eval must pass through an already-evaluated Closure");
+
+            try {
+                context.eval("wsm", "(eval)");
+                throw new AssertionError("eval zero-argument call must fail with Arity");
+            } catch (org.graalvm.polyglot.PolyglotException error) {
+                require(
+                        error.getMessage().contains("Arity"),
+                        "wrong error kind for eval arity: " + error.getMessage());
+            }
+
+            try {
+                SemanticMechanismTable.invoke(
+                        "1062",
+                        new Object[] { new Value.SemanticRef("0010") });
+                throw new AssertionError("eval SemanticRef datum must fail with Type");
+            } catch (WsmError error) {
+                require(
+                        error.kind == WsmError.Kind.TYPE,
+                        "wrong error kind for eval Type: " + error.contractKind());
+            }
         }
 
         System.out.println("BOOTSTRAP-CLOSURE-LOADER-OK");
