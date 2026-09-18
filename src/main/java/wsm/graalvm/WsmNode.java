@@ -80,6 +80,13 @@ public abstract class WsmNode extends com.oracle.truffle.api.nodes.Node {
 
         @Override public Object executeGeneric(VirtualFrame frame) {
             Object form = datum.executeGeneric(frame);
+
+            // Upstream eval_values preserves already-materialized closures and
+            // macros as values. They are runtime objects, not source syntax.
+            if (form instanceof Closure || form instanceof GlobalBindings.MacroValue) {
+                return form;
+            }
+
             WsmNode executable = compiler.compile(form, scope);
             return executable.executeGeneric(frame);
         }
