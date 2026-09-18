@@ -54,7 +54,7 @@ final class GlobalBindings {
     }
 
     WsmFunc macro(String name) {
-        MacroDefinition macro = macros.get(name);
+        WsmFunc macro = macros.get(name);
         if (macro == null) {
             throw new WsmError(
                     WsmError.Kind.UNKNOWN_SYMBOL,
