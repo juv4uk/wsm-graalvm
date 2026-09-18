@@ -79,6 +79,14 @@ public final class LetRawExpansionContract {
                 "42".equals(Printer.print(result)),
                 "raw pinned let expansion must execute to 42, got: " + Printer.print(result));
 
+        Object sourceResult = BootstrapRuntime.execute(
+                context,
+                "(" + let + " ((cutover-value 42)) cutover-value)");
+        require(
+                "42".equals(Printer.print(sourceResult)),
+                "source-level Lisp-owned let must execute to 42, got: "
+                        + Printer.print(sourceResult));
+
         System.out.println("LET-RAW-EXPANSION-CONTRACT-OK");
     }
 }
