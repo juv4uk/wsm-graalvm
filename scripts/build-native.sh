@@ -14,7 +14,21 @@ rm -f "$REPO/native-wsm"
 "$G/bin/native-image"   --module-path "$MODULE_PATH"   --no-fallback   --initialize-at-build-time=wsm.graalvm.providers.WsmLanguageProvider   -H:IncludeResources='META-INF/services/com[.]oracle[.]truffle[.]api[.]provider[.]TruffleLanguageProvider'   -cp "$CP"   wsm.graalvm.Main   "$REPO/native-wsm"
 
 MYLISP=${MYLISP:-$REPO/external/my-lisp}
-"$REPO/native-wsm"   "$MYLISP/lib/canon.lisp"   "$MYLISP/lib/surface/semantic-registry.lisp"   "$REPO" 2>&1 | tee "$REPO/native-canon.log"
+CANON="$MYLISP/lib/canon.lisp"
+REGISTRY="$MYLISP/lib/surface/semantic-registry.lisp"
+
+[ -f "$CANON" ] || { echo "missing pinned canon: $CANON" >&2; exit 1; }
+[ -f "$REGISTRY" ] || { echo "missing pinned registry: $REGISTRY" >&2; exit 1; }
+
+# Match the JVM Canon acceptance path exactly: loading canon.lisp only defines
+# the witness and naturally returns the last closure. The acceptance program
+# must explicitly invoke the Lisp-owned observer.
+TMP=$(mktemp --suffix=.lisp)
+trap 'rm -f "$TMP"' EXIT
+cat "$CANON" > "$TMP"
+printf '\n(canon-conforms?)\n' >> "$TMP"
+
+"$REPO/native-wsm"   "$TMP"   "$REGISTRY"   "$MYLISP" 2>&1 | tee "$REPO/native-canon.log"
 
 grep -q "(canon-conformance satisfied)" "$REPO/native-canon.log"
 echo "NATIVE-IMAGE-CANON-OK"
