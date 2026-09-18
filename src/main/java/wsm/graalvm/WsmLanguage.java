@@ -45,7 +45,7 @@ public final class WsmLanguage extends TruffleLanguage<Void> {
                     "missing system property wsm.registryPath (numeric registry authority)");
         }
         CanonRegistry registry = CanonRegistryLoader.load(registryPath);
-        Compiler compiler = new Compiler(registry);
+        Compiler compiler = new Compiler(registry, this);
         List<WsmNode> forms = compiler.compileProgram(new Reader(code).readAll());
         ProgramBodyNode body = new ProgramBodyNode(forms);
         BodyRoot root = new BodyRoot(this, body);
@@ -64,7 +64,7 @@ public final class WsmLanguage extends TruffleLanguage<Void> {
         }
         @Override
         public Object execute(VirtualFrame frame) {
-            Object last = body.run();
+            Object last = body.run(frame);
             System.out.println("[wsm-graalvm M0] result: " + Printer.print(last));
             return last;
         }
