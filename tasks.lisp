@@ -49,6 +49,48 @@
    (issue . 28)
    (description . "Build a native executable containing the WSM Truffle provider, run the real external/my-lisp/lib/canon.lisp witness, and fail if language discovery or Canon conformance diverges.")))
 
+ ("GRAALVM-M1-LET-LEXICAL-CUTOVER" .
+  ((priority . 10.0) (capabilities . (graalvm truffle compiler frames macro-bootstrap)) (origin . wsm-graalvm)
+   (depends-on . (GRAALVM-M1-NATIVE-IMAGE-WITNESS))
+   (issue . 160)
+   (description . "Resolve source-level Lisp-owned let expansion losing lexical scope on Graal while the raw expansion witness is green. Fix only compiler/Truffle frame plumbing; no Java let semantics.")))
+
+ ("GRAALVM-P0-RELEASE-ARTIFACT-CONTRACT" .
+  ((priority . 10.0) (capabilities . (release packaging provenance windows deb rpm semver)) (origin . wsm-graalvm)
+   (depends-on . (GRAALVM-M1-LET-LEXICAL-CUTOVER))
+   (issue . 161)
+   (description . "Define one fail-closed v0.1.x artifact contract: native runtime, canonical launcher, exact pinned my-lisp authority slice, release metadata, checksums/provenance, FHS layout, and install lifecycle.")))
+
+ ("GRAALVM-P0-WINDOWS-INSTALLER" .
+  ((priority . 9.9) (capabilities . (windows native installer msi provenance)) (origin . wsm-graalvm)
+   (depends-on . (GRAALVM-P0-RELEASE-ARTIFACT-CONTRACT))
+   (issue . 162)
+   (description . "Produce the Windows x86_64 installable package around the native executable and canonical launcher, with clean install/upgrade/uninstall smoke coverage.")))
+
+ ("GRAALVM-P0-DEB-PACKAGE" .
+  ((priority . 9.8) (capabilities . (linux deb dpkg FHS packaging)) (origin . wsm-graalvm)
+   (depends-on . (GRAALVM-P0-RELEASE-ARTIFACT-CONTRACT))
+   (issue . 163)
+   (description . "Produce the Debian/Ubuntu x86_64 package from the same native release payload; validate install/run/upgrade/remove and provenance.")))
+
+ ("GRAALVM-P0-RPM-PACKAGE" .
+  ((priority . 9.8) (capabilities . (linux rpm rpmbuild FHS packaging)) (origin . wsm-graalvm)
+   (depends-on . (GRAALVM-P0-RELEASE-ARTIFACT-CONTRACT))
+   (issue . 164)
+   (description . "Produce the RPM-family x86_64 package from the same native release payload; validate install/run/upgrade/erase and provenance.")))
+
+ ("GRAALVM-P0-CROSS-PLATFORM-RELEASE" .
+  ((priority . 10.0) (capabilities . (release ci windows deb rpm linux native-image atomic-publish)) (origin . wsm-graalvm)
+   (depends-on . (GRAALVM-P0-WINDOWS-INSTALLER GRAALVM-P0-DEB-PACKAGE GRAALVM-P0-RPM-PACKAGE))
+   (issue . 165)
+   (description . "Unify Windows + DEB + RPM + portable release production from one immutable source revision, with package-level smoke tests, checksums, provenance/SBOM and atomic publication.")))
+
+ ("GRAALVM-P1-PACKAGE-REPOSITORIES" .
+  ((priority . 7.0) (capabilities . (apt rpm repository signing key-management upgrades rollback)) (origin . wsm-graalvm)
+   (depends-on . (GRAALVM-P0-CROSS-PLATFORM-RELEASE))
+   (issue . 166)
+   (description . "Post-v0.1.x distribution repositories for signed APT/RPM metadata, key rotation/revocation, upgrade policy, retention and rollback. Must not block first package artifacts.")))
+
  ("GRAALVM-M2-TCO-DECISION-ADR" .
   ((priority . 9.0) (capabilities . (truffle jvm tco lisp semantics adr)) (origin . my-lisp)
    (depends-on . (GRAALVM-M1-CONFORMANCE-TIER1))
