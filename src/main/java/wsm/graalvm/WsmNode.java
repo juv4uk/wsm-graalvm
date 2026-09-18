@@ -59,7 +59,7 @@ public abstract class WsmNode extends com.oracle.truffle.api.nodes.Node {
                 return SemanticMechanismTable.invoke(
                         semantic.id(),
                         argv,
-                        mechanismContext);
+                        mechanismContext.withFrame(frame));
             }
             if (f instanceof WsmFunc func) {
                 return func.call(argv);
