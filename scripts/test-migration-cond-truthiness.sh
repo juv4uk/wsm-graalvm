@@ -18,4 +18,11 @@ CP="$REPO/classes:$REPO/third_party/truffle-api.jar:$REPO/third_party/polyglot.j
 "$G/bin/javac" --release 25 -cp "$CP" -d "$TEST_CLASSES" \
   "$REPO/src/test/java/wsm/graalvm/MigrationCondTruthinessContract.java"
 
-"$G/bin/java" -cp "$TEST_CLASSES:$CP" wsm.graalvm.MigrationCondTruthinessContract
+REGISTRY="$REPO/external/my-lisp/lib/surface/semantic-registry.lisp"
+[ -f "$REGISTRY" ] || {
+  echo "missing pinned registry: $REGISTRY" >&2
+  exit 1
+}
+
+"$G/bin/java" -cp "$TEST_CLASSES:$CP" \
+  wsm.graalvm.MigrationCondTruthinessContract "$REGISTRY"
