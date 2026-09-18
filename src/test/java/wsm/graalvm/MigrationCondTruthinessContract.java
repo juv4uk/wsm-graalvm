@@ -63,10 +63,11 @@ public final class MigrationCondTruthinessContract {
         require(!twoPartSelects(Value.record("structural-relation", "distinct")),
                 "two-part cond: structural distinct must be false");
 
-        require(twoPartSelects(exact(1)), "two-part cond: exact 1 must be true");
-        require(!twoPartSelects(exact(0)), "two-part cond: exact 0 must be false");
+        require(twoPartSelects(exact(1)), "two-part cond: exact 1 remains truthy");
+        require(twoPartSelects(exact(0)),
+                "two-part cond: ordinary exact 0 must preserve published G8 truthiness");
         require(twoPartSelects(exact(2)),
-                "two-part cond: non-decision exact values retain legacy truthiness");
+                "two-part cond: ordinary exact values retain legacy truthiness");
         require(!twoPartSelects(Value.NIL), "two-part cond: NIL remains false");
         require(twoPartSelects(Value.record("other-domain", "value")),
                 "two-part cond: unrelated records retain legacy truthiness");
@@ -96,6 +97,16 @@ public final class MigrationCondTruthinessContract {
                     "right".equals(twoPart.toString()),
                     "source two-part cond must treat structural-kind pair as false: "
                             + twoPart);
+
+            Object zero =
+                    context.eval(
+                            "wsm",
+                            "(cond (0 (quote zero-truthy)) "
+                                    + "((quote fallback) (quote wrong)))");
+            require(
+                    "zero-truthy".equals(zero.toString()),
+                    "source two-part cond must preserve ordinary numeric zero truthiness: "
+                            + zero);
 
             Object canonical =
                     context.eval(
