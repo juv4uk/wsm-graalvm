@@ -61,6 +61,61 @@ public final class ConformanceInventory {
         return List.copyOf(selected);
     }
 
+    public static String emitLisp(List<Fixture> fixtures, long tier) {
+        StringBuilder out = new StringBuilder();
+
+        for (Fixture fixture : fixtures) {
+            out.append("((id . ").append(fixture.id()).append(')')
+                    .append(" (expr . ").append(quoted(fixture.expr())).append(')')
+                    .append(" (expected . ").append(optionalQuoted(fixture.expected())).append(')')
+                    .append(" (error . ").append(optionalQuoted(fixture.error())).append(')')
+                    .append(" (role . ").append(optionalQuoted(fixture.role())).append(')')
+                    .append(" (requires . ").append(symbolListSource(fixture.requires())).append(')')
+                    .append(" (since-contract . ").append(integerListSource(fixture.sinceContract())).append("))")
+                    .append('\n');
+        }
+
+        out.append("((summary . tier-inventory)")
+                .append(" (tier . ").append(tier).append(')')
+                .append(" (selected . ").append(fixtures.size()).append("))")
+                .append('\n');
+
+        return out.toString();
+    }
+
+    private static String optionalQuoted(String value) {
+        return value == null ? "()" : quoted(value);
+    }
+
+    private static String quoted(String value) {
+        StringBuilder out = new StringBuilder("\"");
+        for (int i = 0; i < value.length(); i++) {
+            char c = value.charAt(i);
+            switch (c) {
+                case '\n' -> out.append("\\n");
+                case '\r' -> out.append("\\r");
+                case '\t' -> out.append("\\t");
+                case '"' -> out.append("\\\"");
+                case '\\' -> out.append("\\\\");
+                default -> out.append(c);
+            }
+        }
+        return out.append('"').toString();
+    }
+
+    private static String symbolListSource(List<String> values) {
+        return "(" + String.join(" ", values) + ")";
+    }
+
+    private static String integerListSource(List<Long> values) {
+        StringBuilder out = new StringBuilder("(");
+        for (int i = 0; i < values.size(); i++) {
+            if (i > 0) out.append(' ');
+            out.append(values.get(i));
+        }
+        return out.append(')').toString();
+    }
+
     private static Map<String, Object> alist(Object value) {
         Map<String, Object> fields = new LinkedHashMap<>();
         Object cursor = value;
