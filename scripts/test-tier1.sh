@@ -162,9 +162,9 @@ public final class Tier1Harness {
                 continue;
             }
             switch (c) {
-                case 'n' -> out.append('\\n');
-                case 'r' -> out.append('\\r');
-                case 't' -> out.append('\\t');
+                case 'n' -> out.append('\n');
+                case 'r' -> out.append('\r');
+                case 't' -> out.append('\t');
                 case '"' -> out.append('"');
                 case '\\' -> out.append('\\');
                 default -> throw new IllegalArgumentException(
