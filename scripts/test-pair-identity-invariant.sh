@@ -35,3 +35,24 @@ rm -rf "$TEST_CLASSES"
 mkdir -p "$TEST_CLASSES"
 "$G/bin/javac" --release 25 -cp "$CP" -d "$TEST_CLASSES" src/test/java/wsm/graalvm/PairIdentityContract.java
 java -cp "$TEST_CLASSES:$CP" wsm.graalvm.PairIdentityContract
+if [ -n "${NATIVE_WSM:-}" ]; then
+  MYLISP=${MYLISP:-"$REPO/external/my-lisp"}
+  REGISTRY="$MYLISP/lib/surface/semantic-registry.lisp"
+  [ -x "$NATIVE_WSM" ] || { echo "missing native WSM executable: $NATIVE_WSM" >&2; exit 1; }
+
+  TMP_OK=$(mktemp --suffix=.lisp)
+  TMP_TYPE=$(mktemp --suffix=.lisp)
+  trap 'rm -f "$TMP_OK" "$TMP_TYPE"' EXIT
+  printf "%s\n" "(cond ((quote (pair-data)) (quote (pair-data)) (quote pair-structural-native-ok)))" > "$TMP_OK"
+  "$NATIVE_WSM" "$TMP_OK" "$REGISTRY" "$MYLISP" 2>&1 | tee /tmp/pair-native-structural.log
+  grep -q "pair-structural-native-ok" /tmp/pair-native-structural.log
+
+  printf "%s\n" "(eq (quote (pair-data)) (quote (pair-data)))" > "$TMP_TYPE"
+  if "$NATIVE_WSM" "$TMP_TYPE" "$REGISTRY" "$MYLISP" > /tmp/pair-native-eq.log 2>&1; then
+    echo "pair-identity-invariant FAIL: Native Image 0003 accepted pair operands" >&2
+    exit 1
+  fi
+  cat /tmp/pair-native-eq.log
+  grep -q "error-kind=Type" /tmp/pair-native-eq.log
+  echo "pair-identity-invariant Native Image PASS"
+fi
