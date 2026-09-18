@@ -250,13 +250,7 @@ public final class Compiler {
                     WsmError.Kind.ARITY,
                     ID_DEFINE + " expects 2 arguments");
         }
-        if (!(args.get(0) instanceof Token nameToken)) {
-            throw new WsmError(
-                    WsmError.Kind.INVALID_FORM,
-                    ID_DEFINE + " binder must be a symbol");
-        }
-
-        String name = nameToken.spelling();
+        String name = defineBinderName(args.get(0));
         ensureBinderAllowed(name);
 
         if (scope.isRoot()) {
@@ -275,6 +269,22 @@ public final class Compiler {
         return new WsmNode.LocalDefineNode(
                 slot,
                 compile(args.get(1), scope));
+    }
+
+    /**
+     * DEFINE may arrive directly from the reader or as Lisp data emitted by a
+     * macro/eval path. Both representations denote the same Lisp Symbol.
+     */
+    private static String defineBinderName(Object binder) {
+        if (binder instanceof Token token) {
+            return token.spelling();
+        }
+        if (binder instanceof Value.Symbol symbol) {
+            return symbol.name;
+        }
+        throw new WsmError(
+                WsmError.Kind.INVALID_FORM,
+                ID_DEFINE + " binder must be a symbol");
     }
 
     private void ensureBinderAllowed(String spelling) {
