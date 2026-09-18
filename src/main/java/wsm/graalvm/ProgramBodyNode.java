@@ -1,13 +1,14 @@
 package wsm.graalvm;
 
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.nodes.Node.Children;
 import java.util.List;
 
 final class ProgramBodyNode extends WsmNode {
-    private final List<WsmNode> forms;
+    @Children private final WsmNode[] forms;
 
     ProgramBodyNode(List<WsmNode> forms) {
-        this.forms = forms;
+        this.forms = forms.toArray(WsmNode[]::new);
     }
 
     Object run(VirtualFrame frame) {
