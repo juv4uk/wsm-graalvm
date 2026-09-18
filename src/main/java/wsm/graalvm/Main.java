@@ -6,7 +6,7 @@ import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
 
-/** M0 launcher: run a file (usually ../my-lisp/lib/canon.lisp) on the Truffle substrate. */
+/** M0 launcher: run a file (usually external/my-lisp/lib/canon.lisp (sparse authority checkout)) on the Truffle substrate. */
 public final class Main {
     public static void main(String[] args) throws IOException {
         if (args.length < 3) {
