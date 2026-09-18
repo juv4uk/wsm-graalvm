@@ -55,6 +55,7 @@ jobs:
           java-version: "25"
           distribution: "graalvm-community"
           version: "${{ env.GRAALVM_VERSION }}"
+          components: "native-image"
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Verify Native Image toolchain
