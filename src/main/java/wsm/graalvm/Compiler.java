@@ -189,16 +189,9 @@ public final class Compiler {
             case ID_DEFINE, ID_DEF_COMPAT -> compileDefine(args, scope);
             case ID_DEFMACRO -> compileDefmacro(args, scope);
             case ID_COND -> compileCond(args, scope);
-            default -> {
-                if (SemanticMechanismTable.supports(id)) {
-                    yield new WsmNode.CallNode(
-                            new WsmNode.ConstantNode(new Value.SemanticRef(id)),
-                            compileAll(args, scope));
-                }
-                throw new WsmError(
-                        WsmError.Kind.INVALID_FORM,
-                        "unroutable semantic id " + id);
-            }
+            default -> new WsmNode.CallNode(
+                    new WsmNode.ConstantNode(new Value.SemanticRef(id)),
+                    compileAll(args, scope));
         };
     }
 
