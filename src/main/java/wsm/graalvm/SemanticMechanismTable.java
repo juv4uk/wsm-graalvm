@@ -23,6 +23,7 @@ public final class SemanticMechanismTable {
             "0006", SemanticMechanismTable::invoke0006,
             "1016", SemanticMechanismTable::invoke1016,
             "1022", SemanticMechanismTable::invoke1022,
+            "1043", SemanticMechanismTable::invoke1043,
             "1052", SemanticMechanismTable::invoke1052
     );
 
@@ -83,6 +84,17 @@ public final class SemanticMechanismTable {
                 && a.denominator().equals(b.denominator())
                 ? Value.symbol("t")
                 : Value.NIL;
+    }
+
+    private static Object invoke1043(Object[] args) {
+        WsmError.arity(args, 2, "1043");
+        if (!(args[0] instanceof Value.StringValue left)
+                || !(args[1] instanceof Value.StringValue right)) {
+            throw new WsmError(
+                    WsmError.Kind.TYPE,
+                    "1043 expects two strings");
+        }
+        return new Value.StringValue(left.value + right.value);
     }
 
     private static Object invoke1052(Object[] args) {
