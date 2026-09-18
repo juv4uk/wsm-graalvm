@@ -1,0 +1,31 @@
+name: verify-204-deep-recursion-red
+
+on:
+  pull_request:
+    paths:
+      - 'src/test/java/wsm/graalvm/DeepRecursionParityContract.java'
+      - 'scripts/test-deep-recursion-parity.sh'
+      - '.github/workflows/verify-204-deep-recursion.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: verify-204-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  pinned-tail-recursion:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          submodules: recursive
+      - uses: graalvm/setup-graalvm@v1
+        with:
+          java-version: '25'
+          distribution: 'graalvm-community'
+          version: '25.3.4.1'
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Verify pinned authority
+        run: bash scripts/verify-authority.sh external/my-lisp
+      - name: RED — pinned 100000 tail-recursion witness
+        run: bash scripts/test-deep-recursion-parity.sh
