@@ -3,7 +3,6 @@ from __future__ import annotations
 
 import argparse
 import hashlib
-import os
 from pathlib import Path
 import shutil
 import stat
@@ -113,7 +112,8 @@ def main() -> int:
         encoding="utf-8",
     )
 
-    raw_binary = out / f"wsm-graalvm-{args.version}-{args.platform}" + (".exe" if args.platform == "windows-x86_64" else "")
+    raw_name = f"wsm-graalvm-{args.version}-{args.platform}" + (".exe" if args.platform == "windows-x86_64" else "")
+    raw_binary = out / raw_name
     shutil.copy2(pkg / "bin" / bin_name, raw_binary)
     zip_path = out / f"wsm-graalvm-{args.version}-{args.platform}.zip"
     with zipfile.ZipFile(zip_path, "w", compression=zipfile.ZIP_DEFLATED, compresslevel=9) as zf:
