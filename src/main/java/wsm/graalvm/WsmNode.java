@@ -283,12 +283,11 @@ public abstract class WsmNode extends com.oracle.truffle.api.nodes.Node {
          * migration_only_cond_truthy and can disappear with two-part cond.
          */
         private static boolean migrationOnlyTruthy(Object value) {
-            if (value instanceof Value.NumberValue number
-                    && number.denominator().equals(java.math.BigInteger.ONE)) {
-                if (number.numerator().equals(java.math.BigInteger.ZERO)) return false;
-                if (number.numerator().equals(java.math.BigInteger.ONE)) return true;
-            }
-
+            // Numeric data deliberately stays on legacy NIL/non-NIL truthiness
+            // here. Pinned conformance still requires ordinary exact 0 to be
+            // truthy. Exact-Q decision 0/1 has no representation provenance
+            // that would let this generic bridge distinguish it from ordinary
+            // rational data; see upstream my-lisp #613.
             String[] record = twoSymbolRecord(value);
             if (record != null) {
                 String kind = record[0];
