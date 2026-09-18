@@ -6,6 +6,12 @@
   ((priority . 9.5) (capabilities . (java truffle reader lisp canon)) (origin . my-lisp)
    (done . (t . "loc-anviksiki-1 2026-09-18, gen 1: (canon-conformance satisfied) produced from real pinned my-lisp/lib/canon.lisp on GraalVM CE 25.3.4.1 by the own reader/eval; commit f024247. Truffle-interpreter-only, registry consumed by numeric IDs, zero hardcoded spellings."))))
 
+ ("GRAALVM-M1-LEXICAL-FRAME-WITNESSES" .
+  ((priority . 9.2) (capabilities . (java truffle lexical closure frames tests)) (origin . wsm-graalvm)
+   (depends-on . (GRAALVM-M0-READER-SEVEN-PRIMITIVES))
+   (issue . 6)
+   (description . "Exercise current Truffle lexical frames with nested capture, shadowing, and multi-level capture; CI gate uses the real pinned registry and runtime path. Acceptance: 42, 7, 42 witnesses and no compile-time Environment value capture.")))
+
  ;; issue #11 Phase B (gates 6+): goal adjunct is the current fixture expectation
  ("GRAALVM-M1-CONFORMANCE-TIER1" .
   ((priority . 9.0) (capabilities . (truffle conformance lisp fixtures java)) (origin . wsm-graalvm)
