@@ -41,3 +41,7 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
       - name: Quote / apostrophe / dotted-data contract
         run: bash scripts/test-quote-contract.sh
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
