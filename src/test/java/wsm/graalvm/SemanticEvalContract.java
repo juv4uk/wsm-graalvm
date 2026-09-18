@@ -56,6 +56,22 @@ public final class SemanticEvalContract {
                     "43".equals(text(lambdaDatum)),
                     "1062 must compile materialized Lisp-symbol binders, got: " + lambdaDatum);
 
+            Object closureCall =
+                    context.eval(
+                            "wsm",
+                            "((eval (lambda (x) x)) 44)");
+            require(
+                    "44".equals(text(closureCall)),
+                    "1062 must preserve Closure values, got: " + closureCall);
+
+            Object macroValue =
+                    context.eval(
+                            "wsm",
+                            "(eval (make-macro (lambda (x) x)))");
+            require(
+                    macroValue instanceof GlobalBindings.MacroValue,
+                    "1062 must preserve Macro values, got: " + macroValue);
+
             try {
                 context.eval("wsm", "(eval)");
                 throw new AssertionError("1062 arity-0 must fail");
