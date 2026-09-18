@@ -28,7 +28,7 @@ mkdir -p "$TEST_CLASSES"
 "$JAVA_HOME/bin/javac" --release 25 -cp "$CP" -d "$TEST_CLASSES" "$REPO/src/test/java/wsm/graalvm/Tier1ErrorParityContract.java"
 
 set +e
-VALUE_REPORT=$(java -cp "$CP" -Dtruffle.class.path.append="$REPO/classes" wsm.graalvm.ConformanceMain "$CORPUS" "$REGISTRY" 2>&1)
+VALUE_REPORT=$(java -cp "$CP" -Dtruffle.class.path.append="$REPO/classes" wsm.graalvm.ConformanceMain "$CORPUS" "$REGISTRY" "$REPO" 2>&1)
 VALUE_STATUS=$?
 set -e
 printf '%s\n' "$VALUE_REPORT"
