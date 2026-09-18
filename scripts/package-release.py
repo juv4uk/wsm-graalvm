@@ -151,6 +151,24 @@ def main() -> int:
         encoding="utf-8",
     )
 
+    sbom_files = []
+    for path in sorted(p for p in package.rglob("*") if p.is_file()):
+        sbom_files.append({
+            "SPDXID": "SPDXRef-" + path.relative_to(package).as_posix().replace("/", "-").replace(".", "-"),
+            "fileName": path.relative_to(package).as_posix(),
+            "checksums": [{"algorithm": "SHA256", "checksumValue": sha256(path)}],
+        })
+    (package / "SBOM.spdx.json").write_text(
+        __import__("json").dumps({
+            "spdxVersion": "SPDX-2.3",
+            "SPDXID": "SPDXRef-DOCUMENT",
+            "name": f"wsm-graalvm-{args.version}-{args.platform}",
+            "dataLicense": "CC0-1.0",
+            "files": sbom_files,
+        }, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+
     assets = out / "assets"
     assets.mkdir(parents=True, exist_ok=True)
     raw_name = f"wsm-graalvm-{args.version}-{args.platform}" + (".exe" if args.platform == "windows-x86_64" else "")
