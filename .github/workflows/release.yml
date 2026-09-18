@@ -60,6 +60,14 @@ jobs:
           MYLISP: external/my-lisp
         run: bash scripts/build-release.sh "${GITHUB_REF_NAME#v}"
 
+      - name: Smoke-test staged Linux bundle
+        if: runner.os == 'Linux'
+        shell: bash
+        run: |
+          printf '(quote 42)\n' > "$RUNNER_TEMP/wsm-release-smoke.lisp"
+          dist/linux-x64/bin/wsm-graalvm "$RUNNER_TEMP/wsm-release-smoke.lisp" | tee "$RUNNER_TEMP/smoke.log"
+          grep -q "42" "$RUNNER_TEMP/smoke.log"
+
       - name: Package Linux bundle
         if: runner.os == 'Linux'
         shell: bash
@@ -69,6 +77,15 @@ jobs:
           BASE="wsm-graalvm-$VERSION-${{ matrix.platform }}"
           tar -C "dist/${{ matrix.platform }}" -czf "$BASE.tar.gz" .
           sha256sum "$BASE.tar.gz" | awk '{print $1}' > "$BASE.tar.gz.sha256"
+
+      - name: Smoke-test staged Windows bundle
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $smoke = Join-Path $env:TEMP "wsm-release-smoke.lisp"
+          Set-Content -Path $smoke -Value "(quote 42)"
+          & "dist\windows-x64\bin\wsm-graalvm.cmd" $smoke
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
       - name: Package Windows bundle
         if: runner.os == 'Windows'
