@@ -34,8 +34,8 @@ public final class BootstrapClosureLoaderContract {
         List<Path> expected =
                 List.of(
                         authority.resolve("lib/canon.lisp").normalize(),
-                        authority.resolve("lib/core.lisp").normalize(),
-                        authority.resolve("lib/macro.lisp").normalize());
+                        authority.resolve("lib/macro.lisp").normalize(),
+                        authority.resolve("lib/core.lisp").normalize());
 
         require(
                 executable.equals(expected),
