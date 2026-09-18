@@ -19,6 +19,12 @@
 - Об'єм орієнтовний: reader ~300–500 Java, ~20 AST-класів,
   environment+Canon ~150, LoopNode ~100, errors ~80 (≈1.5–2k рядків)
 
+## M1 — dependency closure (started)
+- `refs/lisp-dependency-manifest.lisp` records the pinned upstream commit and the current M0/M1 bootstrap slice.
+- `scripts/check-lisp-dependency-manifest.sh` verifies the manifest pin equals the submodule gitlink and all required Lisp sources are present.
+- Runtime bootstrap is explicit: `canon.lisp`, `macro.lisp`, and `core.lisp` are the current language-owned bootstrap slice; other libraries are not pulled in by directory scanning.
+- Full-tree classification remains open in issue #30; upstream `scripts/build-dependency-classification.lisp` is the source-confirmed fixture dependency evidence and is not copied into this repository.
+
 ## М2 — семантичні рішення субстрату (до/під час вузлів)
 - TCO: LoopNode у lambda-позиції vs trampoline — ADR
 - Пара: Java-object vs flat-array — ADR з ланцюгом representation
