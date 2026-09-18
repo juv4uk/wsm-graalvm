@@ -39,6 +39,9 @@ public abstract class WsmNode extends com.oracle.truffle.api.nodes.Node {
             Object f = fn.executeGeneric(frame);
             Object[] argv = new Object[args.length];
             for (int i = 0; i < args.length; i++) argv[i] = args[i].executeGeneric(frame);
+            if (f instanceof Value.SemanticRef semantic) {
+                return SemanticMechanismTable.invoke(semantic.id(), argv);
+            }
             if (f instanceof WsmFunc func) return func.call(argv);
             throw new WsmError(WsmError.Kind.TYPE, "not callable: " + Printer.print(f));
         }
@@ -94,6 +97,8 @@ public abstract class WsmNode extends com.oracle.truffle.api.nodes.Node {
                 throw new WsmError(WsmError.Kind.TYPE, "0003 expects two atoms");
             boolean same = x == y
                     || (x instanceof Value.Symbol sx && y instanceof Value.Symbol sy && sx.name.equals(sy.name))
+                    || (x instanceof Value.SemanticRef sx && y instanceof Value.SemanticRef sy
+                        && sx.id().equals(sy.id()))
                     || (x instanceof Long lx && y instanceof Long ly && lx.equals(ly));
             return same ? Value.identitySame() : Value.record("identity-relation", "distinct");
         }
@@ -131,6 +136,8 @@ public abstract class WsmNode extends com.oracle.truffle.api.nodes.Node {
             if (x instanceof Value.Symbol sx && y instanceof Value.Symbol sy)
                 return sx.name.equals(sy.name);
             if (x instanceof Long lx && y instanceof Long ly) return lx.equals(ly);
+            if (x instanceof Value.SemanticRef sx && y instanceof Value.SemanticRef sy)
+                return sx.id().equals(sy.id());
             if (x instanceof Value.Pair px && y instanceof Value.Pair py)
                 return equals(px.car, py.car) && equals(px.cdr, py.cdr);
             return false;
