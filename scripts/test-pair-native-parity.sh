@@ -33,6 +33,6 @@ if "$NATIVE_WSM" "$TYPE" "$REGISTRY" "$MYLISP" > /tmp/pair-native-eq.log 2>&1; t
   exit 1
 fi
 cat /tmp/pair-native-eq.log
-grep -q "error-kind=Type" /tmp/pair-native-eq.log
+grep -q "WsmError: Type: 0003 expects two atoms" /tmp/pair-native-eq.log
 
 echo "PAIR-NATIVE-PARITY-OK"
