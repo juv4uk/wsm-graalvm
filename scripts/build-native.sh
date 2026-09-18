@@ -22,7 +22,23 @@ fi
 bash "$REPO/scripts/build.sh"
 
 if [ "$WINDOWS_HOST" -eq 1 ]; then
-  NATIVE_IMAGE=$(command -v native-image 2>/dev/null || true)
+  G_POSIX="$(cygpath -u "${GRAALVM_HOME:-$G}")"
+  NATIVE_IMAGE=""
+  for candidate in \
+    "$G_POSIX/bin/native-image.cmd" \
+    "$G_POSIX/bin/native-image.exe" \
+    "$G_POSIX/bin/native-image"; do
+    if [ -f "$candidate" ]; then
+      NATIVE_IMAGE="$candidate"
+      break
+    fi
+  done
+  if [ -z "$NATIVE_IMAGE" ]; then
+    NATIVE_IMAGE=$(command -v native-image.cmd 2>/dev/null || true)
+  fi
+  if [ -z "$NATIVE_IMAGE" ]; then
+    NATIVE_IMAGE=$(command -v native-image 2>/dev/null || true)
+  fi
   REPO_NATIVE=$(cygpath -w "$REPO")
   CP="$REPO_NATIVE\\classes"
   MODULE_PATH="$REPO_NATIVE\\third_party\\truffle-api.jar;$REPO_NATIVE\\third_party\\truffle-runtime.jar;$REPO_NATIVE\\third_party\\truffle-compiler.jar;$REPO_NATIVE\\third_party\\polyglot.jar;$REPO_NATIVE\\third_party\\collections.jar;$REPO_NATIVE\\third_party\\jniutils.jar;$REPO_NATIVE\\third_party\\nativeimage.jar;$REPO_NATIVE\\third_party\\word.jar"
