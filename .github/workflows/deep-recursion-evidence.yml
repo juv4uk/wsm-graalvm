@@ -1,0 +1,29 @@
+name: deep-recursion-evidence
+
+on:
+  pull_request:
+    paths:
+      - 'src/test/java/wsm/graalvm/DeepRecursionProbe.java'
+      - 'scripts/probe-deep-recursion.sh'
+      - '.github/workflows/deep-recursion-evidence.yml'
+  workflow_dispatch:
+
+jobs:
+  observe:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          submodules: recursive
+          fetch-depth: 0
+
+      - name: Set up GraalVM CE
+        uses: graalvm/setup-graalvm@v1
+        with:
+          java-version: '25'
+          distribution: 'graalvm-community'
+          version: '25.3.4.1'
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Record current recursion boundary
+        run: bash scripts/probe-deep-recursion.sh
