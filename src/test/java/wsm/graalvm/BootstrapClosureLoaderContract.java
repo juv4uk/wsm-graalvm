@@ -2,6 +2,7 @@ package wsm.graalvm;
 
 import java.nio.file.Path;
 import java.util.List;
+import org.graalvm.polyglot.Context;
 
 /** Transport contract while current-source execution mechanisms land separately. */
 public final class BootstrapClosureLoaderContract {
@@ -45,6 +46,30 @@ public final class BootstrapClosureLoaderContract {
                     "bootstrap source is empty: " + source.path());
         }
 
-        System.out.println("BOOTSTRAP-CLOSURE-TRANSPORT-OK");
+        System.setProperty("wsm.registryPath", closure.registryPath().toString());
+        try (Context context = Context.newBuilder("wsm").build()) {
+            for (BootstrapClosureLoader.Source source : closure.executableSources()) {
+                context.eval("wsm", source.text());
+            }
+
+            Object identity = context.eval("wsm", "(identity 42)");
+            require("42".equals(identity.toString()),
+                    "pinned lib/core.lisp identity must execute, got: " + identity);
+
+            Object structural =
+                    context.eval(
+                            "wsm",
+                            "(equal? (quote (radio antenna)) "
+                                    + "(quote (radio antenna)))");
+            require("t".equals(structural.toString()),
+                    "pinned lib/core.lisp equal? must own execution, got: " + structural);
+
+            Object ordering = context.eval("wsm", "(<= 1 2 2 3)");
+            require("t".equals(ordering.toString()),
+                    "pinned lib/core.lisp <= must execute without Java mechanism, got: "
+                            + ordering);
+        }
+
+        System.out.println("BOOTSTRAP-CLOSURE-EXECUTION-OK");
     }
 }
