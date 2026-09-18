@@ -8,6 +8,7 @@
 ;; Semantic authority залишається в my-lisp; цей файл містить лише шляхи
 ;; до потрібних runtime witnesses усередині pinned submodule.
 (
+ (dependency-manifest . "refs/lisp-dependency-manifest.lisp")
  (registry     . "external/my-lisp/lib/surface/semantic-registry.lisp")
  (canon        . "external/my-lisp/lib/canon.lisp")
  (core         . "external/my-lisp/lib/core.lisp")
