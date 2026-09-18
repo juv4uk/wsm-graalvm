@@ -13,6 +13,7 @@ public final class ReaderDatum {
 
     public static Object toValue(Object form) {
         if (form == Value.NIL) return Value.NIL;
+        if (form instanceof String s) return new Value.StringValue(s);
         if (form instanceof Value.NumberValue || form instanceof Value.StringValue) return form;
         if (form instanceof Token token) return Value.symbol(token.spelling());
         if (form instanceof Value.Pair pair) {
