@@ -68,7 +68,7 @@ public final class WsmLanguage extends TruffleLanguage<Void> {
         }
         @Override
         public Object execute(VirtualFrame frame) {
-            Object last = body.run();
+            Object last = body.run(frame);
             System.out.println("[wsm-graalvm M0] result: " + Printer.print(last));
             return last;
         }
