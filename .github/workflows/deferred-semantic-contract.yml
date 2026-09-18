@@ -4,6 +4,7 @@ on:
   push:
     paths:
       - "src/main/java/wsm/graalvm/Compiler.java"
+      - "src/main/java/wsm/graalvm/WsmLanguage.java"
       - "src/main/java/wsm/graalvm/ReaderDatum.java"
       - "src/main/java/wsm/graalvm/Value.java"
       - "src/main/java/wsm/graalvm/SemanticMechanismTable.java"
@@ -13,6 +14,7 @@ on:
   pull_request:
     paths:
       - "src/main/java/wsm/graalvm/Compiler.java"
+      - "src/main/java/wsm/graalvm/WsmLanguage.java"
       - "src/main/java/wsm/graalvm/ReaderDatum.java"
       - "src/main/java/wsm/graalvm/Value.java"
       - "src/main/java/wsm/graalvm/SemanticMechanismTable.java"
