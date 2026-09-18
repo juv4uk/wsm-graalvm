@@ -20,7 +20,7 @@ import java.util.List;
         id = "wsm",
         name = "WSM my-lisp",
         implementationName = "wsm-graalvm",
-        version = "M0",
+        version = "0.1.0",
         defaultMimeType = "text/x-wsm",
         characterMimeTypes = { "text/x-wsm" }
 )
