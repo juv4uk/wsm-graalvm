@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-VERSION=\${1:?usage: package-rpm.sh VERSION PAYLOAD_DIR OUTPUT_DIR}
-PAYLOAD=\${2:?usage: package-rpm.sh VERSION PAYLOAD_DIR OUTPUT_DIR}
-OUT=\${3:?usage: package-rpm.sh VERSION PAYLOAD_DIR OUTPUT_DIR}
+VERSION=${1:?usage: package-rpm.sh VERSION PAYLOAD_DIR OUTPUT_DIR}
+PAYLOAD=${2:?usage: package-rpm.sh VERSION PAYLOAD_DIR OUTPUT_DIR}
+OUT=${3:?usage: package-rpm.sh VERSION PAYLOAD_DIR OUTPUT_DIR}
 PKG_VERSION=$(printf "%s" "$VERSION" | sed "s/^v//")
 
 command -v rpmbuild >/dev/null || { echo "rpmbuild is required" >&2; exit 1; }
