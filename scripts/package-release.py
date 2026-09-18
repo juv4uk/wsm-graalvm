@@ -83,7 +83,13 @@ def main() -> int:
         "#!/usr/bin/env sh\n"
         "set -eu\n"
         'HERE=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)\n'
-        'exec "$HERE/bin/wsm-graalvm" "$1" '
+        'TMP=$(mktemp "${TMPDIR:-/tmp}/wsm-graalvm-XXXXXX.lisp")\n'
+        'trap "rm -f \"$TMP\"" EXIT HUP INT TERM\n'
+        'cat "$HERE/authority/lib/canon.lisp" '
+        '"$HERE/authority/lib/macro.lisp" '
+        '"$HERE/authority/lib/core.lisp" '
+        '"$1" > "$TMP"\n'
+        'exec "$HERE/bin/wsm-graalvm" "$TMP" '
         '"$HERE/authority/lib/surface/semantic-registry.lisp" "$HERE/authority"\n',
         encoding="utf-8",
     )
@@ -93,7 +99,16 @@ def main() -> int:
         "@echo off\r\n"
         "setlocal\r\n"
         'set "HERE=%~dp0"\r\n'
-        '"%HERE%bin\\wsm-graalvm.exe" "%~1" "%HERE%authority\\lib\\surface\\semantic-registry.lisp" "%HERE%authority"\r\n',
+        'set "TMP=%TEMP%\\wsm-graalvm-%RANDOM%.lisp"\r\n'
+        '> "%TMP%" type nul\r\n'
+        'type "%HERE%authority\\lib\\canon.lisp" >> "%TMP%"\r\n'
+        'type "%HERE%authority\\lib\\macro.lisp" >> "%TMP%"\r\n'
+        'type "%HERE%authority\\lib\\core.lisp" >> "%TMP%"\r\n'
+        'type "%~1" >> "%TMP%"\r\n'
+        '"%HERE%bin\\wsm-graalvm.exe" "%TMP%" "%HERE%authority\\lib\\surface\\semantic-registry.lisp" "%HERE%authority"\r\n'
+        'set "RC=%ERRORLEVEL%"\r\n'
+        'del /q "%TMP%" >nul 2>nul\r\n'
+        'exit /b %RC%\r\n',
         encoding="utf-8",
     )
 
