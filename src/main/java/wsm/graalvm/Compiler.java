@@ -137,7 +137,8 @@ public final class Compiler {
         } else {
             return new WsmNode.CallNode(
                     compile(head, scope),
-                    compileAll(args, scope));
+                    compileAll(args, scope),
+                    new SemanticInvocationContext(language, registry, globals, scope, null));
         }
         if (globals.isMacro(spelling)) {
             Object[] syntaxArgs = new Object[args.size()];
@@ -159,7 +160,8 @@ public final class Compiler {
         if (scope.resolveLocal(spelling) != null || globals.isDeclared(spelling)) {
             return new WsmNode.CallNode(
                     symbolNode(spelling, scope),
-                    compileAll(args, scope));
+                    compileAll(args, scope),
+                    new SemanticInvocationContext(language, registry, globals, scope, null));
         }
 
         if (id != null) {
@@ -195,7 +197,8 @@ public final class Compiler {
                 // concern, not a compile-time semantic admission rule.
                 yield new WsmNode.CallNode(
                         new WsmNode.ConstantNode(new Value.SemanticRef(id)),
-                        compileAll(args, scope));
+                        compileAll(args, scope),
+                        new SemanticInvocationContext(language, registry, globals, scope, null));
             }
         };
     }
