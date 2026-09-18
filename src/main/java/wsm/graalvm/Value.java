@@ -91,6 +91,14 @@ public final class Value {
         }
     }
 
+    /**
+     * PAIR_IDENTITY_IS_NOT_STRUCTURAL_EQUALITY
+     *
+     * Deliberately inherits Object.equals/hashCode: Java object identity is a
+     * substrate representation fact, not Lisp structural equality. Deep pair
+     * comparison belongs to WsmNode.Structural.equals, while Canon 0003 EQ is
+     * atom-only and must continue to reject Pair operands.
+     */
     public static final class Pair implements com.oracle.truffle.api.interop.TruffleObject {
         public Object car;
         public Object cdr;
