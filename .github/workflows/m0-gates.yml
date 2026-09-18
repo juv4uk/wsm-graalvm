@@ -55,6 +55,9 @@ jobs:
           G=$(dirname "$(dirname "$(readlink -f "$(command -v java)")")")
           G=${G} bash scripts/build.sh
 
+      - name: M2 evidence — diagnostic tail-call parity witness
+        run: bash scripts/test-tail-call-witness.sh
+
       - name: P0 — registry-derived Ukrainian surface parity
         run: bash scripts/test-uk-surface-parity.sh
 
