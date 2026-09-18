@@ -1,0 +1,28 @@
+name: debug-cutover
+
+on:
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+concurrency:
+  group: debug-cutover-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  cutover:
+    if: github.event_name == 'workflow_dispatch' || github.head_ref == 'debug/cutover-value-source-path'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          submodules: recursive
+          fetch-depth: 0
+      - uses: graalvm/setup-graalvm@v1
+        with:
+          java-version: '25'
+          distribution: 'graalvm-community'
+          version: '25.3.4.1'
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Run focused cutover witness
+        run: bash scripts/test-real-lisp-bootstrap.sh
