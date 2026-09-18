@@ -61,28 +61,8 @@ ERROR_FAIL=$(number_from "$ERROR_SUMMARY" fail)
 
 [ "$TOTAL" -eq "$SELECTED" ] || { echo "TIER1-LEDGER FAIL: selected drift $TOTAL != $SELECTED" >&2; exit 1; }
 [ "$SKIPPED" -eq "$ERROR_FIXTURES" ] || { echo "TIER1-LEDGER FAIL: error fixture accounting drift $SKIPPED != $ERROR_FIXTURES" >&2; exit 1; }
-KNOWN_BLOCKED_PRESENT=0
-for fixture in $VALUE_KNOWN_BLOCKED_FIXTURES; do
-  if printf '%s\n' "$VALUE_REPORT" | grep -qE "gate6\\[FAIL\\] $fixture expr="; then
-    KNOWN_BLOCKED_PRESENT=$((KNOWN_BLOCKED_PRESENT + 1))
-  fi
-done
-
-UNKNOWN_FAIL=$((FAIL - KNOWN_BLOCKED_PRESENT))
-EFFECTIVE_PASS=$((PASS + KNOWN_BLOCKED_PRESENT))
-
-[ "$KNOWN_BLOCKED_PRESENT" -le "$(printf '%s\n' "$VALUE_KNOWN_BLOCKED_FIXTURES" | wc -w | tr -d ' ')" ] || {
-  echo "TIER1-LEDGER FAIL: known blocker accounting overflow $KNOWN_BLOCKED_PRESENT" >&2
-  exit 1
-}
-[ "$EFFECTIVE_PASS" -ge "$VALUE_PASS_MIN" ] || {
-  echo "TIER1-LEDGER REGRESSION: effective value pass $EFFECTIVE_PASS < $VALUE_PASS_MIN (raw=$PASS known-blocked=$KNOWN_BLOCKED_PRESENT)" >&2
-  exit 1
-}
-[ "$UNKNOWN_FAIL" -le "$VALUE_FAIL_MAX" ] || {
-  echo "TIER1-LEDGER REGRESSION: unknown value fail $UNKNOWN_FAIL > $VALUE_FAIL_MAX (raw=$FAIL known-blocked=$KNOWN_BLOCKED_PRESENT)" >&2
-  exit 1
-}
+[ "$PASS" -ge "$VALUE_PASS_MIN" ] || { echo "TIER1-LEDGER REGRESSION: value pass $PASS < $VALUE_PASS_MIN" >&2; exit 1; }
+[ "$FAIL" -le "$VALUE_FAIL_MAX" ] || { echo "TIER1-LEDGER REGRESSION: value fail $FAIL > $VALUE_FAIL_MAX" >&2; exit 1; }
 [ "$ERROR_TOTAL" -eq "$ERROR_FIXTURES" ] || { echo "TIER1-LEDGER FAIL: error total $ERROR_TOTAL != $ERROR_FIXTURES" >&2; exit 1; }
 [ "$ERROR_PASS" -ge "$ERROR_PASS_MIN" ] || { echo "TIER1-LEDGER REGRESSION: error pass $ERROR_PASS < $ERROR_PASS_MIN" >&2; exit 1; }
 [ "$ERROR_BLOCKED" -le "$ERROR_BLOCKED_MAX" ] || { echo "TIER1-LEDGER REGRESSION: error blocked $ERROR_BLOCKED > $ERROR_BLOCKED_MAX" >&2; exit 1; }
