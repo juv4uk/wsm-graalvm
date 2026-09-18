@@ -6,7 +6,8 @@ if [ -z "${G:-}" ]; then
   G=$(dirname "$(dirname "$JBIN")")
 fi
 
-MYLISP=$(bash "$REPO/scripts/resolve-my-lisp.sh")\nCORPUS="$MYLISP/tests/fixtures/conformance.lisp"
+MYLISP=$(bash "$REPO/scripts/resolve-my-lisp.sh")
+CORPUS="$MYLISP/tests/fixtures/conformance.lisp"
 [ -f "$CORPUS" ] || {
   echo "missing upstream corpus: $CORPUS" >&2
   exit 1
