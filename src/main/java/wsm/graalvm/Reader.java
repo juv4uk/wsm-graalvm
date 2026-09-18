@@ -200,8 +200,13 @@ public final class Reader {
             return Value.NumberValue.integer(new java.math.BigInteger(token));
         }
         if (token.matches("[+-]?(?:\\d+\\.\\d*|\\.\\d+)(?:[eE][+-]?\\d+)?")
+                || token.matches("[+-]?(?:\\d+,\\d*|,\\d+)(?:[eE][+-]?\\d+)?")
                 || token.matches("[+-]?[1-9]\\d*(?:[eE][+-]?\\d+)")) {
-            return Value.NumberValue.decimal(token);
+            // Contract M0 admits comma-decimal spelling as an exact rational.
+            // Normalize only at the exact NumberValue boundary; ordinary
+            // comma-bearing atoms remain symbols because they do not match
+            // the complete decimal grammar above.
+            return Value.NumberValue.decimal(token.replace(',', '.'));
         }
         if (token.matches("[+-]?\\d+/\\d+")) {
             String[] parts = token.split("/", -1);
