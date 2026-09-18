@@ -60,14 +60,14 @@ public final class WsmLanguage extends TruffleLanguage<WsmContext> {
     }
 
     static final class BodyRoot extends RootNode {
-        private final ProgramBodyNode body;
-        BodyRoot(WsmLanguage language, ProgramBodyNode body) {
+        private final WsmNode body;
+        BodyRoot(WsmLanguage language, WsmNode body) {
             super(language);
             this.body = body;
         }
         @Override
         public Object execute(VirtualFrame frame) {
-            Object last = body.run(frame);
+            Object last = body.executeGeneric(frame);
             System.out.println("[wsm-graalvm M0] result: " + Printer.print(last));
             return last;
         }
