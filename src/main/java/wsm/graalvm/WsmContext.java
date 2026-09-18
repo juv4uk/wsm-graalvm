@@ -2,7 +2,8 @@ package wsm.graalvm;
 
 /** Runtime state owned by one Truffle language context. */
 final class WsmContext {
-    private final CanonRegistry registry;
+    private final String registryPath;
+    private CanonRegistry registry;
     private final GlobalBindings globals;
 
     WsmContext(String registryPath) {
@@ -10,10 +11,20 @@ final class WsmContext {
             throw new IllegalArgumentException(
                     "missing system property wsm.registryPath (numeric registry authority)");
         }
-        this.registry = CanonRegistryLoader.load(registryPath);
+        this.registryPath = registryPath;
         this.globals = new GlobalBindings();
     }
 
-    CanonRegistry registry() { return registry; }
+    void initialize() {
+        this.registry = CanonRegistryLoader.load(registryPath);
+    }
+
+    CanonRegistry registry() {
+        if (registry == null) {
+            throw new IllegalStateException("WSM context registry is not initialized");
+        }
+        return registry;
+    }
+
     GlobalBindings globals() { return globals; }
 }
