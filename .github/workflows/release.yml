@@ -1,4 +1,4 @@
-name: release-integrator
+name: release-build
 
 on:
   pull_request:
