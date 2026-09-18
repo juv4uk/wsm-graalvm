@@ -3,7 +3,13 @@ package wsm.graalvm;
 import java.math.BigInteger;
 import org.graalvm.polyglot.Context;
 
-/** Focused witness for the migration-only two-part cond bridge. */
+/**
+ * Focused witness for the migration-only two-part cond bridge.
+ *
+ * The expected mapping is copied from pinned my-lisp's migration-only
+ * compatibility path; this test deliberately does not define a new truth
+ * model for canonical three-part cond.
+ */
 public final class MigrationCondTruthinessContract {
     private static final Object SELECTED = Value.symbol("selected");
 
