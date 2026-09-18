@@ -41,8 +41,10 @@ public final class WriteToStringContract {
 
         Value.StringValue escaped = (Value.StringValue) invoke(
                 new Value.StringValue("line\n\t\"\\"));
-        require(escaped.value.equals(""line\\n\\t\\\"\\\\""),
-                "string escaping must match canonical wire format");
+        String escapedExpected =
+                "\"" + "line" + "\\n" + "\\t" + "\\"" + "\\\\" + "\"";
+        require(escaped.value.equals(escapedExpected),
+                "string escaping must match canonical wire format: " + escaped.value);
 
         Object proper = Value.list(List.of(
                 Value.symbol("alpha"),
