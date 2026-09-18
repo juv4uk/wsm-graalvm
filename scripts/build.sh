@@ -19,6 +19,11 @@ fi
 G="${G%/}"
 [ -x "$G/bin/javac" ] || { echo "missing GraalVM javac: $G/bin/javac" >&2; exit 1; }
 
+# Local/CI fallback used by the repository's pinned GraalVM environment.
+if [ ! -x "$G/bin/javac" ] && [ -d /home/agents/graalvm-community-25.3.4.1+1.1 ]; then
+  G=/home/agents/graalvm-community-25.3.4.1+1.1
+fi
+
 bash "$REPO/scripts/fetch-third-party.sh"
 
 case "$(uname -s 2>/dev/null || true)" in
