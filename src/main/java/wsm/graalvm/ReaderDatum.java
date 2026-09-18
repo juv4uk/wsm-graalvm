@@ -11,6 +11,30 @@ import wsm.graalvm.Reader.Token;
 public final class ReaderDatum {
     private ReaderDatum() {}
 
+    /**
+     * Converts a language datum back into the reader-shaped syntax objects
+     * consumed by Compiler. This is the inverse transport boundary used by
+     * value-level eval; it performs no evaluation or spelling policy.
+     */
+    public static Object toReaderForm(Object value) {
+        if (value == Value.NIL
+                || value instanceof Value.NumberValue
+                || value instanceof Value.StringValue) {
+            return value;
+        }
+        if (value instanceof Value.Symbol symbol) {
+            return new Token(symbol.name);
+        }
+        if (value instanceof Value.Pair pair) {
+            return new Value.Pair(
+                    toReaderForm(pair.car),
+                    toReaderForm(pair.cdr));
+        }
+        throw new WsmError(
+                WsmError.Kind.TYPE,
+                "eval expects a readable Lisp datum");
+    }
+
     public static Object toValue(Object form) {
         if (form == Value.NIL) return Value.NIL;
         if (form instanceof Value.NumberValue || form instanceof Value.StringValue) return form;
