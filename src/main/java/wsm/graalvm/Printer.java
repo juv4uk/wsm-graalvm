@@ -35,8 +35,8 @@ public final class Printer {
                 case '\n' -> out.append("\\n");
                 case '\r' -> out.append("\\r");
                 case '\t' -> out.append("\\t");
-                case '"' -> out.append("\\"");
-                case '\\' -> out.append("\\\\");
+                case '"' -> out.append('\\').append('"');
+                case '\\' -> out.append('\\').append('\\');
                 default -> out.append(value.charAt(i));
             }
         }
