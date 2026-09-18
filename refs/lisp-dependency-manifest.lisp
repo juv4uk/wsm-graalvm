@@ -15,14 +15,14 @@
 
   (bootstrap-required
     ("lib/canon.lisp" . (gate M0))
-    ("lib/core.lisp" . (gate M1))
-    ("lib/macro.lisp" . (gate M1)))
+    ("lib/macro.lisp" . (gate M1))
+    ("lib/core.lisp" . (gate M1)))
 
   (load-order
     ("lib/surface/semantic-registry.lisp")
     ("lib/canon.lisp")
-    ("lib/core.lisp")
-    ("lib/macro.lisp"))
+    ("lib/macro.lisp")
+    ("lib/core.lisp"))
 
   (witness
     ("tests/fixtures/conformance.lisp" . (gate M1))
