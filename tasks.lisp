@@ -12,6 +12,20 @@
    (issue . 30)
    (description . "Declare and fail-closed-check the pinned my-lisp M0/M1 bootstrap closure without copying semantic source. Full-tree classification remains a separate follow-up.")))
 
+ ("GRAALVM-M1-DEPENDENCY-CLASSIFICATION-EVIDENCE" .
+  ((priority . 9.0) (capabilities . (lisp dependency graph evidence ci)) (origin . my-lisp)
+   (depends-on . (GRAALVM-M1-DEPENDENCY-MANIFEST))
+   (issue . 30)
+   (upstream-generator . "juv4uk/my-lisp@scripts/build-dependency-classification.lisp")
+   (description . "Record the source-confirmed pinned dependency-classification artifact as downstream evidence. This does not replace the eventual full reachable *.lisp file classification or introduce a second semantic authority.")))
+
+ ("GRAALVM-M1-NUMERIC-SEMANTIC-ID-HEAD-RULE" .
+  ((priority . 9.4) (capabilities . (lisp semantic-id reader compiler coordination)) (origin . my-lisp)
+   (depends-on . (GRAALVM-M1-CONFORMANCE-TIER1))
+   (issue . 47)
+   (upstream-issue . "juv4uk/my-lisp#611")
+   (description . "Do not invent a downstream numeric-ID-vs-integer rule. Consume the Lisp-owned rule for executable numeric semantic IDs above 0999 once ratified; until then keep ordinary exact integer data semantics unchanged.")))
+
  ("GRAALVM-M1-CONTEXT-OWNED-RUNTIME-STATE" .
   ((priority . 9.2) (capabilities . (java truffle context frames lisp)) (origin . my-lisp)
    (depends-on . (GRAALVM-M0-READER-SEVEN-PRIMITIVES))

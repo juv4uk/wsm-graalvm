@@ -9,6 +9,7 @@
 ;; до потрібних runtime witnesses усередині pinned submodule.
 (
  (dependency-manifest . "refs/lisp-dependency-manifest.lisp")
+ (dependency-classification . "refs/upstream-dependency-classification.lisp")
  (registry     . "external/my-lisp/lib/surface/semantic-registry.lisp")
  (canon        . "external/my-lisp/lib/canon.lisp")
  (core         . "external/my-lisp/lib/core.lisp")
