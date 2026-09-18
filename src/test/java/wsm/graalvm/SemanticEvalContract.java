@@ -1,6 +1,7 @@
 package wsm.graalvm;
 
 import org.graalvm.polyglot.Context;
+import org.graalvm.polyglot.PolyglotException;
 
 /** Focused contract for semantic ID 1062: EVAL in the current WSM environment. */
 public final class SemanticEvalContract {
@@ -54,6 +55,16 @@ public final class SemanticEvalContract {
             require(
                     "43".equals(text(lambdaDatum)),
                     "1062 must compile materialized Lisp-symbol binders, got: " + lambdaDatum);
+
+            try {
+                context.eval("wsm", "(eval)");
+                throw new AssertionError("1062 arity-0 must fail");
+            } catch (PolyglotException error) {
+                require(
+                        error.getMessage().contains("Arity")
+                                || error.getMessage().contains("expects 1 argument"),
+                        "1062 arity must preserve language error, got: " + error.getMessage());
+            }
         }
 
         System.out.println("SEMANTIC-EVAL-1062-CONTRACT-OK");
