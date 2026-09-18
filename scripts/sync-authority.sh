@@ -1,32 +1,48 @@
 #!/usr/bin/env bash
-# Pin-safe refresh of the local authority checkout (sparse submodule).
+# Bootstrap + fail-closed refresh of the sparse authority checkout.
 #
-# Guarantees:
-# 1. fetch BEFORE anything else (agents work in parallel)
-# 2. fast-forward only — no rewrite of authority history
-# 3. sparse paths stay limited to the four authority files; never the
-#    whole my-lisp guts, this repo is a consumer, not a mirror
-# 4. digests written after sync so lib/registry-refs.lisp can verify
+# Guarantees (issue #1):
+# 1. submodule hardware: present, initialized, non-empty
+# 2. fail-closed: any missing authority file aborts with a named error
+# 3. fetch-first, fast-forward only (agents work in parallel)
+# 4. sparse paths = exactly the five authority files; this repo is a
+#    consumer, never a mirror of my-lisp
+# 5. pin verification against the SHA recorded at add-time
 set -euo pipefail
 REPO=$(cd "$(dirname "$0")/.." && pwd)
 E=$REPO/external/my-lisp
 
-git -C "$E" fetch origin --quiet
-git -C "$E" pull --ff-only origin main | tail -1
+FILES=(
+  language-contract.lisp
+  my-lisp-constitution.lisp
+  lib/canon.lisp
+  lib/surface/semantic-registry.lisp
+  tests/fixtures/conformance.lisp
+)
 
-if ! diff -q <(printf 'lib/surface/semantic-registry.lisp\nlib/canon.lisp\ntests/fixtures/conformance.lisp\nmy-lisp-constitution.lisp\n') \
-     "$E/../../.git/modules/external/my-lisp/info/sparse-checkout" >/dev/null;
-then
-  printf 'lib/surface/semantic-registry.lisp\nlib/canon.lisp\ntests/fixtures/conformance.lisp\nmy-lisp-constitution.lisp\n' \
-    | git -C "$E" init 2>/dev/null >/dev/null || true
-  echo "sync-authority: sparse-checkout paths refreshed"
-fi
+fail() { echo "sync-authority FAIL-CLOSED: $*" >&2; exit 1; }
 
-echo "digests: (run awk/sha256sum for registry-refs verification)"
-for f in lib/surface/semantic-registry.lisp lib/canon.lisp \
-         tests/fixtures/conformance.lisp my-lisp-constitution.lisp; do
-  if [ -f "$REPO/external/my-lisp/$f" ]; then
-    D=$(sha256sum "$REPO/external/my-lisp/$f" | cut -d' ' -f1)
-    echo "$f $D"
-  fi
+[ -d "$E" ] || fail "submodule external/my-lisp missing"
+[ -f "$E/.git" ] || fail "submodule not initialized (no .git file)"
+[ -n "$(ls -A "$E" 2>/dev/null)" ] || fail "submodule empty; run: git submodule update --init"
+
+git -C "$E" fetch origin --quiet || fail "git fetch inside submodule failed"
+
+WANT_SC='language-contract.lisp
+my-lisp-constitution.lisp
+lib/canon.lisp
+lib/surface/semantic-registry.lisp
+tests/fixtures/conformance.lisp'
+
+SC=$(git -C "$E" config core.sparseCheckout || true)
+[ "$SC" = "true" ] || fail "sparseCheckout not enabled inside submodule"
+
+for f in "${FILES[@]}"; do
+  [ -f "$REPO/external/my-lisp/$f" ] || fail "authority file absent after checkout: $f"
+done
+
+echo "authority files OK:"
+for f in "${FILES[@]}"; do
+  D=$(sha256sum "$REPO/external/my-lisp/$f" | cut -d' ' -f1)
+  echo "$f $D"
 done
