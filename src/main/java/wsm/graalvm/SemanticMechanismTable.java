@@ -24,7 +24,6 @@ public final class SemanticMechanismTable {
             Map.entry("1014", SemanticMechanismTable::invoke1014),
             Map.entry("1015", SemanticMechanismTable::invoke1015),
             Map.entry("1016", SemanticMechanismTable::invoke1016),
-            Map.entry("1022", SemanticMechanismTable::invoke1022),
             Map.entry("1052", SemanticMechanismTable::invoke1052),
             Map.entry("1061", SemanticMechanismTable::invoke1061),
             Map.entry("1043", SemanticMechanismTable::invoke1043)
@@ -152,10 +151,4 @@ public final class SemanticMechanismTable {
         return new Value.StringValue(out.toString());
     }
 
-    private static Object invoke1022(Object[] args) {
-        WsmError.arity(args, 2, "1022");
-        return WsmNode.Structural.equals(args[0], args[1])
-                ? Value.record("structural-relation", "same")
-                : Value.record("structural-relation", "distinct");
-    }
 }
