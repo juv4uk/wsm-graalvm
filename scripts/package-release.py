@@ -112,8 +112,10 @@ def main() -> int:
         encoding="utf-8",
     )
 
+    assets_dir = out / "assets"
+    assets_dir.mkdir(parents=True, exist_ok=True)
     raw_name = f"wsm-graalvm-{args.version}-{args.platform}" + (".exe" if args.platform == "windows-x86_64" else "")
-    raw_binary = out / raw_name
+    raw_binary = assets_dir / raw_name
     shutil.copy2(pkg / "bin" / bin_name, raw_binary)
     zip_path = out / f"wsm-graalvm-{args.version}-{args.platform}.zip"
     with zipfile.ZipFile(zip_path, "w", compression=zipfile.ZIP_DEFLATED, compresslevel=9) as zf:
