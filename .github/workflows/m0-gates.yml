@@ -74,11 +74,13 @@ jobs:
             src/test/java/wsm/graalvm/ReaderStringContract.java \
             src/test/java/wsm/graalvm/ConformanceInventoryContract.java \
             src/test/java/wsm/graalvm/RealTier1InventoryContract.java \
-            src/test/java/wsm/graalvm/TruffleFrameContract.java
+            src/test/java/wsm/graalvm/TruffleFrameContract.java \
+            src/test/java/wsm/graalvm/StringAppendContract.java
           java -cp "$TEST_CLASSES:$CP" wsm.graalvm.ReaderStringContract
           java -cp "$TEST_CLASSES:$CP" wsm.graalvm.ConformanceInventoryContract
           java -cp "$TEST_CLASSES:$CP" wsm.graalvm.RealTier1InventoryContract external/my-lisp/tests/fixtures/conformance.lisp
           java -cp "$TEST_CLASSES:$CP" wsm.graalvm.TruffleFrameContract external/my-lisp/lib/surface/semantic-registry.lisp
+          java -cp "$TEST_CLASSES:$CP" wsm.graalvm.StringAppendContract external/my-lisp/lib/surface/semantic-registry.lisp
 
       - name: Gate 6+ — tier-1 conformance counter (current baseline; explicit, not silent)
         if: always()
