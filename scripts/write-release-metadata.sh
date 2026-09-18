@@ -22,15 +22,16 @@ GRAAL_VERSION=${GRAALVM_VERSION:-unknown}
   exit 1
 }
 
-case "$VERSION" in
-  v[0-9]*.[0-9]*.[0-9]*) ;;
+RELEASE_VERSION="${VERSION#v}"
+case "$RELEASE_VERSION" in
+  [0-9]*.[0-9]*.[0-9]*) ;;
   *) echo "invalid release version: $VERSION" >&2; exit 1 ;;
 esac
 
 cat > "$OUT/RELEASE.txt" <<EOF
 WSM/GraalVM Release
 ===================
-version: $VERSION
+version: v$RELEASE_VERSION
 wsm-commit: $WSM_COMMIT
 my-lisp-commit: $MYLISP_PIN
 platform: $PLATFORM
@@ -51,4 +52,5 @@ cat > "$OUT/RELEASE.json" <<EOF
 }
 EOF
 
-echo "RELEASE-METADATA-OK $VERSION $MYLISP_PIN"
+printf '%s\n' "$MYLISP_PIN" > "$OUT/MY_LISP_PIN.txt"
+echo "RELEASE-METADATA-OK v$RELEASE_VERSION $MYLISP_PIN"
