@@ -15,6 +15,9 @@ jobs:
           submodules: recursive
           fetch-depth: 0
 
+      - name: P0 — fail closed on unexpected gitlinks/submodules
+        run: bash scripts/check-gitlink-topology.sh
+
       - name: Fetch my-lisp authority pin
         run: |
           git -C external/my-lisp fetch origin --quiet
