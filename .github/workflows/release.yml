@@ -106,11 +106,11 @@ EOF
           Copy-Item native-wsm.exe "$Dist/bin/wsm-graalvm.exe"
           @(
             '@echo off',
-            'set ROOT=%~dp0..',
+            'set "ROOT=%~dp0.."',
             'if "%~1"=="" (echo usage: wsm-graalvm-run ^<program.lisp^> [registry.lisp] [my-lisp-root] & exit /b 2)',
-            'set REGISTRY=%~2',
+            'set "REGISTRY=%~2"',
             'if "%REGISTRY%"=="" set REGISTRY=%ROOT%\my-lisp\lib\surface\semantic-registry.lisp',
-            'set LISP_ROOT=%~3',
+            'set "LISP_ROOT=%~3"',
             'if "%LISP_ROOT%"=="" set LISP_ROOT=%ROOT%\my-lisp',
             '"%ROOT%\bin\wsm-graalvm.exe" "%~1" "%REGISTRY%" "%LISP_ROOT%"'
           ) | Set-Content "$Dist/bin/wsm-graalvm-run.cmd"
