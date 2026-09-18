@@ -1,6 +1,6 @@
 package wsm.graalvm;
 
-import com.graalvm.polyglot.Context;
+import org.graalvm.polyglot.Context;
 
 /** Focused contract for the upstream-required Closure -> Macro substrate. */
 public final class BootstrapMacroSubstrateContract {
