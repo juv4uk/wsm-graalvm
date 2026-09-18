@@ -59,6 +59,9 @@ jobs:
       - name: Gate 4b — focused Truffle frame witnesses
         run: bash scripts/test-truffle-frames.sh
 
+      - name: RED/green — raw Tier-1 ErrorKind parity
+        run: bash scripts/test-tier1-error-parity.sh
+
       - name: Gate 5 — (canon-conforms?) → current conformance record
         run: |
           MYLISP=external/my-lisp bash scripts/run-canon.sh 2>&1 | tee gate5.log
