@@ -91,6 +91,9 @@ jobs:
       - name: M1 — exact-Q primitive comparisons 1014/1015/1016
         run: bash scripts/test-exact-q-comparison.sh
 
+      - name: P0 — exact-rational subtraction semantic 1001
+        run: bash scripts/test-subtraction-1001.sh
+
       - name: M1 — manifest bootstrap closure loader
         run: bash scripts/test-bootstrap-closure-loader.sh
 
