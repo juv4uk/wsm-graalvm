@@ -62,7 +62,19 @@ jobs:
         run: |
           java --version
           javac --version
-          native-image --version
+          if [[ "${RUNNER_OS}" == "Windows" ]]; then
+            G_POSIX="$(cygpath -u "${GRAALVM_HOME}")"
+            if [[ -f "$G_POSIX/bin/native-image.cmd" ]]; then
+              "$G_POSIX/bin/native-image.cmd" --version
+            elif [[ -f "$G_POSIX/bin/native-image.exe" ]]; then
+              "$G_POSIX/bin/native-image.exe" --version
+            else
+              echo "native-image is missing from GraalVM: $GRAALVM_HOME" >&2
+              exit 1
+            fi
+          else
+            native-image --version
+          fi
 
       - name: Build native image and Canon witness
         shell: bash
