@@ -55,6 +55,9 @@ jobs:
       - name: Gate 4b — focused Truffle frame witnesses
         run: bash scripts/test-truffle-frames.sh
 
+      - name: M1 — migration-only two-part cond record bridge
+        run: bash scripts/test-migration-cond-records.sh
+
       - name: M1 — Lisp-owned semantic 0012 macro peers
         run: bash scripts/test-macro-peer-installer.sh
 
