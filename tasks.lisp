@@ -12,6 +12,12 @@
    (issue . 6)
    (description . "Exercise current Truffle lexical frames with nested capture, shadowing, and multi-level capture; CI gate uses the real pinned registry and runtime path. Acceptance: 42, 7, 42 witnesses and no compile-time Environment value capture.")))
 
+ ("GRAALVM-M1-DEPENDENCY-MANIFEST" .
+  ((priority . 9.1) (capabilities . (lisp dependency graph manifest ci)) (origin . wsm-graalvm)
+   (depends-on . (GRAALVM-M0-READER-SEVEN-PRIMITIVES))
+   (issue . 30)
+   (description . "Declare and fail-closed-check the pinned my-lisp M0/M1 bootstrap closure without copying semantic source. Current slice covers authority, Canon, macro, core, and conformance witness; full-tree classification remains open.")))
+
  ;; issue #11 Phase B (gates 6+): goal adjunct is the current fixture expectation
  ("GRAALVM-M1-CONFORMANCE-TIER1" .
   ((priority . 9.0) (capabilities . (truffle conformance lisp fixtures java)) (origin . wsm-graalvm)
