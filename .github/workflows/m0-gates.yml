@@ -72,6 +72,9 @@ jobs:
       - name: M1 — canonical write-to-string semantic ID 1061
         run: bash scripts/test-write-to-string.sh
 
+      - name: M1 — semantic ID 1062 eval in current environment
+        run: bash scripts/test-semantic-eval.sh
+
       - name: RED/green contract tests (chatgpt/* migration)
         run: |
           G=$(dirname "$(dirname "$(readlink -f "$(command -v java)")")")
