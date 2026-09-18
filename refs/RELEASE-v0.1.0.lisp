@@ -1,27 +1,29 @@
 ;; RELEASE v0.1.0 evidence bundle — Truffle substrate vertical day.
 ;; Owner-committed release issue: wsm-graalvm#147 (assignee anviksiki).
-;; Every value below is a *pointer* into pinned evidence, never a semantic copy.
+;; Every value below is a release-time evidence pointer; no Lisp semantics are copied here.
 (
   (schema . 1)
   (release . "v0.1.0")
+  (release-status . "prepared; final tag gate must be green before publication")
 
   ;; upstream semantic authority
   (authority
     (manifest . "refs/lisp-dependency-manifest.lisp")
     (manifest-load-order . ("lib/surface/semantic-registry.lisp" "lib/canon.lisp" "lib/core.lisp" "lib/macro.lisp"))
-    (my-lisp-pin . "9ce5101853c0a9f43aacb32a98bb2bc9ab2eec3b")
+    (my-lisp-pin . "f3d2127739ef475acb6821e65773ce395af2480c")
     (pin-source . "refs/sparse-authority-paths.txt via scripts/sync-authority.sh"))
 
   ;; substrate
   (substrate
-    (distribution . "graalvm-community-25.3.4.1+1.1 (linux-x64)")
+    (distribution . "graalvm-community-25.3.4.1+1.1 (linux-x64, windows-x64)")
     (maven-line . "truffle-api / polyglot / truffle-runtime / dsl-processor @ 25.3.4.1")
     (approach . "language implementation against Truffle, NOT a polyglot-side interpreter"))
 
   ;; observable self-verdict on both execution modes
   (self-verdict
     (jvm . "(canon-conformance satisfied) via scripts/run-canon.sh lane")
-    (native-image . "same verdict reproduced in .github/workflows/native-image.yml CI on main"))
+    (native-image-linux . "must be reproduced by native-image CI on the release tag")
+    (native-image-windows . "must be reproduced by native-image CI on the release tag"))
 
   ;; RED/green contract set, all GREEN at release tag moment
   (contracts
@@ -49,7 +51,7 @@
 
   ;; migration narrative that makes this release *understandable*
   (substrate-story
-    (rust-core     . "lib/canon.lisp executed once by main my-lisp engine on same pin")
+    (rust-core     . "lib/canon.lisp remains owned by upstream my-lisp on the pinned source")
     (graal-substrate . "same pinned canon, self-verdict computed again here — same observable result")
     (witness-line  . "(canon-conformance satisfied) == '(the substrate reads its own authority)"))
 )
