@@ -34,11 +34,12 @@ jobs:
                     external/my-lisp/lib/surface/semantic-registry.lisp \
                     external/my-lisp/tests/fixtures/conformance.lisp
 
-      - name: Set up GraalVM CE (community)
+      - name: Set up GraalVM CE pinned to the runtime the substrate is built for
         uses: graalvm/setup-graalvm@v1
         with:
           java-version: '25'
           distribution: 'graalvm-community'
+          version: '25.3.4.1'
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build (javac, interpreter classes)
