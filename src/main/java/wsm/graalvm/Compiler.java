@@ -127,13 +127,19 @@ public final class Compiler {
         }
 
         List<Object> args = items.subList(1, items.size());
-        if (!(head instanceof Token token)) {
+        String spelling;
+        if (head instanceof Token token) {
+            spelling = token.spelling();
+        } else if (head instanceof Value.Symbol symbol) {
+            // Macro expansion produces ordinary Lisp data symbols. Resolve
+            // their semantic identity exactly as source tokens, without
+            // turning syntax heads into computed calls.
+            spelling = symbol.name;
+        } else {
             return new WsmNode.CallNode(
                     compile(head, scope),
                     compileAll(args, scope));
         }
-
-        String spelling = token.spelling();
         if (globals.isMacro(spelling)) {
             Object expanded = MacroExpander.expand(
                     globals.macro(spelling),
