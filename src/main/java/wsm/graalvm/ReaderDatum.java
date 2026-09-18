@@ -16,6 +16,13 @@ public final class ReaderDatum {
         if (form instanceof Value.NumberValue || form instanceof Value.StringValue) return form;
         if (form instanceof Token token) return Value.symbol(token.spelling());
         if (form instanceof Value.Pair pair) {
+            if (pair.car == Reader.QUOTE_HEAD
+                    && pair.cdr instanceof Value.Pair quoted
+                    && quoted.cdr == Value.NIL) {
+                return new Value.Pair(
+                        Value.symbol("quote"),
+                        new Value.Pair(toValue(quoted.car), Value.NIL));
+            }
             return new Value.Pair(toValue(pair.car), toValue(pair.cdr));
         }
         throw new WsmError(
