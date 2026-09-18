@@ -11,4 +11,9 @@ record SemanticInvocationContext(
         CanonRegistry registry,
         GlobalBindings globals,
         LexicalScope scope,
-        VirtualFrame frame) {}
+        VirtualFrame frame) {
+    SemanticInvocationContext withFrame(VirtualFrame currentFrame) {
+        return new SemanticInvocationContext(
+                language, registry, globals, scope, currentFrame);
+    }
+}
