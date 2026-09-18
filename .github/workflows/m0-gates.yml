@@ -2,9 +2,13 @@ name: m0-gates
 
 on:
   push:
-    branches: [ main, "**" ]
+    branches: [ main ]
   pull_request:
   workflow_dispatch:
+
+concurrency:
+  group: m0-gates-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   build-and-gates:
@@ -64,7 +68,6 @@ jobs:
       - name: M1 — materialized DEFINE binder data-to-code
         run: bash scripts/test-materialized-define-binder.sh
 
-
       - name: M1 — migration-only two-part cond bridge
         run: bash scripts/test-migration-cond-truthiness.sh
 
@@ -110,11 +113,7 @@ jobs:
           rm -rf "$TEST_CLASSES"
           mkdir -p "$TEST_CLASSES"
           CP="classes:third_party/truffle-api.jar:third_party/graalvm-collections.jar:third_party/nativeimage.jar:third_party/polyglot.jar:third_party/truffle-runtime.jar:third_party/truffle-compiler.jar"
-          G="$G" "$G/bin/javac" --release 25 -cp "$CP" -d "$TEST_CLASSES" \
-            src/test/java/wsm/graalvm/ReaderStringContract.java \
-            src/test/java/wsm/graalvm/ConformanceInventoryContract.java \
-            src/test/java/wsm/graalvm/RealTier1InventoryContract.java \
-            src/test/java/wsm/graalvm/TruffleFrameContract.java
+          G="$G" "$G/bin/javac" --release 25 -cp "$CP" -d "$TEST_CLASSES"             src/test/java/wsm/graalvm/ReaderStringContract.java             src/test/java/wsm/graalvm/ConformanceInventoryContract.java             src/test/java/wsm/graalvm/RealTier1InventoryContract.java             src/test/java/wsm/graalvm/TruffleFrameContract.java
           java -cp "$TEST_CLASSES:$CP" wsm.graalvm.ReaderStringContract
           java -cp "$TEST_CLASSES:$CP" wsm.graalvm.ConformanceInventoryContract
           java -cp "$TEST_CLASSES:$CP" wsm.graalvm.RealTier1InventoryContract external/my-lisp/tests/fixtures/conformance.lisp
@@ -132,8 +131,6 @@ jobs:
           echo "Full Tier-1 remains visible evidence while incremental M1 gaps remain."
           echo "Merge blocking is the monotonic ledger plus focused semantic gates."
       - name: M1 — shared definition frame across Context.eval
-
         run: |
           G=$(dirname "$(dirname "$(readlink -f "$(command -v java)")")")
           G=$G bash scripts/test-context.sh external/my-lisp/lib/surface/semantic-registry.lisp
-
