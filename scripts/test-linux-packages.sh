@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+REPO=$(cd "$(dirname "$0")/.." && pwd)
 VERSION=$1
 PAYLOAD=$2
 DEB=$3
@@ -25,7 +26,7 @@ docker run --rm \
   debian:bookworm-slim bash -euxo pipefail -c '
     dpkg -i /tmp/old.deb
     dpkg -i /tmp/new.deb
-    test "$(dpkg-query -W -f="${Version}" wsm-graalvm)" != "0.0.9"
+    test "$(dpkg-query -W -f=\${Version} wsm-graalvm)" != "0.0.9"
     /usr/bin/wsm /tmp/smoke.lisp | grep -q "42"
     dpkg -r wsm-graalvm
     test ! -e /usr/bin/wsm
