@@ -140,6 +140,26 @@ Reference/digest дані фіксують, проти якої версії `my
 Після upstream merge pin оновлюється, а тимчасові migration-only зміни
 повинні зникати або ставати звичайною частиною нового upstream baseline.
 
+## Release v0.1.0 / Повний бінарний реліз
+
+Release pipeline produces native-image bundles for both supported x64 targets:
+
+- `wsm-graalvm-v0.1.0-linux-x64.tar.gz`
+- `wsm-graalvm-v0.1.0-windows-x64.zip`
+
+Each bundle contains the native executable, a small launcher, the exact pinned
+Lisp authority inputs selected by `refs/sparse-authority-paths.txt`, release
+metadata, and SHA-256 verification material published alongside the archive.
+
+The Linux launcher is `bin/wsm-graalvm`; Windows uses
+`bin/wsm-graalvm.cmd`. Both accept one Lisp source path and inject the bundled
+semantic registry and authority root, so a released binary can be used without
+a local GraalVM installation.
+
+The release workflow first runs the real native Canon witness on the target
+platform, then packages the bundle, verifies its checksum, and only then
+publishes a GitHub Release from the corresponding `v*` tag.
+
 ## Ліцензія / License
 
 [ВОЛЬНІСТЬ](LICENSE) — канонічний текст, дослівно.
