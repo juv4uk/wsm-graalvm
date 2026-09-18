@@ -17,10 +17,13 @@ public final class Main {
         String registry = args[1];
         Path rootDir = Path.of(args[2]);
 
+        // M0 bridge: WsmLanguage.parse currently consumes the same registry path
+        // as a system property. Keep the Polyglot option too so the eventual
+        // context-owned option migration does not change the launcher surface.
+        System.setProperty("wsm.registryPath", registry);
         try (org.graalvm.polyglot.Context context = org.graalvm.polyglot.Context.newBuilder("wsm")
                 .option("wsm.registryPath", registry)
                 .allowHostAccess(org.graalvm.polyglot.HostAccess.ALL)
-                .option("wsm.registryPath", registry)
                 .build()) {
             String code = Files.readString(Path.of(file));
             System.setProperty("wsm.rootDir", rootDir.toString());
@@ -33,7 +36,7 @@ public final class Main {
             System.err.println("io: " + e.getMessage());
             System.exit(1);
         } catch (WsmError e) {
-            System.err.println("error-kind=" + e.kind + ": " + e.detail);
+            System.err.println("error-kind=" + e.contractKind() + ": " + e.detail);
             System.exit(1);
         }
     }
