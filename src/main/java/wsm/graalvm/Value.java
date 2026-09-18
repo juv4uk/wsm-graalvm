@@ -26,6 +26,15 @@ public final class Value {
         public Pair(Object car, Object cdr) { this.car = car; this.cdr = cdr; }
     }
 
+    /** Canonical callable language identity; Java allocation identity is irrelevant. */
+    public record SemanticRef(String id) implements com.oracle.truffle.api.interop.TruffleObject {
+        public SemanticRef {
+            if (id == null || id.isBlank()) {
+                throw new IllegalArgumentException("semantic id must be non-empty");
+            }
+        }
+    }
+
     private static final java.util.Map<String, Symbol> INTERN = new java.util.HashMap<>();
 
     public static Symbol symbol(String name) {
