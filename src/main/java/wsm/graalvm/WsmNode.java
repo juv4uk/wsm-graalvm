@@ -170,6 +170,13 @@ public abstract class WsmNode extends com.oracle.truffle.api.nodes.Node {
         @Override public Object executeGeneric(VirtualFrame frame) {
             Object v = value.executeGeneric(frame);
             globals.define(name, v);
+            // A Lisp-owned defmacro expands to (define name (make-macro ...)).
+            // Register the resulting MacroValue in the macro dispatch table as
+            // a substrate projection; the macro's behavior remains entirely
+            // owned by the Lisp closure that produced it.
+            if (v instanceof GlobalBindings.MacroValue macro) {
+                globals.defineMacro(name, macro);
+            }
             return v;
         }
     }
