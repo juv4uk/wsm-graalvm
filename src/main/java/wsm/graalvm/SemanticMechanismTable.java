@@ -15,6 +15,11 @@ public final class SemanticMechanismTable {
         Object invoke(Object[] args);
     }
 
+    @FunctionalInterface
+    private interface ContextualMechanism {
+        Object invoke(Object[] args, SemanticInvocationContext context);
+    }
+
     private static final Map<String, Mechanism> TABLE = Map.of(
             "0002", SemanticMechanismTable::invoke0002,
             "0003", SemanticMechanismTable::invoke0003,
@@ -27,13 +32,35 @@ public final class SemanticMechanismTable {
             "1061", SemanticMechanismTable::invoke1061
     );
 
+    private static final Map<String, ContextualMechanism> CONTEXTUAL_TABLE = Map.of(
+            "1062", SemanticMechanismTable::invoke1062
+    );
+
     private SemanticMechanismTable() {}
 
     public static boolean supports(String semanticId) {
-        return TABLE.containsKey(semanticId);
+        return TABLE.containsKey(semanticId) || CONTEXTUAL_TABLE.containsKey(semanticId);
     }
 
     public static Object invoke(String semanticId, Object[] args) {
+        Mechanism mechanism = TABLE.get(semanticId);
+        if (mechanism == null) {
+            throw new WsmError(
+                    WsmError.Kind.TYPE,
+                    "semantic identity requires an execution context: " + semanticId);
+        }
+        return mechanism.invoke(args);
+    }
+
+    static Object invoke(
+            String semanticId,
+            Object[] args,
+            SemanticInvocationContext context) {
+        ContextualMechanism contextual = CONTEXTUAL_TABLE.get(semanticId);
+        if (contextual != null) {
+            return contextual.invoke(args, context);
+        }
+
         Mechanism mechanism = TABLE.get(semanticId);
         if (mechanism == null) {
             throw new WsmError(
@@ -97,6 +124,31 @@ public final class SemanticMechanismTable {
     private static Object invoke1061(Object[] args) {
         WsmError.arity(args, 1, "1061");
         return new Value.StringValue(CanonicalSerializer.write(args[0]));
+    }
+
+    private static Object invoke1062(
+            Object[] args,
+            SemanticInvocationContext context) {
+        WsmError.arity(args, 1, "1062");
+        Object datum = args[0];
+
+        if (datum instanceof Closure || datum instanceof MacroValue) {
+            return datum;
+        }
+
+        if (context == null || context.frame() == null) {
+            throw new WsmError(
+                    WsmError.Kind.TYPE,
+                    "1062 requires a current execution context");
+        }
+
+        Object readerForm = ReaderDatum.toReaderForm(datum);
+        Compiler compiler = new Compiler(
+                context.registry(),
+                context.language(),
+                context.globals());
+        WsmNode node = compiler.compile(readerForm, context.scope());
+        return node.executeGeneric(context.frame());
     }
 
     private static Object invoke1022(Object[] args) {
