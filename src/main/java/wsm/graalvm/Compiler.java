@@ -134,6 +134,16 @@ public final class Compiler {
             // their semantic identity exactly as source tokens, without
             // turning syntax heads into computed calls.
             spelling = symbol.name;
+        } else if (head instanceof Value.NumberValue numericHead) {
+            // Issue #47: numeric heads may still be admitted machine IDs.
+            // The admitted set comes from the pinned registry only.
+            String id = registry.semanticIdForNumeric(numericHead.numerator().longValueExact());
+            if (id != null) {
+                return dispatchSemanticHead(id, args, scope);
+            }
+            return new WsmNode.CallNode(
+                    compile(head, scope),
+                    compileAll(args, scope));
         } else {
             return new WsmNode.CallNode(
                     compile(head, scope),

@@ -26,7 +26,8 @@ public final class SemanticMechanismTable {
             Map.entry("1016", SemanticMechanismTable::invoke1016),
             Map.entry("1022", SemanticMechanismTable::invoke1022),
             Map.entry("1052", SemanticMechanismTable::invoke1052),
-            Map.entry("1061", SemanticMechanismTable::invoke1061)
+            Map.entry("1061", SemanticMechanismTable::invoke1061),
+            Map.entry("1043", SemanticMechanismTable::invoke1043)
     );
 
     private SemanticMechanismTable() {}
@@ -135,6 +136,20 @@ public final class SemanticMechanismTable {
     private static Object invoke1061(Object[] args) {
         WsmError.arity(args, 1, "1061");
         return new Value.StringValue(CanonicalSerializer.write(args[0]));
+    }
+
+    private static Object invoke1043(Object[] args) {
+        if (args.length != 2) {
+            throw new WsmError(WsmError.Kind.ARITY, "1043 expects 2 string arguments");
+        }
+        StringBuilder out = new StringBuilder();
+        for (Object a : args) {
+            if (!(a instanceof Value.StringValue text)) {
+                throw new WsmError(WsmError.Kind.TYPE, "1043 expects strings");
+            }
+            out.append(text.value);
+        }
+        return new Value.StringValue(out.toString());
     }
 
     private static Object invoke1022(Object[] args) {

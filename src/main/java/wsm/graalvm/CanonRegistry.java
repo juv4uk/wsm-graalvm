@@ -104,6 +104,18 @@ public final class CanonRegistry {
         return spellingToId.get(spelling);
     }
 
+    /**
+     * Issue #47 rule: an arbitrary numeric head can still be an admitted
+     * machine ID when its integer value equals a registry row's numeric
+     * value (10xx, 11xx IDs have no leading zero, so the Reader hands them
+     * to us as Long). The admitted set comes only from the pinned registry
+     * file; unknown numeric heads never route.
+     */
+    public String semanticIdForNumeric(long value) {
+        String id = String.format("%04d", value);
+        return rows.containsKey(id) ? id : null;
+    }
+
     @Deprecated
     public String idForSpelling(String spelling) {
         return semanticIdForToken(spelling);
