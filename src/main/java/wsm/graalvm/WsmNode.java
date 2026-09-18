@@ -214,20 +214,26 @@ public abstract class WsmNode extends com.oracle.truffle.api.nodes.Node {
         @Children private final WsmNode[] expecteds;
         @Children private final WsmNode[] bodies;
 
+        private final boolean[] legacyTruthiness;
+
         CondNode(
                 WsmNode[] tests,
                 WsmNode[] expecteds,
-                WsmNode[] bodies) {
+                WsmNode[] bodies,
+                boolean[] legacyTruthiness) {
             this.tests = tests;
             this.expecteds = expecteds;
             this.bodies = bodies;
+            this.legacyTruthiness = legacyTruthiness;
         }
 
         @Override public Object executeGeneric(VirtualFrame frame) {
             for (int i = 0; i < tests.length; i++) {
                 Object actual = tests[i].executeGeneric(frame);
-                Object expected = expecteds[i].executeGeneric(frame);
-                if (Structural.equals(actual, expected)) {
+                boolean selected = legacyTruthiness[i]
+                        ? actual != Value.NIL
+                        : Structural.equals(actual, expecteds[i].executeGeneric(frame));
+                if (selected) {
                     return bodies[i].executeGeneric(frame);
                 }
             }
@@ -270,6 +276,9 @@ public abstract class WsmNode extends com.oracle.truffle.api.nodes.Node {
             }
             if (x instanceof Long lx && y instanceof Long ly) {
                 return lx.equals(ly);
+            }
+            if (x instanceof String sx && y instanceof String sy) {
+                return sx.equals(sy);
             }
             if (x instanceof Value.SemanticRef sx
                     && y instanceof Value.SemanticRef sy) {
