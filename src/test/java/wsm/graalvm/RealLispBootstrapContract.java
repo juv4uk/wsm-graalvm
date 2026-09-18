@@ -70,13 +70,12 @@ public final class RealLispBootstrapContract {
                 peers.contains(defmacro),
                 "registry-selected defmacro peer was not installed: " + defmacro);
 
-        // Pre-retirement witness: prove the pinned Lisp definition is the
-        // exercised implementation behind the 1022 surface before deleting
-        // the duplicate Java mechanism. The Java table is intentionally still
-        // present at this commit; the next commit removes it.
+        // Post-retirement witness: the Java 1022 mechanism must be absent,
+        // while the pinned Lisp-owned equal? definition remains executable.
+        // Keep this on the real bootstrap path so host fallback cannot return silently.
         require(
-                SemanticMechanismTable.supports("1022"),
-                "pre-retirement witness expected Java 1022 mechanism to exist");
+                !SemanticMechanismTable.supports("1022"),
+                "Java 1022 mechanism must remain retired");
         Object equalSame = BootstrapRuntime.execute(
                 context,
                 "(" + equal + " (quote (1 2)) (quote (1 2)))");

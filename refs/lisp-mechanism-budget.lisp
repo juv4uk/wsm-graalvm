@@ -2,7 +2,7 @@
 ;; Classifications are evidence pointers, not semantic definitions.
 (
   (schema . 1)
-  (max-lisp-defined-java-debt . 1)
+  (max-lisp-defined-java-debt . 0)
 
   (mechanism "0002" substrate-required
     (meaning-source . "lib/canon.lisp")
@@ -33,14 +33,16 @@
     (evidence . "contracts/exact-q-binary-contract.lisp")
     (note . "removed from Java table on main before this ledger landed"))
 
-  (mechanism "1022" lisp-defined-retire-java
+  (retired "1022" lisp-defined
     (meaning-source . "lib/core.lisp")
-    (evidence . "contracts/structural-query-inventory.lisp"))
+    (evidence . "contracts/structural-query-inventory.lisp")
+    (note . "Java mechanism retired after current-main Lisp-owned equal? witness"))
 
   (mechanism "1043" substrate-required
-    (meaning-source . "lib/core.lisp string-append peer derivation")
-    (identity-source . "lib/surface/semantic-registry.lisp (1043 stable)")
-    (evidence . "NumericHeadRouteContract: 1043 head routes to admitted mechanism"))
+    (meaning-source . "lib/core.lisp")
+    (identity-source . "lib/surface/semantic-registry.lisp")
+    (evidence . "NumericHeadRouteContract: 1043 head routes to admitted mechanism")
+    (note . "string-append is exercised by Lisp-owned gensym; Java supplies only the irreducible string concatenation mechanism"))
 
   (mechanism "1052" substrate-required
     (identity-source . "lib/surface/semantic-registry.lisp"))
@@ -48,11 +50,6 @@
   (mechanism "1061" substrate-required
     (identity-source . "lib/surface/semantic-registry.lisp")
     (law-source . "tests/fixtures/conformance.lisp"))
-
-  (mechanism "1043" substrate-required
-    (meaning-source . "lib/core.lisp")
-    (identity-source . "lib/surface/semantic-registry.lisp")
-    (note . "string-append is exercised by Lisp-owned gensym; Java supplies only the irreducible string concatenation mechanism"))
 
   (rule . "No new Java mechanism ID may appear without classification here. Lisp-defined Java debt may only shrink.")
 )
