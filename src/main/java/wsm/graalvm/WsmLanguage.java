@@ -34,6 +34,11 @@ public final class WsmLanguage extends TruffleLanguage<WsmContext> {
     }
 
     @Override
+    protected void initializeContext(WsmContext context) {
+        context.initialize();
+    }
+
+    @Override
     protected org.graalvm.options.OptionDescriptors getOptionDescriptors() {
         return new WsmOptionDescriptors();
     }
@@ -42,11 +47,6 @@ public final class WsmLanguage extends TruffleLanguage<WsmContext> {
     protected CallTarget parse(com.oracle.truffle.api.TruffleLanguage.ParsingRequest request)
             throws IOException {
         String code = request.getSource().getCharacters().toString();
-        String registryPath = System.getProperty("wsm.registryPath");
-        if (registryPath == null) {
-            throw new IllegalArgumentException(
-                    "missing system property wsm.registryPath (numeric registry authority)");
-        }
         WsmContext context = CONTEXT_REFERENCE.get(null);
         Compiler compiler = new Compiler(context.registry(), this, context.globals());
         List<WsmNode> forms = compiler.compileProgram(new Reader(code).readAll());
