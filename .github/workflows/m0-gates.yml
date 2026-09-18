@@ -57,7 +57,7 @@ jobs:
           G=$(dirname "$(dirname "$(readlink -f "$(command -v java)")")")
           G=$G bash scripts/test-context.sh external/my-lisp/lib/surface/semantic-registry.lisp
 
-      - name: Gate 6+ — tier-1 conformance (next; no silent pass)
-        if: always()
+      - name: Gate 6 — Tier-1 conformance against pinned upstream fixture
         run: |
-          echo "not yet implemented; see tasks.lisp GRAALVM-M1-CONFORMANCE-TIER1 (issue #9 gate 6)"
+          G=$(dirname "$(dirname "$(readlink -f "$(command -v java)")")")
+          G=$G MYLISP=external/my-lisp bash scripts/test-tier1.sh
