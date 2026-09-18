@@ -65,9 +65,30 @@ public final class RealLispBootstrapContract {
 
         String defmacro = spelling(context.registry(), "0012");
         String let = spelling(context.registry(), "1141");
+        String equal = spelling(context.registry(), "1022");
         require(
                 peers.contains(defmacro),
                 "registry-selected defmacro peer was not installed: " + defmacro);
+
+        // Pre-retirement witness: prove the pinned Lisp definition is the
+        // exercised implementation behind the 1022 surface before deleting
+        // the duplicate Java mechanism. The Java table is intentionally still
+        // present at this commit; the next commit removes it.
+        require(
+                SemanticMechanismTable.supports("1022"),
+                "pre-retirement witness expected Java 1022 mechanism to exist");
+        Object equalSame = BootstrapRuntime.execute(
+                context,
+                "(" + equal + " (quote (1 2)) (quote (1 2)))");
+        Object equalDistinct = BootstrapRuntime.execute(
+                context,
+                "(" + equal + " (quote (1 2)) (quote (1 3)))");
+        require(
+                "(structural-relation same)".equals(Printer.print(equalSame)),
+                "Lisp-owned equal? same witness failed: " + Printer.print(equalSame));
+        require(
+                "(structural-relation distinct)".equals(Printer.print(equalDistinct)),
+                "Lisp-owned equal? distinct witness failed: " + Printer.print(equalDistinct));
 
         // let is Lisp-defined in pinned core.lisp. Running it here proves
         // the MacroValue returned by lib/macro.lisp was installed on the
@@ -82,6 +103,7 @@ public final class RealLispBootstrapContract {
         System.out.println(
                 "REAL-LISP-BOOTSTRAP-GREEN peers=" + peers.size()
                         + " macro=" + defmacro
-                        + " let=" + let);
+                        + " let=" + let
+                        + " equal=" + equal);
     }
 }
