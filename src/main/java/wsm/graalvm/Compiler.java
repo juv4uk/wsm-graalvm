@@ -48,8 +48,8 @@ public final class Compiler {
         if (isSpecial(id))
             throw new WsmError(WsmError.Kind.INVALID_FORM,
                     "canonical special form is syntax-only: " + spelling);
-        if (CanonBuiltins.CALLABLE.contains(id))
-            return new WsmNode.ConstantNode(CanonBuiltins.forId(id));
+        if (SemanticMechanismTable.supports(id))
+            return new WsmNode.ConstantNode(new Value.SemanticRef(id));
         return new WsmNode.SymbolNode(spelling, env);
     }
 
@@ -103,9 +103,9 @@ public final class Compiler {
                     "0012 is not materialized in substrate M0");
             case ID_COND -> compileCond(args, env);
             default -> {
-                if (CanonBuiltins.CALLABLE.contains(id)) {
+                if (SemanticMechanismTable.supports(id)) {
                     yield new WsmNode.CallNode(
-                            new WsmNode.ConstantNode(CanonBuiltins.forId(id)), compileAll(args, env));
+                            new WsmNode.ConstantNode(new Value.SemanticRef(id)), compileAll(args, env));
                 }
                 throw new WsmError(WsmError.Kind.INVALID_FORM, "unroutable id " + id);
             }
