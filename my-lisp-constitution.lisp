@@ -1,1 +1,0 @@
-external/my-lisp/my-lisp-constitution.lisp
