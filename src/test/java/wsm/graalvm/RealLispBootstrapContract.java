@@ -67,23 +67,23 @@ public final class RealLispBootstrapContract {
         BootstrapRuntime.execute(context, coreSource.text());
 
         String defmacro = spelling(context.registry(), "0012");
-        String cons = spelling(context.registry(), "0004");
-        String quote = spelling(context.registry(), "0001");
+        String let = spelling(context.registry(), "1141");
 
         require(
                 peers.contains(defmacro),
                 "registry-selected defmacro peer was not installed: " + defmacro);
 
-        String witness = "(" + defmacro + " cutover-wrap x "
-                + "(" + cons
-                + " (" + quote + " " + quote + ")"
-                + " (" + cons + " 42 (" + quote + " ()))))) "
-                + "(cutover-wrap radio)";
+        // let is itself Lisp-defined in the pinned core library. Using it
+        // here proves the MacroValue returned by lib/macro.lisp was actually
+        // installed on the 0012 registry peers before core.lisp was evaluated.
+        String witness =
+                "(" + let + " ((cutover-value 42)) cutover-value)";
 
         Object result = BootstrapRuntime.execute(context, witness);
         require(
                 "42".equals(String.valueOf(result)),
-                "Lisp-owned macro did not expand/evaluate on Graal: " + result);
+                "Lisp-owned let macro did not expand/evaluate on Graal: " + result);
+
 
         System.out.println(
                 "REAL-LISP-BOOTSTRAP-GREEN peers=" + peers.size()
