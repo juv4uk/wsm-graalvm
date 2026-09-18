@@ -23,7 +23,8 @@ public final class SemanticMechanismTable {
             "0006", SemanticMechanismTable::invoke0006,
             "1016", SemanticMechanismTable::invoke1016,
             "1022", SemanticMechanismTable::invoke1022,
-            "1052", SemanticMechanismTable::invoke1052
+            "1052", SemanticMechanismTable::invoke1052,
+            "1061", SemanticMechanismTable::invoke1061
     );
 
     private SemanticMechanismTable() {}
@@ -91,6 +92,11 @@ public final class SemanticMechanismTable {
             throw new WsmError(WsmError.Kind.TYPE, "1052 expects a string");
         }
         return Value.symbol(text.value);
+    }
+
+    private static Object invoke1061(Object[] args) {
+        WsmError.arity(args, 1, "1061");
+        return new Value.StringValue(CanonicalSerializer.write(args[0]));
     }
 
     private static Object invoke1022(Object[] args) {

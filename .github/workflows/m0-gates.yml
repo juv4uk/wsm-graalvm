@@ -69,6 +69,9 @@ jobs:
       - name: M1 — monotonic Tier-1 progress ledger
         run: bash scripts/test-tier1-progress.sh
 
+      - name: M1 — canonical write-to-string semantic ID 1061
+        run: bash scripts/test-write-to-string.sh
+
       - name: RED/green contract tests (chatgpt/* migration)
         run: |
           G=$(dirname "$(dirname "$(readlink -f "$(command -v java)")")")
