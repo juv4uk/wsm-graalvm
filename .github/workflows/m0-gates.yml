@@ -33,6 +33,9 @@ jobs:
       - name: P0 — Java public-surface spelling firewall
         run: bash scripts/check-java-spelling-firewall.sh
 
+      - name: M1 — path-identical Lisp mirror
+        run: bash scripts/check-lisp-mirror.sh
+
       - name: Set up GraalVM CE pinned to the runtime the substrate is built for
         uses: graalvm/setup-graalvm@v1
         with:
