@@ -8,10 +8,17 @@
 
 ### Перший вертикальний день: my-lisp читає власний контракт на GraalVM
 
-Той самий `my-lisp` authority (pinned `juv4uk/my-lisp@9ce5101`), той самий
+Той самий `my-lisp` authority (pinned `juv4uk/my-lisp@f3d2127`), той самий
 pinned registry + canon + conformance fixtures — виконано на другий субстрат:
 **GraalVM Community 25.3.4.1**, мова реалізована через **Truffle** (не через
 polyglot-side interpreter).
+
+#### Release engineering
+- Cross-platform native release pipeline for `linux-x64` and `windows-x64`.
+- Linux artifact: `wsm-graalvm-v0.1.0-linux-x64.tar.gz`.
+- Windows artifact: `wsm-graalvm-v0.1.0-windows-x64.zip`.
+- Both bundles contain the native executable, platform launcher, pinned Lisp authority inputs selected by the dependency manifest, release metadata, and SHA-256 verification files.
+- The Windows lane now builds Native Image itself; it is not a JVM-only fallback.
 
 #### Added
 - **Truffle language `wsm`** (`WsmLanguage`) — з Reader, Compiler, `CanonRegistry`
