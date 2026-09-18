@@ -21,7 +21,7 @@ Section: devel
 Priority: optional
 Architecture: amd64
 Maintainer: WSM Project
-Depends: bash
+Depends: bash, coreutils, libc6, zlib1g
 Description: WSM Lisp runtime on GraalVM
  Native WSM runtime executing the pinned my-lisp semantic authority.
 EOF
