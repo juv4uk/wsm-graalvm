@@ -37,6 +37,7 @@ public final class Tier1Harness {
     public static void main(String[] args) throws Exception {
         Path fixturePath = Path.of(args[0]);
         String registryPath = args[1];
+        Path corePath = Path.of(args[2]);
 
         List<Fixture> fixtures = parseFixtures(Files.readAllLines(fixturePath));
         int passed = 0;
@@ -44,7 +45,7 @@ public final class Tier1Harness {
 
         for (Fixture fixture : fixtures) {
             try {
-                runFixture(fixture, registryPath);
+                runFixture(fixture, registryPath, corePath);
                 passed++;
                 System.out.println("PASS line=" + fixture.line);
             } catch (Throwable failure) {
@@ -96,9 +97,20 @@ public final class Tier1Harness {
         return out;
     }
 
-    private static void runFixture(Fixture fixture, String registryPath) {
+    private static void runFixture(
+            Fixture fixture,
+            String registryPath,
+            Path corePath) {
         System.setProperty("wsm.registryPath", registryPath);
         try (Context context = Context.newBuilder("wsm").build()) {
+            try {
+                context.eval("wsm", Files.readString(corePath));
+            } catch (org.graalvm.polyglot.PolyglotException coreFailure) {
+                throw new AssertionError(
+                        "core bootstrap failed: " + coreFailure.getMessage(),
+                        coreFailure);
+            }
+
             if (fixture.error() != null) {
                 try {
                     context.eval("wsm", fixture.expr());
@@ -169,4 +181,4 @@ public final class Tier1Harness {
 JAVA
 
 "$G/bin/javac" --release 25 -cp "$CP" -d "$TMP" "$TMP/Tier1Harness.java"
-"$G/bin/java" -cp "$CP:$TMP" -Dtruffle.class.path.append="$REPO/classes"   wsm.graalvm.Tier1Harness   "$MYLISP/tests/fixtures/conformance.lisp"   "$MYLISP/lib/surface/semantic-registry.lisp"
+"$G/bin/java" -cp "$CP:$TMP" -Dtruffle.class.path.append="$REPO/classes"   wsm.graalvm.Tier1Harness   "$MYLISP/tests/fixtures/conformance.lisp"   "$MYLISP/lib/surface/semantic-registry.lisp"   "$MYLISP/lib/core.lisp"
