@@ -290,8 +290,7 @@ public final class Compiler {
                 slots,
                 restSlot,
                 body.toArray(WsmNode[]::new));
-        globals.defineMacro(name, new MacroDefinition(
-                new Closure(root.getCallTarget(), null)));
+        globals.defineMacro(name, new Closure(root.getCallTarget(), null));
         return new WsmNode.ConstantNode(Value.NIL);
     }
 
