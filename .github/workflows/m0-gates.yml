@@ -65,11 +65,20 @@ jobs:
 
       - name: RED/green contract tests (chatgpt/* migration)
         run: |
+          G=$(dirname "$(dirname "$(readlink -f "$(command -v java)")")")
+          TEST_CLASSES="test-classes-contract-gates"
+          rm -rf "$TEST_CLASSES"
+          mkdir -p "$TEST_CLASSES"
           CP="classes:third_party/truffle-api.jar:third_party/graalvm-collections.jar:third_party/nativeimage.jar:third_party/polyglot.jar:third_party/truffle-runtime.jar:third_party/truffle-compiler.jar"
-          java -cp "$CP" wsm.graalvm.ReaderStringContract
-          java -cp "$CP" wsm.graalvm.ConformanceInventoryContract
-          java -cp "$CP" wsm.graalvm.RealTier1InventoryContract external/my-lisp/tests/fixtures/conformance.lisp
-          java -cp "$CP" wsm.graalvm.TruffleFrameContract external/my-lisp/lib/surface/semantic-registry.lisp
+          G="$G" "$G/bin/javac" --release 25 -cp "$CP" -d "$TEST_CLASSES" \
+            src/test/java/wsm/graalvm/ReaderStringContract.java \
+            src/test/java/wsm/graalvm/ConformanceInventoryContract.java \
+            src/test/java/wsm/graalvm/RealTier1InventoryContract.java \
+            src/test/java/wsm/graalvm/TruffleFrameContract.java
+          java -cp "$TEST_CLASSES:$CP" wsm.graalvm.ReaderStringContract
+          java -cp "$TEST_CLASSES:$CP" wsm.graalvm.ConformanceInventoryContract
+          java -cp "$TEST_CLASSES:$CP" wsm.graalvm.RealTier1InventoryContract external/my-lisp/tests/fixtures/conformance.lisp
+          java -cp "$TEST_CLASSES:$CP" wsm.graalvm.TruffleFrameContract external/my-lisp/lib/surface/semantic-registry.lisp
 
       - name: Gate 6+ — tier-1 conformance counter (current baseline; explicit, not silent)
         if: always()
