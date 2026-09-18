@@ -61,7 +61,7 @@ public final class Compiler {
     private WsmNode compileList(Object form, Environment env) {
         // apostrophe sugar after list-wrap: form = (QUOTE_HEAD . datum)
         if (form instanceof Value.Pair qPair && qPair.car == Reader.QUOTE_HEAD)
-            return new WsmNode.QuoteNode(qPair.cdr);
+            return new WsmNode.QuoteNode(datumValue(qPair.cdr));
         List<Object> items = items(form);
         if (items.isEmpty())
             return new WsmNode.ConstantNode(Value.NIL);
@@ -95,7 +95,7 @@ public final class Compiler {
             case ID_QUOTE -> {
                 if (args.size() != 1)
                     throw new WsmError(WsmError.Kind.ARITY, ID_QUOTE + " expects 1 argument");
-                yield new WsmNode.QuoteNode(args.get(0));
+                yield new WsmNode.QuoteNode(datumValue(args.get(0)));
             }
             case ID_LAMBDA -> compileLambda(args, env);
             case ID_DEFINE, ID_DEF_LEGACY -> compileDefine(args, env);
