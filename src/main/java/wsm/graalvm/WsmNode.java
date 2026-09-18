@@ -104,42 +104,22 @@ public abstract class WsmNode extends com.oracle.truffle.api.nodes.Node {
         @Children private final WsmNode[] tests;
         @Children private final WsmNode[] expecteds;
         @Children private final WsmNode[] bodies;
-        private final boolean[] migration;
-        CondNode(WsmNode[] tests, WsmNode[] expecteds, WsmNode[] bodies, boolean[] migration) {
-            this.tests = tests; this.expecteds = expecteds; this.bodies = bodies;
-            this.migration = migration;
+
+        CondNode(WsmNode[] tests, WsmNode[] expecteds, WsmNode[] bodies) {
+            this.tests = tests;
+            this.expecteds = expecteds;
+            this.bodies = bodies;
         }
+
         @Override public Object executeGeneric(VirtualFrame frame) {
             for (int i = 0; i < tests.length; i++) {
-                Object got = tests[i].executeGeneric(frame);
-                if (migration[i]) {
-                    if (WsmNode.MigrationTruthyNode.matches(got)) return bodies[i].executeGeneric(frame);
-                } else if (Structural.equals(got, expecteds[i].executeGeneric(frame))) {
+                Object actual = tests[i].executeGeneric(frame);
+                Object expected = expecteds[i].executeGeneric(frame);
+                if (Structural.equals(actual, expected)) {
                     return bodies[i].executeGeneric(frame);
                 }
             }
             return Value.NIL;
-        }
-    }
-
-    /** migration-only truthiness bridge: same mapping as the Rust host */
-    public static final class MigrationTruthyNode extends WsmNode {
-        public static final MigrationTruthyNode INSTANCE = new MigrationTruthyNode();
-        private MigrationTruthyNode() {}
-        @Override public Object executeGeneric(VirtualFrame frame) {
-            throw new WsmError(WsmError.Kind.INVALID_FORM, "migration sentinel is data, not code");
-        }
-        static boolean matches(Object v) {
-            if (v == Value.NIL) return false;
-            if (v instanceof Value.Pair rec && rec.car instanceof Value.Symbol kind
-                    && rec.cdr instanceof Value.Pair tail1
-                    && tail1.car instanceof Value.Symbol state
-                    && tail1.cdr instanceof Value.Pair tailEnd
-                    && tailEnd.cdr == Value.NIL) {
-                if (kind.name.equals("structural-kind")) return !state.name.equals("pair");
-                if (kind.name.equals("identity-relation")) return state.name.equals("same");
-            }
-            return true;
         }
     }
 
