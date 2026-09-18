@@ -18,6 +18,22 @@ ACTUAL_PIN=$(git -C "$MYLISP" rev-parse HEAD)
   exit 1
 }
 
+WSM_GRAALVM_COMMIT=$(git -C "$REPO" rev-parse HEAD)
+CONTRACT="$MYLISP/language-contract.lisp"
+[ -f "$CONTRACT" ] || { echo "TIER1-LEDGER FAIL: missing language contract: $CONTRACT" >&2; exit 1; }
+ACTUAL_CONTRACT_MAJOR=$(sed -n 's/^((major \. \([0-9][0-9]*\)) (minor \. \([0-9][0-9]*\)).*/\1/p' "$CONTRACT" | head -1)
+ACTUAL_CONTRACT_MINOR=$(sed -n 's/^((major \. \([0-9][0-9]*\)) (minor \. \([0-9][0-9]*\)).*/\2/p' "$CONTRACT" | head -1)
+[ -n "$ACTUAL_CONTRACT_MAJOR" ] && [ -n "$ACTUAL_CONTRACT_MINOR" ] || {
+  echo "TIER1-LEDGER FAIL: cannot parse language contract version" >&2
+  exit 1
+}
+[ "$ACTUAL_CONTRACT_MAJOR" -eq "$LANGUAGE_CONTRACT_MAJOR" ] && [ "$ACTUAL_CONTRACT_MINOR" -eq "$LANGUAGE_CONTRACT_MINOR" ] || {
+  echo "TIER1-LEDGER FAIL: language contract selection changed" >&2
+  echo "  baseline=$LANGUAGE_CONTRACT_MAJOR.$LANGUAGE_CONTRACT_MINOR" >&2
+  echo "  actual=$ACTUAL_CONTRACT_MAJOR.$ACTUAL_CONTRACT_MINOR" >&2
+  exit 1
+}
+
 bash "$REPO/scripts/build.sh"
 
 CP="$REPO/classes:$REPO/third_party/truffle-api.jar:$REPO/third_party/polyglot.jar:$REPO/third_party/truffle-runtime.jar:$REPO/third_party/graalvm-collections.jar"
@@ -76,4 +92,4 @@ if [ "$FAIL" -eq 0 ] && [ "$VALUE_STATUS" -ne 0 ]; then
   echo "TIER1-LEDGER FAIL: value counter failed despite zero failures" >&2; exit 1
 fi
 
-printf 'TIER1-LEDGER-OK pin=%s selected=%d value-pass=%d value-fail=%d error-pass=%d error-blocked=%d error-fail=%d\n' "$ACTUAL_PIN" "$TOTAL" "$PASS" "$FAIL" "$ERROR_PASS" "$ERROR_BLOCKED" "$ERROR_FAIL"
+printf 'TIER1-LEDGER-OK upstream-pin=%s wsm-commit=%s contract=%s.%s selected=%d value-pass=%d value-fail=%d error-pass=%d error-blocked=%d error-fail=%d\n' "$ACTUAL_PIN" "$WSM_GRAALVM_COMMIT" "$ACTUAL_CONTRACT_MAJOR" "$ACTUAL_CONTRACT_MINOR" "$TOTAL" "$PASS" "$FAIL" "$ERROR_PASS" "$ERROR_BLOCKED" "$ERROR_FAIL"
