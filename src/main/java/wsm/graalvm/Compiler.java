@@ -117,7 +117,10 @@ public final class Compiler {
 
         Object head = items.get(0);
         if (head == Reader.QUOTE_HEAD) {
-            return quoteForm(items.subList(1, items.size()));
+            return dispatchSemanticHead(
+                    ID_QUOTE,
+                    items.subList(1, items.size()),
+                    scope);
         }
 
         List<Object> args = items.subList(1, items.size());
@@ -149,15 +152,6 @@ public final class Compiler {
         return new WsmNode.CallNode(
                 symbolNode(spelling, scope),
                 compileAll(args, scope));
-    }
-
-    private WsmNode quoteForm(List<Object> argForms) {
-        if (argForms.size() != 1) {
-            throw new WsmError(
-                    WsmError.Kind.ARITY,
-                    ID_QUOTE + " expects exactly one argument");
-        }
-        return new WsmNode.QuoteNode(ReaderDatum.toValue(argForms.get(0)));
     }
 
     private WsmNode dispatchSemanticHead(
