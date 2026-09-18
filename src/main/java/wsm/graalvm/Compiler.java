@@ -32,13 +32,13 @@ public final class Compiler {
     private final LexicalScope root;
 
     public Compiler(CanonRegistry registry) {
-        this(registry, null);
+        this(registry, null, new GlobalBindings());
     }
 
-    Compiler(CanonRegistry registry, WsmLanguage language) {
+    Compiler(CanonRegistry registry, WsmLanguage language, GlobalBindings globals) {
         this.language = language;
         this.registry = registry;
-        this.globals = new GlobalBindings();
+        this.globals = globals;
         this.root = LexicalScope.root(globals);
     }
 
