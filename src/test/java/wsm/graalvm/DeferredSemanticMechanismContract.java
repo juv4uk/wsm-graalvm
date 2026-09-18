@@ -31,20 +31,28 @@ public final class DeferredSemanticMechanismContract {
         require(!SemanticMechanismTable.supports("1043"),
                 "this witness requires 1043 to remain unmaterialized");
 
+        String surface = registry.row("1043").surfaces().values().stream()
+                .filter(s -> !"—".equals(s))
+                .findFirst()
+                .orElseThrow(() -> new AssertionError("1043 must have an admitted surface"));
+        require("1043".equals(registry.semanticIdForToken(surface)),
+                "chosen surface must resolve to 1043: " + surface);
+
         Compiler compiler = new Compiler(registry);
 
         List<WsmNode> definition = compiler.compileProgram(
-                new Reader("(0011 deferred (0010 (x) (1043 x x)))").readAll());
+                new Reader("(0011 deferred (0010 (x) (" + surface + " x x)))").readAll());
         Object defined = executeAll(definition);
         require(defined instanceof Closure,
                 "definition containing unmaterialized 1043 must still produce a closure");
 
         List<WsmNode> dormantCall = compiler.compileProgram(
-                new Reader("(1043 (0001 a) (0001 b))").readAll());
+                new Reader("(" + surface + " (0001 a) (0001 b))").readAll());
         require(dormantCall.size() == 1,
                 "admitted callable semantic identity must compile before invocation");
 
         System.out.println(
-                "DEFERRED-SEMANTIC-MECHANISM-CONTRACT-OK id=1043 mechanism=absent");
+                "DEFERRED-SEMANTIC-MECHANISM-CONTRACT-OK id=1043 surface="
+                        + surface + " mechanism=absent");
     }
 }
