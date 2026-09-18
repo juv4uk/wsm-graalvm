@@ -198,19 +198,20 @@ public final class Compiler {
                     ID_LAMBDA + " expects params and body");
         }
 
-        List<Object> rawParams = items(args.get(0));
+        LambdaParameters parameters = parseLambdaParameters(args.get(0));
         LexicalScope lambdaScope = parentScope.child();
-        int[] slots = new int[rawParams.size()];
+        int[] slots = new int[parameters.fixed().size()];
 
-        for (int i = 0; i < rawParams.size(); i++) {
-            Object raw = rawParams.get(i);
-            if (!(raw instanceof Token binder)) {
-                throw new WsmError(
-                        WsmError.Kind.INVALID_FORM,
-                        ID_LAMBDA + " binder must be a symbol");
-            }
-            ensureBinderAllowed(binder.spelling());
-            slots[i] = lambdaScope.declareLocal(binder.spelling());
+        for (int i = 0; i < parameters.fixed().size(); i++) {
+            String binder = parameters.fixed().get(i);
+            ensureBinderAllowed(binder);
+            slots[i] = lambdaScope.declareLocal(binder);
+        }
+
+        int restSlot = -1;
+        if (parameters.rest() != null) {
+            ensureBinderAllowed(parameters.rest());
+            restSlot = lambdaScope.declareLocal(parameters.rest());
         }
 
         List<WsmNode> body = new ArrayList<>();
@@ -223,11 +224,46 @@ public final class Compiler {
                 language,
                 descriptor,
                 slots,
+                restSlot,
                 body.toArray(WsmNode[]::new));
 
         return new WsmNode.LambdaNode(
                 lambdaRoot.getCallTarget(),
                 !parentScope.isRoot());
+    }
+
+    private record LambdaParameters(List<String> fixed, String rest) {}
+
+    private LambdaParameters parseLambdaParameters(Object raw) {
+        if (raw instanceof Token rest) {
+            return new LambdaParameters(List.of(), rest.spelling());
+        }
+        if (raw == Value.NIL) {
+            return new LambdaParameters(List.of(), null);
+        }
+
+        List<String> fixed = new ArrayList<>();
+        Object cursor = raw;
+        while (cursor instanceof Value.Pair cell) {
+            if (!(cell.car instanceof Token binder)) {
+                throw new WsmError(
+                        WsmError.Kind.INVALID_FORM,
+                        ID_LAMBDA + " binder must be a symbol");
+            }
+            fixed.add(binder.spelling());
+            cursor = cell.cdr;
+        }
+
+        if (cursor == Value.NIL) {
+            return new LambdaParameters(List.copyOf(fixed), null);
+        }
+        if (cursor instanceof Token rest) {
+            return new LambdaParameters(List.copyOf(fixed), rest.spelling());
+        }
+
+        throw new WsmError(
+                WsmError.Kind.INVALID_FORM,
+                ID_LAMBDA + " parameter tail must be a symbol");
     }
 
     private WsmNode compileDefine(
