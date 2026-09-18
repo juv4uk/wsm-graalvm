@@ -146,10 +146,9 @@ public final class ConformanceInventory {
     private static String optionalString(Map<String, Object> fields, String key) {
         Object value = fields.get(key);
         if (value == null) return null;
-        if (!(value instanceof String s)) {
-            throw invalid(key + " must be a string");
-        }
-        return s;
+        if (value instanceof Value.Str s) return s.value;
+        if (value instanceof String s) return s;
+        throw invalid(key + " must be a string");
     }
 
     private static List<String> symbolList(Object value, String field) {
