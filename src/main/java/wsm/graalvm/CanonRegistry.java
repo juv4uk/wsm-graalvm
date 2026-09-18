@@ -31,6 +31,7 @@ public final class CanonRegistry {
             Value.Pair row = (Value.Pair) rowO;
             String id = ((Token) row.car).spelling();
             Map<String, String> faceMap = new java.util.LinkedHashMap<>();
+            putMapping(this.spellingToId, id, id);
             for (Object surfaceO : rows(row.cdr)) {
                 Value.Pair surface = (Value.Pair) surfaceO;
                 List<Object> fields = cellList(surface);                // surface shape: (marker spelling status) — status filter:
@@ -83,6 +84,18 @@ public final class CanonRegistry {
     }
 
     public String idForSpelling(String spelling) { return spellingToId.get(spelling); }
+
+    private static void putMapping(Map<String, String> index, String spelling, String id) {
+        String previous = index.putIfAbsent(spelling, id);
+        if (previous != null && !previous.equals(id)) {
+            throw new WsmError(WsmError.Kind.PARSE,
+                    "semantic surface collision: " + spelling + " -> " + previous + " / " + id);
+        }
+    }
+
+    private static void putMappingIfAbsent(Map<String, String> index, String spelling, String id) {
+        index.putIfAbsent(spelling, id);
+    }
 
     public java.util.Set<String> ids() { return rows.keySet(); }
 
