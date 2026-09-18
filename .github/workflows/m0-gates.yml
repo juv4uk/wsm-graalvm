@@ -27,6 +27,9 @@ jobs:
       - name: Verify pinned my-lisp authority
         run: |
           bash scripts/verify-authority.sh external/my-lisp
+      - name: P0 — Lisp-first mechanism budget
+        run: bash scripts/check-lisp-mechanism-budget.sh
+
       - name: Set up GraalVM CE pinned to the runtime the substrate is built for
         uses: graalvm/setup-graalvm@v1
         with:
