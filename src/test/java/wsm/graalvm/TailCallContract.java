@@ -60,18 +60,29 @@ public final class TailCallContract {
 
         Path repo = Path.of(args[0]).toAbsolutePath().normalize();
         Path manifest = repo.resolve("refs/lisp-dependency-manifest.lisp");
-        Path reference = repo.resolve(
-                "external/my-lisp/crates/my-lisp/tests/mccarthy.rs");
+        Path referenceMeta = repo.resolve("refs/tco-reference.properties");
 
         require(Files.exists(manifest), "dependency manifest must exist");
-        require(Files.exists(reference), "pinned my-lisp reference witness must exist");
+        require(Files.exists(referenceMeta), "TCO reference provenance must exist");
 
-        String referenceSource = Files.readString(reference);
-        require(referenceSource.contains(
-                        "fn tail_recursion_uses_constant_rust_stack()"),
-                "pinned reference must contain the tail recursion witness");
-        require(referenceSource.contains("let depth = 5_000;"),
-                "pinned reference must use the agreed depth 5_000");
+        java.util.Properties properties = new java.util.Properties();
+        try (java.io.Reader reader = Files.newBufferedReader(referenceMeta)) {
+            properties.load(reader);
+        }
+        require("fa9bd8757983eb0eb8b3228c56ccc53471adde0c".equals(
+                        properties.getProperty("my_lisp_pin")),
+                "TCO provenance must pin the current my-lisp authority");
+        require("crates/my-lisp/tests/mccarthy.rs".equals(
+                        properties.getProperty("path")),
+                "TCO provenance must identify the upstream reference witness");
+        require("5000".equals(properties.getProperty("depth")),
+                "TCO provenance must use the agreed depth 5000");
+        require("tail_recursion_uses_constant_rust_stack".equals(
+                        properties.getProperty("test")),
+                "TCO provenance must name the upstream reference test");
+        require(properties.getProperty("blob_sha") != null
+                        && !properties.getProperty("blob_sha").isBlank(),
+                "TCO provenance must pin the reference blob SHA");
 
         BootstrapClosureLoader.Closure closure =
                 BootstrapClosureLoader.load(repo);
