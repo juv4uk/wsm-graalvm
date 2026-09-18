@@ -44,5 +44,10 @@
     (identity-source . "lib/surface/semantic-registry.lisp")
     (law-source . "tests/fixtures/conformance.lisp"))
 
+  (mechanism "1043" substrate-required
+    (meaning-source . "lib/core.lisp")
+    (identity-source . "lib/surface/semantic-registry.lisp")
+    (note . "string-append is exercised by Lisp-owned gensym; Java supplies only the irreducible string concatenation mechanism"))
+
   (rule . "No new Java mechanism ID may appear without classification here. Lisp-defined Java debt may only shrink.")
 )
