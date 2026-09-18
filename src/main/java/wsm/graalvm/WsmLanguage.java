@@ -3,7 +3,7 @@ package wsm.graalvm;
 import com.oracle.truffle.api.CallTarget;
 import com.oracle.truffle.api.TruffleLanguage;
 import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.api.nodes.RootNode;
+import com.oracle.truffle.api.nodes.Node.Child;\nimport com.oracle.truffle.api.nodes.RootNode;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -57,7 +57,7 @@ public final class WsmLanguage extends TruffleLanguage<Void> {
     }
 
     static final class BodyRoot extends RootNode {
-        private final ProgramBodyNode body;
+        @Child private ProgramBodyNode body;
         BodyRoot(WsmLanguage language, ProgramBodyNode body) {
             super(language);
             this.body = body;
