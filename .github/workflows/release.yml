@@ -1,0 +1,79 @@
+name: release-build
+
+on:
+  push:
+    tags: [ 'v*' ]
+  workflow_dispatch:
+
+jobs:
+  linux-native:
+    name: Linux - native image executable (tar.gz)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with: { submodules: recursive, fetch-depth: 0 }
+      - name: Pin my-lisp authority
+        run: git -C external/my-lisp fetch origin --quiet
+      - uses: graalvm/setup-graalvm@v1
+        with:
+          java-version: '25'
+          distribution: 'graalvm-community'
+          version: '25.3.4.1'
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build release bundle (jvm + native-wsm)
+        env: { }  # no-op; expanded into G
+        run: |
+          MYLISP=external/my-lisp bash scripts/build-release.sh "$(echo ${GITHUB_REF_NAME:-v0.1.0} | sed 's|refs/tags/||')" native
+          # gref manifest push created refuse to bump tag -> safety net path
+          ls -la dist/
+      - name: Verify native witness from bundle root
+        run: |
+          bash scripts/run-canon.sh 2>&1 | tee canon.log
+          grep -q "(canon-conformance satisfied)" canon.log
+      - name: Publish linux bundle to release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: dist/wsm-graalvm-*
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+  windows-jvm:
+    name: Windows - portable JVM bundle (zip, no native-image)
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v5
+        with: { submodules: recursive, fetch-depth: 0 }
+      - uses: graalvm/setup-graalvm@v1
+        with:
+          java-version: '25'
+          distribution: 'graalvm-community'
+          version: '25.3.4.1'
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Pin my-lisp authority
+        shell: pwsh
+        run: git -C external/my-lisp fetch origin --quiet; git -C external/my-lisp checkout origin/main
+      - name: Assemble windows bundle (zip, portable launcher.bat)
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Path dist -Force | Out-Null
+          $stage = New-Item -ItemType Directory -Path (Join-Path $env:TEMP "wsm-stage")
+          Copy-Item classes $stage -Recurse -ErrorAction Stop
+          New-Item -ItemType Directory -Path (Join-Path $stage "third_party") -Force | Out-Null
+          foreach ($j in @("truffle-api","polyglot","truffle-runtime","graalvm-collections","nativeimage","truffle-compiler")) {
+            Copy-Item "third_party/$j.jar" (Join-Path $stage "third_party") -ErrorAction SilentlyContinue
+          }
+          Copy-Item CHANGELOG.md, LICENSE, README.md $stage -ErrorAction SilentlyContinue
+          Copy-Item refs\RELEASE-v0.1.0.lisp $stage -ErrorAction SilentlyContinue
+          Copy-Item scripts\run-canon.sh, scripts\fetch-third-party.sh, scripts\build.sh $stage -ErrorAction SilentlyContinue
+          $bat = Join-Path $stage "launch.bat"
+          $line1 = "@echo off"
+          $line2 = "setlocal"
+          $line3 = "set SELF=%~dp0"
+          $line4 = "java --enable-native-access=ALL-UNNAMED -Dpolyglot.engine.WarnInterpreterOnly=false -Dwsm.registryPath=\"%SELF%external\\my-lisp\\lib\\surface\\semantic-registry.lisp\" -Dtruffle.class.path.append=\"%SELF%classes\" -cp \"%SELF%classes;%SELF%third_party\\truffle-api.jar;%SELF%third_party\\polyglot.jar;%SELF%third_party\\truffle-runtime.jar;%SELF%third_party\\graalvm-collections.jar;%SELF%third_party\\nativeimage.jar;%SELF%third_party\\truffle-compiler.jar\" wsm.graalvm.Main \"%SELF%external\\my-lisp\\lib\\canon.lisp\" \"%SELF%external\\my-lisp\\lib\\surface\\semantic-registry.lisp\" \"%SELF%\""
+          $lines = @($line1, $line2, $line3, $line4)
+          $lines | Set-Content -Path $bat -Encoding ASCII
+          Compress-Archive -Path ($stage\*) -DestinationPath dist/wsm-graalvm-windows-jvm.zip -Force
+      - name: Publish windows bundle to release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: dist/wsm-graalvm-windows-jvm.zip
+          token: ${{ secrets.GITHUB_TOKEN }}
