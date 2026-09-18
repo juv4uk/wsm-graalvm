@@ -2,7 +2,26 @@
 set -euo pipefail
 
 REPO=$(cd "$(dirname "$0")/.." && pwd)
-: "${G:=}"
+
+if [ -z "${G:-}" ]; then
+  if [ -n "${GRAALVM_HOME:-}" ]; then
+    G="$GRAALVM_HOME"
+  elif [ -n "${JAVA_HOME:-}" ]; then
+    G="$JAVA_HOME"
+  else
+    JBIN=$(command -v java)
+    if command -v readlink >/dev/null 2>&1; then
+      JBIN=$(readlink -f "$JBIN" 2>/dev/null || true)
+    fi
+    [ -n "$JBIN" ] || { echo "missing java for GraalVM discovery" >&2; exit 1; }
+    G=$(cd "$(dirname "$JBIN")/.." && pwd)
+  fi
+fi
+G="${G%/}"
+[ -x "$G/bin/native-image" ] || {
+  echo "missing GraalVM Native Image executable: $G/bin/native-image" >&2
+  exit 1
+}
 
 bash "$REPO/scripts/build.sh"
 
