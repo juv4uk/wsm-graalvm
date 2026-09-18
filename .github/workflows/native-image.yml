@@ -38,3 +38,8 @@ jobs:
         run: |
           G=$(dirname "$(dirname "$(readlink -f "$(command -v java)")")")
           G=$G MYLISP=external/my-lisp bash scripts/build-native.sh
+
+      - name: P1 — Pair identity/structure Native Image parity
+        run: |
+          G=$(dirname "$(dirname "$(readlink -f "$(command -v java)")")")
+          G=$G MYLISP=external/my-lisp NATIVE_WSM="$PWD/native-wsm" bash scripts/test-pair-identity-invariant.sh
