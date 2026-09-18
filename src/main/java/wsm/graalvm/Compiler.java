@@ -13,6 +13,7 @@ public final class Compiler {
 
     private final Environment root;
     private final CanonRegistry registry;
+    private final SemanticResolver resolver;
     private static final String ID_QUOTE = "0001";
     private static final String ID_COND = "0007";
     private static final String ID_LAMBDA = "0010";
@@ -21,6 +22,7 @@ public final class Compiler {
 
     public Compiler(CanonRegistry registry) {
         this.registry = registry;
+        this.resolver = new SemanticResolver(registry);
         this.root = new Environment(null);
         root.define("t", Value.symbol("t"));
     }
@@ -42,14 +44,23 @@ public final class Compiler {
     }
 
     private WsmNode symbolNode(String spelling, Environment env) {
-        String id = registry.idForSpelling(spelling);
-        if (id == null) return new WsmNode.SymbolNode(spelling, env);
+        SemanticResolver.Resolution resolved = resolver.resolve(new Token(spelling));
+        if (resolved instanceof SemanticResolver.Lexical lexical) {
+            return new WsmNode.SymbolNode(lexical.spelling(), env);
+        }
+
+        String id = ((SemanticResolver.Semantic) resolved).id();
         if (isSpecial(id))
             throw new WsmError(WsmError.Kind.INVALID_FORM,
-                    "canonical special form is syntax-only: " + spelling);
-        if (CanonBuiltins.CALLABLE.contains(id))
+                    "semantic special form is syntax-only: " + id);
+        if (SemanticMechanismTable.supports(id))
             return new WsmNode.ConstantNode(CanonBuiltins.forId(id));
-        return new WsmNode.SymbolNode(spelling, env);
+
+        // A registry identity can exist without being materialized by this
+        // substrate yet. Never fall back to treating its source spelling as a
+        // lexical symbol: that would reintroduce surface authority.
+        throw new WsmError(WsmError.Kind.INVALID_FORM,
+                "semantic identity has no substrate value mechanism: " + id);
     }
 
     private static boolean isSpecial(String id) {
@@ -72,11 +83,13 @@ public final class Compiler {
             return new WsmNode.CallNode(fn, compileAll(args, env));
         }
 
-        String id = registry.idForSpelling(ht.spelling());
-        if (id == null) {
+        SemanticResolver.Resolution resolvedHead = resolver.resolve(ht);
+        if (resolvedHead instanceof SemanticResolver.Lexical) {
             WsmNode fn = compile(head, env);
             return new WsmNode.CallNode(fn, compileAll(args, env));
         }
+
+        String id = ((SemanticResolver.Semantic) resolvedHead).id();
         return dispatchSpecial(id, args, env);
     }
 
@@ -99,7 +112,7 @@ public final class Compiler {
                     "0012 is not materialized in substrate M0");
             case ID_COND -> compileCond(args, env);
             default -> {
-                if (CanonBuiltins.CALLABLE.contains(id)) {
+                if (SemanticMechanismTable.supports(id)) {
                     yield new WsmNode.CallNode(
                             new WsmNode.ConstantNode(CanonBuiltins.forId(id)), compileAll(args, env));
                 }
