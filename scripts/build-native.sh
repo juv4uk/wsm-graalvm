@@ -6,7 +6,7 @@ REPO=$(cd "$(dirname "$0")/.." && pwd)
 
 bash "$REPO/scripts/build.sh"
 
-CP="$REPO/classes:$REPO/third_party/truffle-api.jar:$REPO/third_party/polyglot.jar:$REPO/third_party/truffle-runtime.jar:$REPO/third_party/graalvm-collections.jar"
+CP="$REPO/classes:$REPO/third_party/truffle-api.jar:$REPO/third_party/polyglot.jar:$REPO/third_party/truffle-runtime.jar"
 
 rm -f "$REPO/native-wsm"
 
