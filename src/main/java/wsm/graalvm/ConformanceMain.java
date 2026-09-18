@@ -15,8 +15,10 @@ public final class ConformanceMain {
         }
         String fixturesSource = Files.readString(Path.of(args[0]));
         Path registryPath = Path.of(args[1]).toAbsolutePath().normalize();
-        WsmContext context = BootstrapRuntime.bootstrapPinned(Path.of(args[2]));
-        requireSameRegistry(registryPath, context);
+        Path repositoryRoot = Path.of(args[2]).toAbsolutePath().normalize();
+        BootstrapClosureLoader.Closure closure = BootstrapClosureLoader.load(repositoryRoot);
+        requireSameRegistry(registryPath, closure.registryPath());
+        WsmContext context = BootstrapRuntime.bootstrapPinned(repositoryRoot);
         List<ConformanceInventory.Fixture> fixtures =
                 ConformanceInventory.selectTier(fixturesSource, 1);
         int pass = 0, skippedError = 0;
@@ -52,13 +54,12 @@ public final class ConformanceMain {
         for (String failure : failures) System.out.println("gate6-FAIL: " + failure);
         if (fail != 0) System.exit(1);
     }
-    private static void requireSameRegistry(Path expected, WsmContext context) {
-        CanonRegistry expectedRegistry = CanonRegistryLoader.load(expected.toString());
-        String expectedProbe = expectedRegistry.semanticIdForToken("quote");
-        String actualProbe = context.registry().semanticIdForToken("quote");
-        if (expectedProbe == null || !expectedProbe.equals(actualProbe)) {
+    private static void requireSameRegistry(Path expected, Path manifestSelected) {
+        Path actual = manifestSelected.toAbsolutePath().normalize();
+        if (!expected.equals(actual)) {
             throw new IllegalStateException(
-                    "Tier-1 registry argument diverges from pinned bootstrap registry");
+                    "Tier-1 registry argument diverges from pinned bootstrap registry: "
+                            + expected + " != " + actual);
         }
     }
 
