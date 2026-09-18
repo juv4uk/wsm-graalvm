@@ -8,13 +8,17 @@ import java.util.List;
 /** Monotonic Tier-1 value-fixture counter; selection is owned by ConformanceInventory. */
 public final class ConformanceMain {
     public static void main(String[] args) throws Exception {
-        if (args.length < 2) {
-            System.err.println("usage: ConformanceMain <fixtures.lisp> <registry.lisp>");
+        if (args.length < 3) {
+            System.err.println(
+                    "usage: ConformanceMain <fixtures.lisp> <registry.lisp> <repository-root>");
             System.exit(2);
         }
         String fixturesSource = Files.readString(Path.of(args[0]));
-        CanonRegistry registry = CanonRegistryLoader.load(args[1]);
-        List<ConformanceInventory.Fixture> fixtures = ConformanceInventory.selectTier(fixturesSource, 1);
+        Path registryPath = Path.of(args[1]).toAbsolutePath().normalize();
+        WsmContext context = BootstrapRuntime.bootstrapPinned(Path.of(args[2]));
+        requireSameRegistry(registryPath, context);
+        List<ConformanceInventory.Fixture> fixtures =
+                ConformanceInventory.selectTier(fixturesSource, 1);
         int pass = 0, skippedError = 0;
         List<String> failures = new ArrayList<>();
         for (ConformanceInventory.Fixture fixture : fixtures) {
@@ -23,13 +27,9 @@ public final class ConformanceMain {
                 report("EXPECTED-ERROR-SEPARATE-GATE", fixture.id(), fixture.expr(), fixture.error());
                 continue;
             }
-            Compiler compiler = new Compiler(registry);
             String actual;
             try {
-                Object last = Value.NIL;
-                for (WsmNode node : compiler.compileProgram(new Reader(fixture.expr()).readAll())) {
-                    last = node.executeGeneric(null);
-                }
+                Object last = BootstrapRuntime.execute(context, fixture.expr());
                 actual = Printer.print(last);
             } catch (WsmError error) {
                 actual = "throw:" + error.contractKind();
@@ -52,6 +52,16 @@ public final class ConformanceMain {
         for (String failure : failures) System.out.println("gate6-FAIL: " + failure);
         if (fail != 0) System.exit(1);
     }
+    private static void requireSameRegistry(Path expected, WsmContext context) {
+        CanonRegistry expectedRegistry = CanonRegistryLoader.load(expected.toString());
+        String expectedProbe = expectedRegistry.semanticIdForToken("quote");
+        String actualProbe = context.registry().semanticIdForToken("quote");
+        if (expectedProbe == null || !expectedProbe.equals(actualProbe)) {
+            throw new IllegalStateException(
+                    "Tier-1 registry argument diverges from pinned bootstrap registry");
+        }
+    }
+
     private static void report(String verdict, String id, String expr, String detail) {
         System.out.println("gate6[" + verdict + "] " + id + " expr=" + expr + " => " + detail);
     }
