@@ -14,15 +14,18 @@ import com.oracle.truffle.api.nodes.RootNode;
  */
 final class LambdaRootNode extends RootNode {
     private final int[] parameterSlots;
+    private final int restSlot;
     @Children private final WsmNode[] body;
 
     LambdaRootNode(
             WsmLanguage language,
             FrameDescriptor descriptor,
             int[] parameterSlots,
+            int restSlot,
             WsmNode[] body) {
         super(language, descriptor);
         this.parameterSlots = parameterSlots;
+        this.restSlot = restSlot;
         this.body = body;
     }
 
@@ -30,15 +33,30 @@ final class LambdaRootNode extends RootNode {
     public Object execute(VirtualFrame frame) {
         Object[] args = frame.getArguments();
         int received = Math.max(0, args.length - 1);
-        if (received != parameterSlots.length) {
+        boolean variadic = restSlot >= 0;
+        boolean wrongArity = variadic
+                ? received < parameterSlots.length
+                : received != parameterSlots.length;
+        if (wrongArity) {
+            String expectation = variadic
+                    ? "at least " + parameterSlots.length
+                    : Integer.toString(parameterSlots.length);
             throw new WsmError(
                     WsmError.Kind.ARITY,
-                    "0010 lambda expects " + parameterSlots.length
+                    "0010 lambda expects " + expectation
                             + " argument(s), received " + received);
         }
 
         for (int i = 0; i < parameterSlots.length; i++) {
             frame.setObject(parameterSlots[i], args[i + 1]);
+        }
+
+        if (variadic) {
+            Object rest = Value.NIL;
+            for (int i = received - 1; i >= parameterSlots.length; i--) {
+                rest = new Value.Pair(args[i + 1], rest);
+            }
+            frame.setObject(restSlot, rest);
         }
 
         Object last = Value.NIL;
