@@ -39,6 +39,7 @@ int total = 0, pass = 0, skip = 0; int totalSeen = 0;
                     Object val = null;
                     // (k . v) dotted pairs: the value may sit directly at cdr
                     if (field.cdr instanceof Value.Pair tail1) val = tail1.car;
+                    if (field.cdr instanceof Value.StringValue st) val = st;
                     if (field.cdr instanceof String st) val = st;
                     if (field.cdr instanceof Reader.Token t) val = t;
                     if (field.cdr instanceof Long lv) val = lv;
@@ -97,6 +98,7 @@ int total = 0, pass = 0, skip = 0; int totalSeen = 0;
 
 
     private static String rawString(Object v) {
+        if (v instanceof Value.StringValue st) return st.value;
         if (v instanceof Value.Str st) return st.value;
         if (v instanceof Value.Symbol s) return s.name;
         if (v instanceof Reader.Token t) return t.spelling();
