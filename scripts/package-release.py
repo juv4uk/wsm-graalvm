@@ -113,6 +113,8 @@ def main() -> int:
         encoding="utf-8",
     )
 
+    raw_binary = out / f"wsm-graalvm-{args.version}-{args.platform}" + (".exe" if args.platform == "windows-x86_64" else "")
+    shutil.copy2(pkg / "bin" / bin_name, raw_binary)
     zip_path = out / f"wsm-graalvm-{args.version}-{args.platform}.zip"
     with zipfile.ZipFile(zip_path, "w", compression=zipfile.ZIP_DEFLATED, compresslevel=9) as zf:
         for path in sorted(p for p in pkg.rglob("*") if p.is_file()):
@@ -120,7 +122,7 @@ def main() -> int:
 
     binary_checksum = out / f"wsm-graalvm-{args.version}-{args.platform}.binary.sha256"
     binary_checksum.write_text(
-        f"{sha256(pkg / 'bin' / bin_name)}  {bin_name}\n", encoding="utf-8"
+        f"{sha256(raw_binary)}  {raw_binary.name}\n", encoding="utf-8"
     )
     zip_checksum = out / f"wsm-graalvm-{args.version}-{args.platform}.zip.sha256"
     zip_checksum.write_text(
