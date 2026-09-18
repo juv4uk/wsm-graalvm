@@ -79,6 +79,8 @@ jobs:
           distribution: "graalvm-community"
           version: "25.3.4.1"
           github-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Smoke-test deterministic release packaging
+        run: bash scripts/test-package-release.sh
       - name: Run release gate
         env:
           MYLISP: external/my-lisp
