@@ -67,6 +67,12 @@ public final class LexicalFrameContract {
         require(shadowed instanceof Long n && n == 7L,
                 "non-Canon registry surface must remain lexically shadowable");
 
+        Object globalShadow = eval(
+                registry,
+                "(0011 second (0010 (x) x)) (second 8)");
+        require(globalShadow instanceof Long n && n == 8L,
+                "non-Canon registry surface must remain globally shadowable");
+
         // Canon 0005 is immutable under every admitted surface.
         expectInvalid(registry, "(0010 (0005) 0005)");
         expectInvalid(registry, "(0010 (car) car)");
