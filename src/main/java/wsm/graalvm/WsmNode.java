@@ -199,9 +199,13 @@ public abstract class WsmNode extends com.oracle.truffle.api.nodes.Node {
                     || (x instanceof Value.SemanticRef sx
                         && y instanceof Value.SemanticRef sy
                         && sx.id().equals(sy.id()))
-                    || (x instanceof Long lx
-                        && y instanceof Long ly
-                        && lx.equals(ly));
+                    || (x instanceof Value.NumberValue nx
+                        && y instanceof Value.NumberValue ny
+                        && nx.numerator().equals(ny.numerator())
+                        && nx.denominator().equals(ny.denominator()))
+                    || (x instanceof Value.StringValue sx
+                        && y instanceof Value.StringValue sy
+                        && sx.value.equals(sy.value));
             return same
                     ? Value.identitySame()
                     : Value.record("identity-relation", "distinct");
