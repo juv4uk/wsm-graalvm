@@ -2,9 +2,9 @@ package wsm.graalvm;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Set;
+import java.util.Map;
 
 /**
  * Registry-derived Ukrainian surface admission contract.
@@ -57,27 +57,34 @@ public final class UkrainianSurfaceParityContract {
         List<?> top = list(forms.get(0), "registry");
         require(!top.isEmpty() && "sr/1".equals(top.get(0)), "registry schema must be sr/1");
 
+        // Build the globally admitted spelling owner map from authority data.
+        // This distinguishes "candidate became admitted" from "candidate
+        // reuses a spelling already stable for another semantic identity".
+        Map<String, String> globallyAdmittedOwner = new LinkedHashMap<>();
+        for (int i = 1; i < top.size(); i++) {
+            List<?> row = list(top.get(i), "registry row");
+            require(!row.isEmpty(), "empty registry row");
+            String id = atom(row.get(0), "semantic id");
+
+            for (int j = 1; j < row.size(); j++) {
+                Surface s = surface(row.get(j), id);
+                if ("—".equals(s.spelling()) || !admitted(s.status())) continue;
+
+                String previous = globallyAdmittedOwner.putIfAbsent(s.spelling(), id);
+                require(previous == null || previous.equals(id),
+                        "admitted spelling collision: " + s.spelling()
+                                + " -> " + previous + " and " + id);
+            }
+        }
+
         int rows = 0;
         int ukStable = 0;
         int ukrStable = 0;
         int ukCandidate = 0;
         int ukrCandidate = 0;
         int candidateOnlyUnadmitted = 0;
-        int candidateAlsoStable = 0;
-
-        // Candidate markers never create admission. A candidate spelling may
-        // legitimately reuse a spelling already admitted as stable or
-        // compatibility-only for another semantic row.
-        Set<String> globallyAdmittedSpellings = new HashSet<>();
-        for (int i = 1; i < top.size(); i++) {
-            List<?> row = list(top.get(i), "registry row");
-            for (int j = 1; j < row.size(); j++) {
-                Surface s = surface(row.get(j), "global registry surface");
-                if (!"—".equals(s.spelling()) && admitted(s.status())) {
-                    globallyAdmittedSpellings.add(s.spelling());
-                }
-            }
-        }
+        int candidateAlsoStableSameId = 0;
+        int candidateSpellingOwnedByOtherStableId = 0;
 
         for (int i = 1; i < top.size(); i++) {
             List<?> row = list(top.get(i), "registry row");
@@ -88,19 +95,11 @@ public final class UkrainianSurfaceParityContract {
             require(id.equals(registry.semanticIdForToken(id)),
                     "opaque numeric ID route missing: " + id);
 
-                java.util.ArrayList<Surface> surfaces = new java.util.ArrayList<>();
-
-            for (int j = 1; j < row.size(); j++) {
-                Surface s = surface(row.get(j), id);
-                surfaces.add(s);
-                if (!"—".equals(s.spelling()) && admitted(s.status())) {
-                }
-            }
-
             boolean sawUk = false;
             boolean sawUkr = false;
 
-            for (Surface s : surfaces) {
+            for (int j = 1; j < row.size(); j++) {
+                Surface s = surface(row.get(j), id);
                 boolean isUk = "uk".equals(s.marker());
                 boolean isUkr = "ukr".equals(s.marker());
                 if (!isUk && !isUkr) continue;
@@ -122,24 +121,27 @@ public final class UkrainianSurfaceParityContract {
                 if ("candidate".equals(s.status())) {
                     if (isUk) ukCandidate++;
                     if (isUkr) ukrCandidate++;
-
                     if ("—".equals(s.spelling())) continue;
-                    String resolved = registry.semanticIdForToken(s.spelling());
 
-                    // A candidate marker may reuse a spelling already admitted
-                    // by another stable/compatibility marker on the SAME ID.
-                    // That token is admitted by the stable peer, not by candidate status.
-                    if (globallyAdmittedSpellings.contains(s.spelling())) {
-                        require(id.equals(resolved),
-                                "candidate/stable shared spelling escaped its ID "
-                                        + id + ": " + s.spelling());
-                        candidateAlsoStable++;
-                    } else {
+                    String resolved = registry.semanticIdForToken(s.spelling());
+                    String stableOwner = globallyAdmittedOwner.get(s.spelling());
+
+                    if (stableOwner == null) {
                         require(resolved == null,
-                                "candidate-only surface became admitted: "
+                                "candidate-only spelling became admitted: "
                                         + s.marker() + " " + id + " " + s.spelling()
                                         + " -> " + resolved);
                         candidateOnlyUnadmitted++;
+                    } else {
+                        require(stableOwner.equals(resolved),
+                                "candidate spelling no longer resolves to its stable owner: "
+                                        + s.spelling() + " expected " + stableOwner
+                                        + " got " + resolved);
+                        if (stableOwner.equals(id)) {
+                            candidateAlsoStableSameId++;
+                        } else {
+                            candidateSpellingOwnedByOtherStableId++;
+                        }
                     }
                     continue;
                 }
@@ -164,7 +166,10 @@ public final class UkrainianSurfaceParityContract {
                         + " (uk-candidate " + ukCandidate + ")"
                         + " (ukr-candidate " + ukrCandidate + ")"
                         + " (candidate-only-unadmitted " + candidateOnlyUnadmitted + ")"
-                        + " (candidate-also-stable " + candidateAlsoStable + ")"
+                        + " (candidate-also-stable-same-id "
+                        + candidateAlsoStableSameId + ")"
+                        + " (candidate-spelling-owned-by-other-stable-id "
+                        + candidateSpellingOwnedByOtherStableId + ")"
                         + " (status pass))");
     }
 }
