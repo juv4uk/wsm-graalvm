@@ -161,6 +161,14 @@ jobs:
           New-Item -ItemType Directory -Force -Path dist\installer | Out-Null
           & $iscc.FullName "/DSourceDir=$payload" "/DOutputDir=$(Resolve-Path dist\installer)" "/DVersion=$env:VERSION" "installer\windows\wsm-graalvm.iss"
           Get-ChildItem dist\installer
+      - name: Hash every distributable artifact
+        shell: bash
+        run: |
+          set -euo pipefail
+          find dist -type f \( -name '*.deb' -o -name '*.rpm' -o -name '*.exe' \) -print0 |
+            while IFS= read -r -d '' file; do
+              sha256sum "$file" > "$file.sha256"
+            done
       - uses: actions/upload-artifact@v4
         with:
           name: release-${{ matrix.platform }}
@@ -168,9 +176,9 @@ jobs:
             dist/wsm-graalvm-*.zip
             dist/wsm-graalvm-*.zip.sha256
             dist/wsm-graalvm-*.binary.sha256
-            dist/deb/*.deb
-            dist/rpm/*.rpm
-            dist/installer/*.exe
+            dist/deb/*
+            dist/rpm/*
+            dist/installer/*
             dist/assets/*
           if-no-files-found: error
 
@@ -201,6 +209,9 @@ jobs:
           test -f "dist/deb/wsm-graalvm-$VERSION-linux-x86_64.deb"
           test -f "dist/rpm/wsm-graalvm-$VERSION-linux-x86_64.rpm"
           test -f "dist/installer/wsm-graalvm-$VERSION-windows-x86_64-installer.exe"
+          test -f "dist/deb/wsm-graalvm-$VERSION-linux-x86_64.deb.sha256"
+          test -f "dist/rpm/wsm-graalvm-$VERSION-linux-x86_64.rpm.sha256"
+          test -f "dist/installer/wsm-graalvm-$VERSION-windows-x86_64-installer.exe.sha256"
           test -f "dist/wsm-graalvm-$VERSION-windows-x86_64.zip.sha256"
           (cd dist && sha256sum -c "wsm-graalvm-$VERSION-linux-x86_64.zip.sha256")
           (cd dist && sha256sum -c "wsm-graalvm-$VERSION-windows-x86_64.zip.sha256")
