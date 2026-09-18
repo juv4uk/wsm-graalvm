@@ -24,10 +24,10 @@ public final class Compiler {
     private static final String ID_LAMBDA = "0010";
     private static final String ID_DEFINE = "0011";
     private static final String ID_DEFMACRO = "0012";
+    private static final String ID_DEF_COMPAT = "1000";
 
     private final WsmLanguage language;
     private final CanonRegistry registry;
-    private final SemanticResolver resolver;
     private final GlobalBindings globals;
     private final LexicalScope root;
 
@@ -38,7 +38,6 @@ public final class Compiler {
     Compiler(CanonRegistry registry, WsmLanguage language) {
         this.language = language;
         this.registry = registry;
-        this.resolver = new SemanticResolver(registry);
         this.globals = new GlobalBindings();
         this.root = LexicalScope.root(globals);
     }
@@ -176,7 +175,7 @@ public final class Compiler {
                         ReaderDatum.toValue(args.get(0)));
             }
             case ID_LAMBDA -> compileLambda(args, scope);
-            case ID_DEFINE -> compileDefine(args, scope);
+            case ID_DEFINE, ID_DEF_COMPAT -> compileDefine(args, scope);
             case ID_DEFMACRO -> throw new WsmError(
                     WsmError.Kind.INVALID_FORM,
                     "0012 is not materialized in substrate M0");
@@ -298,7 +297,8 @@ public final class Compiler {
         return isCanonSyntax(id)
                 || ID_LAMBDA.equals(id)
                 || ID_DEFINE.equals(id)
-                || ID_DEFMACRO.equals(id);
+                || ID_DEFMACRO.equals(id)
+                || ID_DEF_COMPAT.equals(id);
     }
 
     private WsmNode compileCond(
