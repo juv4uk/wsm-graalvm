@@ -6,7 +6,7 @@ MANIFEST="$REPO/refs/lisp-dependency-manifest.lisp"
 SPARSE="$REPO/refs/sparse-authority-paths.txt"
 MYLISP="$REPO/external/my-lisp"
 
-for script in   scripts/build-release-payload.sh   scripts/package-deb.sh   scripts/package-rpm.sh   scripts/write-release-metadata.sh; do
+for script in scripts/stage-release-payload.sh scripts/package-deb.sh scripts/package-rpm.sh scripts/write-release-metadata.sh; do
   bash -n "$REPO/$script"
 done
 
@@ -25,7 +25,7 @@ grep -Fq "(pin . \"$PIN\")" "$MANIFEST" || {
 count=0
 while IFS= read -r path; do
   [ -n "$path" ] || continue
-  case "$path" in #*) continue ;; esac
+  case "$path" in \#*) continue ;; esac
   [ -f "$MYLISP/$path" ] || {
     echo "FAIL-CLOSED: declared sparse authority path missing: $path" >&2
     exit 1
