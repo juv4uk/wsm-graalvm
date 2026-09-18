@@ -49,6 +49,13 @@
    (issue . 28)
    (description . "Build a native executable containing the WSM Truffle provider, run the real external/my-lisp/lib/canon.lisp witness, and fail if language discovery or Canon conformance diverges.")))
 
+ ("GRAALVM-P0-LINUX-WINDOWS-RELEASE" .
+  ((priority . 10.0) (capabilities . (graalvm native-image linux windows release ci semver))
+   (origin . wsm-graalvm)
+   (depends-on . (GRAALVM-M1-NATIVE-IMAGE-WITNESS))
+   (issue . 151)
+   (description . "Build a fail-closed distributable release from one source revision: Linux x86_64 and Windows x86_64 Native Image binaries, self-contained pinned my-lisp authority slice, deterministic archives, SHA256 assets, and atomic GitHub Release publication only after semantic/bootstrap and both platform builds pass.")))
+
  ("GRAALVM-M2-TCO-DECISION-ADR" .
   ((priority . 9.0) (capabilities . (truffle jvm tco lisp semantics adr)) (origin . my-lisp)
    (depends-on . (GRAALVM-M1-CONFORMANCE-TIER1))
