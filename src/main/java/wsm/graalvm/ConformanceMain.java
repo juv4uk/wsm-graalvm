@@ -23,8 +23,11 @@ public final class ConformanceMain {
 
         Path repo = Path.of(args[2]).toAbsolutePath().normalize();
         String fixturesSource = Files.readString(Path.of(args[0]));
+        Path transitionPath =
+                repo.resolve("external/my-lisp/tests/fixtures/conformance-transition-witness.lisp");
+        String transitionSource = Files.readString(transitionPath);
         List<ConformanceInventory.Fixture> fixtures =
-                ConformanceInventory.selectTier(fixturesSource, 1);
+                ConformanceInventory.selectTierCurrent(fixturesSource, transitionSource, 1);
 
         WsmContext context = bootstrap(repo, args[1]);
 
@@ -93,7 +96,7 @@ public final class ConformanceMain {
         WsmContext context = new WsmContext(manifestRegistry.toString());
         context.initialize();
 
-        BootstrapRuntime.execute(
+        BootstrapRuntime.executeAuthoritySource(
                 context,
                 Files.readString(repo.resolve("external/my-lisp/lib/canon.lisp")));
 
@@ -123,7 +126,7 @@ public final class ConformanceMain {
                         .orElseThrow(
                                 () -> new IllegalStateException(
                                         "manifest omitted lib/core.lisp"));
-        BootstrapRuntime.execute(context, coreSource.text());
+        BootstrapRuntime.executeAuthoritySource(context, coreSource.text());
 
         return context;
     }

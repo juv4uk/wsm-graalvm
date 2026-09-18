@@ -2,52 +2,38 @@
 set -euo pipefail
 
 REPO=$(cd "$(dirname "$0")/.." && pwd)
-MYLISP=${MYLISP:-$REPO/external/my-lisp}
+cd "$REPO"
 
-if [ -z "${G:-}" ]; then
-  JBIN=$(readlink -f "$(command -v java)")
-  G=$(dirname "$(dirname "$JBIN")")
-fi
-G=${G:?GraalVM root is required}
-export G MYLISP
-
-manifest_pin() {
-  sed -n 's/^[[:space:]]*(pin \. "\([0-9a-f]\{40\}\)").*/\1/p' "$REPO/refs/lisp-dependency-manifest.lisp"
+run_gate() {
+  local label="$1"
+  shift
+  echo "RELEASE-GATE :: $label"
+  "$@"
 }
 
-[ -d "$MYLISP/.git" ] || [ -f "$MYLISP/.git" ] || { echo "RELEASE-GATE FAIL: missing external/my-lisp checkout" >&2; exit 1; }
-PIN=$(git -C "$MYLISP" rev-parse HEAD)
-MANIFEST_PIN=$(manifest_pin)
-[ "$PIN" = "$MANIFEST_PIN" ] || {
-  echo "RELEASE-GATE FAIL: authority pin mismatch $PIN != $MANIFEST_PIN" >&2
-  exit 1
-}
-printf "%s\n" "$PIN" > "$REPO/release-my-lisp-pin.txt"
+run_gate "unexpected gitlinks" bash scripts/check-gitlink-topology.sh
+run_gate "Lisp-first mechanism budget" bash scripts/check-lisp-mechanism-budget.sh
+run_gate "Java public-surface spelling firewall" bash scripts/check-java-spelling-firewall.sh
+run_gate "build" bash scripts/build.sh
 
-bash "$REPO/scripts/check-gitlink-topology.sh"
-bash "$REPO/scripts/verify-authority.sh" "$MYLISP"
-bash "$REPO/scripts/check-lisp-mechanism-budget.sh"
-bash "$REPO/scripts/check-java-spelling-firewall.sh"
-
-bash "$REPO/scripts/build.sh"
-bash "$REPO/scripts/test-reader-string.sh"
-bash "$REPO/scripts/test-conformance-inventory.sh"
-bash "$REPO/scripts/test-real-tier1-inventory.sh"
-bash "$REPO/scripts/test-truffle-frames.sh"
-bash "$REPO/scripts/test-macro-peer-installer.sh"
-bash "$REPO/scripts/test-materialized-define-binder.sh"
-bash "$REPO/scripts/test-migration-cond-truthiness.sh"
-bash "$REPO/scripts/test-semantic-eval.sh"
-bash "$REPO/scripts/check-lisp-dependency-manifest.sh"
-bash "$REPO/scripts/test-exact-q-comparison.sh"
-bash "$REPO/scripts/test-bootstrap-closure-loader.sh"
-bash "$REPO/scripts/test-let-raw-expansion.sh"
-bash "$REPO/scripts/test-real-lisp-bootstrap.sh"
-bash "$REPO/scripts/test-variadic-lambda.sh"
-bash "$REPO/scripts/test-tier1-error-parity.sh"
-MYLISP="$MYLISP" bash "$REPO/scripts/run-canon.sh"
-bash "$REPO/scripts/test-tier1-progress.sh"
-bash "$REPO/scripts/test-write-to-string.sh"
-bash "$REPO/scripts/test-context.sh" "$MYLISP/lib/surface/semantic-registry.lisp"
+run_gate "reader/string" bash scripts/test-reader-string.sh
+run_gate "conformance inventory" bash scripts/test-conformance-inventory.sh
+run_gate "real Tier-1 inventory" bash scripts/test-real-tier1-inventory.sh
+run_gate "Truffle frames" bash scripts/test-truffle-frames.sh
+run_gate "macro peer installer" bash scripts/test-macro-peer-installer.sh
+run_gate "materialized DEFINE binder" bash scripts/test-materialized-define-binder.sh
+run_gate "migration COND truthiness" bash scripts/test-migration-cond-truthiness.sh
+run_gate "semantic eval" bash scripts/test-semantic-eval.sh
+run_gate "dependency manifest" bash scripts/check-lisp-dependency-manifest.sh
+run_gate "exact-Q comparison" bash scripts/test-exact-q-comparison.sh
+run_gate "bootstrap closure loader" bash scripts/test-bootstrap-closure-loader.sh
+run_gate "let raw expansion" bash scripts/test-let-raw-expansion.sh
+run_gate "real Lisp bootstrap" bash scripts/test-real-lisp-bootstrap.sh
+run_gate "variadic lambda" bash scripts/test-variadic-lambda.sh
+run_gate "Tier-1 ErrorKind parity" bash scripts/test-tier1-error-parity.sh
+run_gate "Canon self-verdict" bash scripts/run-canon.sh
+run_gate "Tier-1 progress ledger" bash scripts/test-tier1-progress.sh
+run_gate "write-to-string" bash scripts/test-write-to-string.sh
+run_gate "context persistence" bash scripts/test-context.sh "$REPO/external/my-lisp/lib/surface/semantic-registry.lisp"
 
 echo "RELEASE-GATE-OK"

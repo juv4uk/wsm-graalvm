@@ -23,6 +23,12 @@ public final class ConformanceInventory {
             List<String> requires,
             List<Long> sinceContract) {}
 
+    private record Transition(
+            String supersedesExpr,
+            String expr,
+            String expected,
+            String error) {}
+
     private ConformanceInventory() {}
 
     public static List<Fixture> selectTier(String source, long tier) {
@@ -57,6 +63,85 @@ public final class ConformanceInventory {
         }
 
         return List.copyOf(selected);
+    }
+
+    /**
+     * Project the immutable historical corpus through the pinned Lisp-owned
+     * transition overlay. Java owns only generic transport keyed by the
+     * overlay's `supersedes-expr`; current expressions/outcomes remain data
+     * from external/my-lisp.
+     */
+    public static List<Fixture> selectTierCurrent(
+            String source,
+            String transitionSource,
+            long tier) {
+        Map<String, Integer> occurrences = new LinkedHashMap<>();
+        for (Object form : new Reader(source).readAll()) {
+            Map<String, Object> fields = alist(form);
+            String expr = requiredString(fields, "expr");
+            occurrences.merge(expr, 1, Integer::sum);
+        }
+
+        Map<String, Transition> transitions = transitions(transitionSource, occurrences);
+        List<Fixture> historical = selectTier(source, tier);
+        List<Fixture> current = new ArrayList<>(historical.size());
+
+        for (Fixture fixture : historical) {
+            Transition transition = transitions.get(fixture.expr());
+            if (transition == null) {
+                current.add(fixture);
+                continue;
+            }
+            current.add(new Fixture(
+                    fixture.id(),
+                    transition.expr(),
+                    transition.expected(),
+                    transition.error(),
+                    fixture.role(),
+                    fixture.requires(),
+                    fixture.sinceContract()));
+        }
+
+        return List.copyOf(current);
+    }
+
+    private static Map<String, Transition> transitions(
+            String source,
+            Map<String, Integer> historicalOccurrences) {
+        Map<String, Transition> out = new LinkedHashMap<>();
+
+        for (Object form : new Reader(source).readAll()) {
+            Map<String, Object> fields = alist(form);
+            String supersedes = requiredString(fields, "supersedes-expr");
+            String expr = requiredString(fields, "expr");
+            String expected = optionalString(fields, "expected");
+            String error = optionalString(fields, "error");
+
+            if ((expected == null) == (error == null)) {
+                throw invalid(
+                        "transition must contain exactly one of expected/error: " + supersedes);
+            }
+
+            Integer count = historicalOccurrences.get(supersedes);
+            if (count == null) {
+                throw invalid("transition target missing from historical corpus: " + supersedes);
+            }
+            if (count != 1) {
+                throw invalid(
+                        "transition target is ambiguous in historical corpus: "
+                                + supersedes + " count=" + count);
+            }
+
+            Transition previous =
+                    out.putIfAbsent(
+                            supersedes,
+                            new Transition(supersedes, expr, expected, error));
+            if (previous != null) {
+                throw invalid("duplicate transition target: " + supersedes);
+            }
+        }
+
+        return Map.copyOf(out);
     }
 
     public static String emitLisp(List<Fixture> fixtures, long tier) {
