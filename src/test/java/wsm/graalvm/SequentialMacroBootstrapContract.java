@@ -18,9 +18,9 @@ public final class SequentialMacroBootstrapContract {
 
         String source = """
             (def make-quoted
-              (lambda (x)
+              (lambda (xs)
                 (cons (quote quote)
-                      (cons x (quote ())))))
+                      (cons (car xs) (quote ())))))
             (defmacro wrap x
               (make-quoted x))
             (wrap radio)
