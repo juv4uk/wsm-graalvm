@@ -151,7 +151,11 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: release-${{ matrix.platform }}
-          path: dist/*
+          path: |
+            dist/wsm-graalvm-*.zip
+            dist/wsm-graalvm-*.zip.sha256
+            dist/wsm-graalvm-*.binary.sha256
+            dist/assets/*
           if-no-files-found: error
 
   publish:
@@ -174,9 +178,11 @@ jobs:
           VERSION: ${{ needs.validate.outputs.version }}
         run: |
           set -euo pipefail
+          test -f "dist/assets/wsm-graalvm-${VERSION}-linux-x86_64"
           test -f "dist/wsm-graalvm-${VERSION}-linux-x86_64.zip"
+          test -f "dist/assets/wsm-graalvm-${VERSION}-windows-x86_64.exe"
           test -f "dist/wsm-graalvm-${VERSION}-windows-x86_64.zip"
-          ls -la dist
+          ls -la dist dist/assets
       - name: Create tag and GitHub Release
         env:
           GH_TOKEN: ${{ github.token }}
@@ -201,11 +207,11 @@ Both Linux x86_64 and Windows x86_64 Native Image packages passed the semantic r
 Each package contains the exact pinned my-lisp authority inputs, README, LICENSE, runner scripts, release/source metadata, and SHA256 checksums.
 EOF
           ASSETS=(
-            "dist/wsm-graalvm-${VERSION}-linux-x86_64"
+            "dist/assets/wsm-graalvm-${VERSION}-linux-x86_64"
             "dist/wsm-graalvm-${VERSION}-linux-x86_64.zip"
             "dist/wsm-graalvm-${VERSION}-linux-x86_64.zip.sha256"
             "dist/wsm-graalvm-${VERSION}-linux-x86_64.binary.sha256"
-            "dist/wsm-graalvm-${VERSION}-windows-x86_64.exe"
+            "dist/assets/wsm-graalvm-${VERSION}-windows-x86_64.exe"
             "dist/wsm-graalvm-${VERSION}-windows-x86_64.zip"
             "dist/wsm-graalvm-${VERSION}-windows-x86_64.zip.sha256"
             "dist/wsm-graalvm-${VERSION}-windows-x86_64.binary.sha256"
