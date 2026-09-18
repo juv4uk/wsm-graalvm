@@ -21,19 +21,9 @@ jobs:
           SHA=$(git -C external/my-lisp rev-parse HEAD)
           echo "my-lisp pinned at $SHA"
 
-      - name: Verify authority digests (fail-closed, like scripts/sync-authority.sh)
+      - name: Verify pinned my-lisp authority
         run: |
-          for f in language-contract.lisp my-lisp-constitution.lisp \
-                   lib/canon.lisp lib/surface/semantic-registry.lisp \
-                   tests/fixtures/conformance.lisp; do
-            test -f "external/my-lisp/$f" || { echo "FAIL-CLOSED: missing $f"; exit 1; }
-          done
-          sha256sum external/my-lisp/language-contract.lisp \
-                    external/my-lisp/my-lisp-constitution.lisp \
-                    external/my-lisp/lib/canon.lisp \
-                    external/my-lisp/lib/surface/semantic-registry.lisp \
-                    external/my-lisp/tests/fixtures/conformance.lisp
-
+          bash scripts/verify-authority.sh external/my-lisp
       - name: Set up GraalVM CE pinned to the runtime the substrate is built for
         uses: graalvm/setup-graalvm@v1
         with:
@@ -76,7 +66,13 @@ jobs:
         if: always()
         run: |
           RS='bash'  # placeholder to keep yaml valid
-      - name: Gate 6+ — tier-1 conformance (next; no silent pass)
-        if: always()
+      - name: M1 — shared definition frame across Context.eval
+
         run: |
-          echo "not yet implemented; see tasks.lisp GRAALVM-M1-CONFORMANCE-TIER1 (issue #9 gate 6)"
+          G=$(dirname "$(dirname "$(readlink -f "$(command -v java)")")")
+          G=$G bash scripts/test-context.sh external/my-lisp/lib/surface/semantic-registry.lisp
+
+      - name: Gate 6 — Tier-1 conformance against pinned upstream fixture
+        run: |
+          G=$(dirname "$(dirname "$(readlink -f "$(command -v java)")")")
+          G=$G MYLISP=external/my-lisp bash scripts/test-tier1.sh

@@ -24,11 +24,18 @@ import java.util.List;
         defaultMimeType = "text/x-wsm",
         characterMimeTypes = { "text/x-wsm" }
 )
-public final class WsmLanguage extends TruffleLanguage<Void> {
+public final class WsmLanguage extends TruffleLanguage<WsmContext> {
+    private static final ContextReference<WsmContext> CONTEXT_REFERENCE =
+            ContextReference.create(WsmLanguage.class);
 
     @Override
-    protected Void createContext(com.oracle.truffle.api.TruffleLanguage.Env env) {
-        return null;
+    protected WsmContext createContext(com.oracle.truffle.api.TruffleLanguage.Env env) {
+        return new WsmContext(System.getProperty("wsm.registryPath"));
+    }
+
+    @Override
+    protected void initializeContext(WsmContext context) {
+        context.initialize();
     }
 
     @Override
@@ -40,13 +47,8 @@ public final class WsmLanguage extends TruffleLanguage<Void> {
     protected CallTarget parse(com.oracle.truffle.api.TruffleLanguage.ParsingRequest request)
             throws IOException {
         String code = request.getSource().getCharacters().toString();
-        String registryPath = System.getProperty("wsm.registryPath");
-        if (registryPath == null) {
-            throw new IllegalArgumentException(
-                    "missing system property wsm.registryPath (numeric registry authority)");
-        }
-        CanonRegistry registry = CanonRegistryLoader.load(registryPath);
-        Compiler compiler = new Compiler(registry);
+        WsmContext context = CONTEXT_REFERENCE.get(null);
+        Compiler compiler = new Compiler(context.registry(), this, context.globals());
         List<WsmNode> forms = compiler.compileProgram(new Reader(code).readAll());
         ProgramBodyNode body = new ProgramBodyNode(forms);
         BodyRoot root = new BodyRoot(this, body);

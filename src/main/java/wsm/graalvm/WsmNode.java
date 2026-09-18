@@ -199,9 +199,13 @@ public abstract class WsmNode extends com.oracle.truffle.api.nodes.Node {
                     || (x instanceof Value.SemanticRef sx
                         && y instanceof Value.SemanticRef sy
                         && sx.id().equals(sy.id()))
-                    || (x instanceof Long lx
-                        && y instanceof Long ly
-                        && lx.equals(ly));
+                    || (x instanceof Value.NumberValue nx
+                        && y instanceof Value.NumberValue ny
+                        && nx.numerator().equals(ny.numerator())
+                        && nx.denominator().equals(ny.denominator()))
+                    || (x instanceof Value.StringValue sx
+                        && y instanceof Value.StringValue sy
+                        && sx.value.equals(sy.value));
             return same
                     ? Value.identitySame()
                     : Value.record("identity-relation", "distinct");
@@ -214,20 +218,26 @@ public abstract class WsmNode extends com.oracle.truffle.api.nodes.Node {
         @Children private final WsmNode[] expecteds;
         @Children private final WsmNode[] bodies;
 
+        private final boolean[] legacyTruthiness;
+
         CondNode(
                 WsmNode[] tests,
                 WsmNode[] expecteds,
-                WsmNode[] bodies) {
+                WsmNode[] bodies,
+                boolean[] legacyTruthiness) {
             this.tests = tests;
             this.expecteds = expecteds;
             this.bodies = bodies;
+            this.legacyTruthiness = legacyTruthiness;
         }
 
         @Override public Object executeGeneric(VirtualFrame frame) {
             for (int i = 0; i < tests.length; i++) {
                 Object actual = tests[i].executeGeneric(frame);
-                Object expected = expecteds[i].executeGeneric(frame);
-                if (Structural.equals(actual, expected)) {
+                boolean selected = legacyTruthiness[i]
+                        ? actual != Value.NIL
+                        : Structural.equals(actual, expecteds[i].executeGeneric(frame));
+                if (selected) {
                     return bodies[i].executeGeneric(frame);
                 }
             }
@@ -268,8 +278,13 @@ public abstract class WsmNode extends com.oracle.truffle.api.nodes.Node {
             if (x instanceof Value.Symbol sx && y instanceof Value.Symbol sy) {
                 return sx.name.equals(sy.name);
             }
-            if (x instanceof Long lx && y instanceof Long ly) {
-                return lx.equals(ly);
+
+            if (x instanceof Value.StringValue sx && y instanceof Value.StringValue sy) {
+                return sx.value.equals(sy.value);
+            }
+            if (x instanceof Value.NumberValue nx && y instanceof Value.NumberValue ny) {
+                return nx.numerator().equals(ny.numerator())
+                        && nx.denominator().equals(ny.denominator());
             }
             if (x instanceof Value.SemanticRef sx
                     && y instanceof Value.SemanticRef sy) {

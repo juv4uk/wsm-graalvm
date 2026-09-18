@@ -4,7 +4,7 @@ import java.util.Arrays;
 import java.util.List;
 
 /**
- * Observable error vocabulary owned by my-lisp Contract 3.0.
+ * Observable error vocabulary owned by my-lisp Contract 6.0.
  *
  * Internal Java control flow may vary, but every surfaced failure must map to
  * exactly one of these eight contract names. Adding/removing a kind is a

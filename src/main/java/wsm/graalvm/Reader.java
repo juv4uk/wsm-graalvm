@@ -83,7 +83,6 @@ public final class Reader {
         if (c == '"') {
             return readString();
         }
-
         if (c == '(') {
             pos++;
             return readList(')');
@@ -151,23 +150,26 @@ public final class Reader {
         StringBuilder out = new StringBuilder();
         while (pos < text.length()) {
             char c = text.charAt(pos++);
-            if (c == '"') return out.toString();
-            if (c == '\\') {
-                if (pos >= text.length()) {
-                    throw new WsmError(WsmError.Kind.PARSE, "unterminated string escape");
-                }
-                char escaped = text.charAt(pos++);
-                switch (escaped) {
-                    case 'n' -> out.append('\n');
-                    case 'r' -> out.append('\r');
-                    case 't' -> out.append('\t');
-                    case '"' -> out.append('"');
-                    case '\\' -> out.append('\\');
-                    default -> throw new WsmError(WsmError.Kind.PARSE, "unknown string escape: \\" + escaped);
-                }
-            } else {
-                out.append(c);
+            if (c == '"') {
+                return new Value.StringValue(out.toString());
             }
+            if (c != '\\') {
+                out.append(c);
+                continue;
+            }
+            if (pos >= text.length()) {
+                throw new WsmError(WsmError.Kind.PARSE, "unterminated string escape");
+            }
+            char escaped = text.charAt(pos++);
+            switch (escaped) {
+                case 'n' -> out.append('\n');
+                case 'r' -> out.append('\r');
+                case 't' -> out.append('\t');
+                case '"' -> out.append('"');
+                case '\\' -> out.append('\\');
+                default -> throw new WsmError(
+                        WsmError.Kind.PARSE,
+                        "unsupported string escape: \\" + escaped);          }
         }
         throw new WsmError(WsmError.Kind.PARSE, "unterminated string literal");
     }
@@ -193,9 +195,19 @@ public final class Reader {
             throw new WsmError(WsmError.Kind.PARSE, "empty token at " + start);
         }
 
-        // Numeric machine IDs such as 0001 remain symbols, not integers.
+        // Numeric machine IDs such as 0001 remain symbols, not numbers.
         if (token.matches("[+-]?[1-9]\\d*|0")) {
-            return Long.parseLong(token);
+            return Value.NumberValue.integer(new java.math.BigInteger(token));
+        }
+        if (token.matches("[+-]?(?:\\d+\\.\\d*|\\.\\d+)(?:[eE][+-]?\\d+)?")
+                || token.matches("[+-]?[1-9]\\d*(?:[eE][+-]?\\d+)")) {
+            return Value.NumberValue.decimal(token);
+        }
+        if (token.matches("[+-]?\\d+/\\d+")) {
+            String[] parts = token.split("/", -1);
+            return new Value.NumberValue(
+                    new java.math.BigInteger(parts[0]),
+                    new java.math.BigInteger(parts[1]));
         }
         return new Token(token);
     }

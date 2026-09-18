@@ -1,6 +1,8 @@
 package wsm.graalvm;
 
-/** A callable first-class mechanism. Canon primitives and closures share this shape. */
-public interface WsmFunc {
+import com.oracle.truffle.api.interop.TruffleObject;
+
+/** A callable first-class runtime value. */
+public interface WsmFunc extends TruffleObject {
     Object call(Object[] args);
 }
