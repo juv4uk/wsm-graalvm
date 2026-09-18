@@ -60,7 +60,8 @@
   ((priority . 10.0) (capabilities . (release packaging provenance windows deb rpm semver)) (origin . wsm-graalvm)
    (depends-on . (GRAALVM-M1-LET-LEXICAL-CUTOVER))
    (issue . 161)
-   (description . "Define one fail-closed v0.1.x artifact contract: native runtime, canonical launcher, exact pinned my-lisp authority slice, release metadata, checksums/provenance, FHS layout, and install lifecycle.")))
+   (description . "Define one fail-closed v0.1.x artifact contract: native runtime, canonical launcher, exact pinned my-lisp authority slice, release metadata, checksums/provenance, FHS layout, and install lifecycle.")
+   (done . (t . "loc-nirmana-1 2026-09-18: scripts/test-release-artifact-contract.sh -> RELEASE-ARTIFACT-CONTRACT-OK pin=fa9bd8757983eb0eb8b3228c56ccc53471adde0c full_mylisp_files=13 on branch release/v0.1.x-products; contract doc docs/RELEASE-ARTIFACT-CONTRACT.md enforced, merge 6348673 + optimization 2619a6e."))))
 
  ("GRAALVM-P0-WINDOWS-INSTALLER" .
   ((priority . 9.9) (capabilities . (windows native installer msi provenance)) (origin . wsm-graalvm)
@@ -72,13 +73,15 @@
   ((priority . 9.8) (capabilities . (linux deb dpkg FHS packaging)) (origin . wsm-graalvm)
    (depends-on . (GRAALVM-P0-RELEASE-ARTIFACT-CONTRACT))
    (issue . 163)
-   (description . "Produce the Debian/Ubuntu x86_64 package from the same native release payload; validate install/run/upgrade/remove and provenance.")))
+   (description . "Produce the Debian/Ubuntu x86_64 package from the same native release payload; validate install/run/upgrade/remove and provenance.")
+   (done . (t . "loc-nirmana-1 2026-09-18: stage-release-payload.sh v0.1.0 linux-x86_64 -> package-deb.sh -> wsm-graalvm-0.1.0-linux-x86_64.deb; dpkg-deb --info/--contents verified; extracted usr/bin/wsm runs the real native bootstrap canon->macro->core->user, exit=0, (car (cdr (cons 1 (cons 2 (cons 3 ()))))) => 2; docker install/upgrade/remove lifecycle pending CI."))))
 
  ("GRAALVM-P0-RPM-PACKAGE" .
   ((priority . 9.8) (capabilities . (linux rpm rpmbuild FHS packaging)) (origin . wsm-graalvm)
    (depends-on . (GRAALVM-P0-RELEASE-ARTIFACT-CONTRACT))
    (issue . 164)
-   (description . "Produce the RPM-family x86_64 package from the same native release payload; validate install/run/upgrade/erase and provenance.")))
+   (description . "Produce the RPM-family x86_64 package from the same native release payload; validate install/run/upgrade/erase and provenance.")
+   (done . (t . "loc-nirmana-1 2026-09-18: stage-release-payload.sh v0.1.0 linux-x86_64 -> package-rpm.sh -> wsm-graalvm-0.1.0-linux-x86_64.rpm; rpm -qip/-qlp verified (License WSM-VOLNIST, /usr/bin/wsm + /usr/lib/wsm-graalvm); rpm2cpio-extracted usr/bin/wsm runs the real native bootstrap, exit=0, result 2; docker rpm install/upgrade/erase lifecycle pending CI."))))
 
  ("GRAALVM-P0-CROSS-PLATFORM-RELEASE" .
   ((priority . 10.0) (capabilities . (release ci windows deb rpm linux native-image atomic-publish)) (origin . wsm-graalvm)
