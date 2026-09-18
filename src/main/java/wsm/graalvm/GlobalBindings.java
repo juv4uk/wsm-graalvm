@@ -14,6 +14,7 @@ import java.util.Set;
  */
 final class GlobalBindings {
     private final Map<String, Object> values = new HashMap<>();
+    private final Map<String, MacroDefinition> macros = new HashMap<>();
     private final Set<String> declared = new HashSet<>();
 
     GlobalBindings() {
@@ -42,4 +43,22 @@ final class GlobalBindings {
         }
         return values.get(name);
     }
-}
+
+    void defineMacro(String name, MacroDefinition macro) {
+        declared.add(name);
+        macros.put(name, macro);
+    }
+
+    boolean isMacro(String name) {
+        return macros.containsKey(name);
+    }
+
+    MacroDefinition macro(String name) {
+        MacroDefinition macro = macros.get(name);
+        if (macro == null) {
+            throw new WsmError(
+                    WsmError.Kind.UNKNOWN_SYMBOL,
+                    "unknown macro: " + name);
+        }
+        return macro;
+    }
