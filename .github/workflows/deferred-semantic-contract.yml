@@ -4,6 +4,8 @@ on:
   push:
     paths:
       - "src/main/java/wsm/graalvm/Compiler.java"
+      - "src/main/java/wsm/graalvm/ReaderDatum.java"
+      - "src/main/java/wsm/graalvm/Value.java"
       - "src/main/java/wsm/graalvm/SemanticMechanismTable.java"
       - "src/test/java/wsm/graalvm/DeferredSemanticMechanismContract.java"
       - "scripts/test-deferred-semantic.sh"
@@ -11,6 +13,8 @@ on:
   pull_request:
     paths:
       - "src/main/java/wsm/graalvm/Compiler.java"
+      - "src/main/java/wsm/graalvm/ReaderDatum.java"
+      - "src/main/java/wsm/graalvm/Value.java"
       - "src/main/java/wsm/graalvm/SemanticMechanismTable.java"
       - "src/test/java/wsm/graalvm/DeferredSemanticMechanismContract.java"
       - "scripts/test-deferred-semantic.sh"
