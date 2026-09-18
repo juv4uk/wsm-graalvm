@@ -79,7 +79,17 @@ trap 'rm -f "$TMP"' EXIT
 cat "$CANON" > "$TMP"
 printf '\n(canon-conforms?)\n' >> "$TMP"
 
-"$OUT" "$TMP" "$REGISTRY" "$MYLISP" 2>&1 | tee "$REPO/native-canon.log"
+if [ "$WINDOWS_HOST" -eq 1 ]; then
+  TMP_ARG="$(cygpath -w "$TMP")"
+  REGISTRY_ARG="$(cygpath -w "$REGISTRY")"
+  MYLISP_ARG="$(cygpath -w "$MYLISP")"
+else
+  TMP_ARG="$TMP"
+  REGISTRY_ARG="$REGISTRY"
+  MYLISP_ARG="$MYLISP"
+fi
+
+"$OUT" "$TMP_ARG" "$REGISTRY_ARG" "$MYLISP_ARG" 2>&1 | tee "$REPO/native-canon.log"
 
 grep -q "(canon-conformance satisfied)" "$REPO/native-canon.log"
 echo "NATIVE-IMAGE-CANON-OK"
