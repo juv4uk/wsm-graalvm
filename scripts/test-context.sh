@@ -22,10 +22,9 @@ public final class ContextSmoke {
         try (Context context = Context.newBuilder("wsm").build()) {
             context.eval("wsm", "(def f (lambda () g))");
             context.eval("wsm", "(def g 42)");
-            Value result = context.eval("wsm", "(f)");
-            if (!result.fitsInLong() || result.asLong() != 42L) {
-                throw new AssertionError("shared definition frame failed: " + result);
-            }
+            context.eval("wsm",
+                    "(cond ((= (f) 42) (quote context-shared-ok)) "
+                            + "(t (undefined-symbol)))");
         }
 
         try (Context isolated = Context.newBuilder("wsm").build()) {
