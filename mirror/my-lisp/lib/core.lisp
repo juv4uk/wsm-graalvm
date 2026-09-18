@@ -58,17 +58,33 @@
     ((atom rest) (structural-kind empty-list) t)
     ((atom rest) (structural-kind atom) t)
     (t (identity-relation same)
-       (cond
-         ((legacy-truthy? (car rest)) t (and (cdr rest)))
-         ((eq t t) (identity-relation same) (quote ())))))
+       (cons (quote cond)
+             (cons
+               (list
+                 (list (quote legacy-truthy?) (car rest))
+                 t
+                 (cons (quote and) (cdr rest)))
+               (cons
+                 (list (list (quote eq) t t)
+                       (quote (identity-relation same))
+                       (quote ()))
+                 (quote ()))))))
 (defmacro or rest
   (cond
     ((atom rest) (structural-kind empty-list) (quote ()))
     ((atom rest) (structural-kind atom) (car rest))
     (t (identity-relation same)
-       (cond
-         ((legacy-truthy? (car rest)) t t)
-         ((eq t t) (identity-relation same) (or (cdr rest))))))
+       (cons (quote cond)
+             (cons
+               (list
+                 (list (quote legacy-truthy?) (car rest))
+                 t
+                 t)
+               (cons
+                 (list (list (quote eq) t t)
+                       (quote (identity-relation same))
+                       (cons (quote or) (cdr rest)))
+                 (quote ()))))))
 ; gensym — my-lisp's defmacro is unhygienic by default (no automatic
 ; protection against accidental variable capture; verified live
 ; 2026-08-27, see docs/macro-hygiene-2026-08-27.md's own capture demo).
@@ -169,7 +185,8 @@
 (def length-onto
   (lambda (values acc)
     (cond
-      ((legacy-truthy? (atom values)) t acc)
+      ((atom values) (structural-kind empty-list) acc)
+      ((atom values) (structural-kind atom) acc)
       ((eq t t) (identity-relation same) (length-onto (cdr values) (+ acc 1)))
     )))
 
@@ -180,7 +197,8 @@
 (def reverse-onto
   (lambda (values acc)
     (cond
-      ((legacy-truthy? (atom values)) t acc)
+      ((atom values) (structural-kind empty-list) acc)
+      ((atom values) (structural-kind atom) acc)
       ((eq t t) (identity-relation same) (reverse-onto (cdr values) (cons (car values) acc)))
     )))
 
@@ -209,7 +227,8 @@
 (def map-onto
   (lambda (f values acc)
     (cond
-      ((legacy-truthy? (atom values)) t (reverse acc))
+      ((atom values) (structural-kind empty-list) (reverse acc))
+      ((atom values) (structural-kind atom) (reverse acc))
       ((eq t t) (identity-relation same) (map-onto f (cdr values) (cons (f (car values)) acc)))
     )))
 
@@ -220,7 +239,8 @@
 (def filter-onto
   (lambda (predicate values acc)
     (cond
-      ((legacy-truthy? (atom values)) t (reverse acc))
+      ((atom values) (structural-kind empty-list) (reverse acc))
+      ((atom values) (structural-kind atom) (reverse acc))
       ((legacy-truthy? (predicate (car values))) t (filter-onto predicate (cdr values) (cons (car values) acc)))
       ((eq t t) (identity-relation same) (filter-onto predicate (cdr values) acc))
     )))
@@ -232,7 +252,8 @@
 (def reduce
   (lambda (f acc values)
     (cond
-      ((legacy-truthy? (atom values)) t acc)
+      ((atom values) (structural-kind empty-list) acc)
+      ((atom values) (structural-kind atom) acc)
       ((eq t t) (identity-relation same) (reduce f (f acc (car values)) (cdr values)))
     )))
 
@@ -315,16 +336,18 @@
     (cond
       ((atom a) (structural-kind pair)
        (cond
-         ((atom b) (structural-kind pair)
+      ((atom b) (structural-kind pair)
           (cond
-            ((equal? (car a) (car b)) (structural-relation same)
+      ((equal? (car a) (car b)) (structural-relation same)
              (equal? (cdr a) (cdr b)))
-            ((equal? (car a) (car b)) (structural-relation distinct)
-             (quote (structural-relation distinct)))))
-         ((atom b) (structural-kind empty-list)
+      ((equal? (car a) (car b)) (structural-relation distinct)
+             (quote (structural-relation distinct)))
+    ))
+      ((atom b) (structural-kind empty-list)
           (quote (structural-relation distinct)))
-         ((atom b) (structural-kind atom)
-          (quote (structural-relation distinct)))))
+      ((atom b) (structural-kind atom)
+          (quote (structural-relation distinct)))
+    ))
       ((atom b) (structural-kind pair)
        (quote (structural-relation distinct)))
       ((eq a b) (identity-relation same)
@@ -352,35 +375,33 @@
 (def nth
   (lambda (i lst)
     (cond
-      ((legacy-truthy? (eq i 0)) t (car lst))
+      ((eq i 0) (identity-relation same) (car lst))
       ((eq t t) (identity-relation same) (nth (- i 1) (cdr lst)))
     )))
 
 (def member?
   (lambda (item lst)
     (cond
-      ((legacy-truthy? (atom lst)) t (quote ()))
-      ((legacy-truthy? (equal? item (car lst))) t t)
+      ((atom lst) (structural-kind empty-list) (quote ()))
+      ((atom lst) (structural-kind atom) (quote ()))
+      ((equal? item (car lst)) (structural-relation same) t)
       ((eq t t) (identity-relation same) (member? item (cdr lst)))
     )))
 
 (def assoc
   (lambda (key alist)
     (cond
-      ((legacy-truthy? (atom alist)) t (quote ()))
-      ((legacy-truthy? (equal? key (car (car alist)))) t (car alist))
+      ((atom alist) (structural-kind empty-list) (quote ()))
+      ((atom alist) (structural-kind atom) (quote ()))
+      ((equal? key (car (car alist))) (structural-relation same) (car alist))
       ((eq t t) (identity-relation same) (assoc key (cdr alist)))
     )))
 
 (defmacro let* (bindings body)
   (cond
-      ((legacy-truthy? (atom bindings)) t body)
-      (t
-     ; Build the recursive expansion from the primitive tree substrate only.
-     ; This keeps let* semantics in Lisp while allowing generic macro
-     ; frontends to execute the law without importing the higher-level list
-     ; helper as host/compiler semantic authority.
-     (cons (quote let)
+      ((atom bindings) (structural-kind empty-list) body)
+      ((atom bindings) (structural-kind atom) body)
+      ((eq t t) (identity-relation same) (cons (quote let)
            (cons (cons (car bindings) (quote ()))
                  (cons (cons (quote let*)
                              (cons (cdr bindings)
@@ -422,7 +443,7 @@
     (cond
       ((legacy-truthy? (string-empty? prefix)) t t)
       ((legacy-truthy? (string-empty? s)) t (quote ()))
-      ((legacy-truthy? (eq (string-first prefix) (string-first s))) t (string-prefix? (string-rest prefix) (string-rest s)))
+      ((eq (string-first prefix) (string-first s)) (identity-relation same) (string-prefix? (string-rest prefix) (string-rest s)))
       ((eq t t) (identity-relation same) (quote ()))
     )))
 
@@ -446,9 +467,14 @@
 (def symbol?
   (lambda (value)
     (cond
-      ((legacy-truthy? (atom value)) t (cond
-         ((eq value (string->symbol (write-to-string value))) t)
-         (t (quote ()))))
+      ((atom value) (structural-kind empty-list) (cond
+      ((eq value (string->symbol (write-to-string value))) (identity-relation same) t)
+      ((eq t t) (identity-relation same) (quote ()))
+    ))
+      ((atom value) (structural-kind atom) (cond
+      ((eq value (string->symbol (write-to-string value))) (identity-relation same) t)
+      ((eq t t) (identity-relation same) (quote ()))
+    ))
       ((eq t t) (identity-relation same) (quote ()))
     )))
 
@@ -509,7 +535,7 @@
 (def largest-chunk
   (lambda (a b chunk mult)
     (cond
-      ((legacy-truthy? (< a (+ chunk chunk))) t (cons chunk mult))
+      ((< a (+ chunk chunk)) 1/1 (cons chunk mult))
       ((eq t t) (identity-relation same) (largest-chunk a b (+ chunk chunk) (+ mult mult)))
     )))
 
@@ -533,8 +559,8 @@
 (def quotient
   (lambda (a b)
     (cond
-      ((legacy-truthy? (eq b 0)) t (/ a b))
-      ((legacy-truthy? (< a b)) t 0)
+      ((eq b 0) (identity-relation same) (/ a b))
+      ((< a b) 1/1 0)
       ((eq t t) (identity-relation same) (let ((chunk+mult (largest-chunk a b b 1)))
            (+ (cdr chunk+mult) (quotient (- a (car chunk+mult)) b))))
     )))
@@ -607,7 +633,7 @@
 (def number->string-onto
   (lambda (n acc)
     (cond
-      ((legacy-truthy? (eq n 0)) t acc)
+      ((eq n 0) (identity-relation same) acc)
       ((eq t t) (identity-relation same) (number->string-onto (quotient n 10) (string-append (digit->string (mod n 10)) acc)))
     )))
 
@@ -639,30 +665,44 @@
 ; Verschachtelung aus.
 (defmacro -> forms
   (cond
-      ((legacy-truthy? (atom forms)) t (quote ()))
-      ((legacy-truthy? (atom (cdr forms))) t (car forms))
+      ((atom forms) (structural-kind empty-list) (quote ()))
+      ((atom forms) (structural-kind atom) (quote ()))
+      ((atom (cdr forms)) (structural-kind empty-list) (car forms))
+      ((atom (cdr forms)) (structural-kind atom) (car forms))
       ((eq t t) (identity-relation same) (let* ((x (car forms))
               (next (car (cdr forms)))
               (rest (cdr (cdr forms)))
-              (step (cond ((atom next) (list next x))
-                          (t (cons (car next) (cons x (cdr next)))))))
+              (step (cond
+      ((atom next) (structural-kind empty-list) (list next x))
+      ((atom next) (structural-kind atom) (list next x))
+      ((eq t t) (identity-relation same) (cons (car next) (cons x (cdr next))))
+    )))
          (cond
-           ((atom rest) step)
-           (t (cons (quote ->) (cons step rest))))))
+      ((atom rest) (structural-kind empty-list) step)
+      ((atom rest) (structural-kind atom) step)
+      ((eq t t) (identity-relation same) (cons (quote ->) (cons step rest)))
+    )))
     ))
 
 (defmacro ->> forms
   (cond
-      ((legacy-truthy? (atom forms)) t (quote ()))
-      ((legacy-truthy? (atom (cdr forms))) t (car forms))
+      ((atom forms) (structural-kind empty-list) (quote ()))
+      ((atom forms) (structural-kind atom) (quote ()))
+      ((atom (cdr forms)) (structural-kind empty-list) (car forms))
+      ((atom (cdr forms)) (structural-kind atom) (car forms))
       ((eq t t) (identity-relation same) (let* ((x (car forms))
               (next (car (cdr forms)))
               (rest (cdr (cdr forms)))
-              (step (cond ((atom next) (list next x))
-                          (t (append next (list x))))))
+              (step (cond
+      ((atom next) (structural-kind empty-list) (list next x))
+      ((atom next) (structural-kind atom) (list next x))
+      ((eq t t) (identity-relation same) (append next (list x)))
+    )))
          (cond
-           ((atom rest) step)
-           (t (cons (quote ->>) (cons step rest))))))
+      ((atom rest) (structural-kind empty-list) step)
+      ((atom rest) (structural-kind atom) step)
+      ((eq t t) (identity-relation same) (cons (quote ->>) (cons step rest)))
+    )))
     ))
 
 ;; ── Numeric library additions (M0, 2026-08-22) ─────────────────────
@@ -680,7 +720,7 @@
 (def sqrt-iter
   (lambda (guess x n)
     (cond
-      ((legacy-truthy? (= n 0)) t guess)
+      ((= n 0) 1/1 guess)
       ((eq t t) (identity-relation same) (sqrt-iter (/ (+ guess (/ x guess)) 2) x (- n 1)))
     )))
 
@@ -688,7 +728,7 @@
 (def isqrt
   (lambda (n)
     (cond
-      ((legacy-truthy? (< n 2)) t n)
+      ((< n 2) 1/1 n)
       ((eq t t) (identity-relation same) (isqrt-step n (quotient n 2)))
     )))
 
@@ -696,69 +736,20 @@
   (lambda (n g)
     (let ((next (quotient (+ g (quotient n g)) 2)))
       (cond
-      ((legacy-truthy? (< next g)) t (isqrt-step n next))
+      ((< next g) 1/1 (isqrt-step n next))
       ((eq t t) (identity-relation same) g)
     ))))
 
 (def sqrt
   (lambda (x)
     (cond
-      ;;
-      negative
-      ->
-      nil
-      (error handling stays with the caller for now)
-      ((legacy-truthy? (< x 0)) t ())
-      ;;
-      zero
-      ->
-      exact
-      zero
-      ((legacy-truthy? (= x 0)) t 0)
-      ;;
-      integer
-      input:
-      exact
-      answer
-      when
-      a
-      perfect
-      square...
-      ((legacy-truthy? (= x (quotient x 1))) t (let ((r (isqrt x)))
-         (cond ((= (* r r) x) r)
-               ;; ... else bounded rational approximation (see below)
-               (t (sqrt-iter (/ x 2) x 8)))))
-      ;;
-      rational/float
-      input:
-      bounded
-      Newton.
-      NOTE:
-      this
-      language
-      is
-      ;;
-      fully
-      exact
-      (float literals parse as rationals)
-      ,
-      so
-      unbounded
-      ;;
-      Newton
-      explodes
-      bignum
-      denominators;
-      8
-      iterations
-      give
-      a
-      ;;
-      usable
-      approximation
-      without
-      the
-      blow-up.
+      ((< x 0) 1/1 ())
+      ((= x 0) 1/1 0)
+      ((= x (quotient x 1)) 1/1 (let ((r (isqrt x)))
+         (cond
+      ((= (* r r) x) 1/1 r)
+      ((eq t t) (identity-relation same) (sqrt-iter (/ x 2) x 8))
+    )))
       ((eq t t) (identity-relation same) (sqrt-iter (/ x 2.0) x 5))
     )))
 
@@ -788,7 +779,7 @@
 (def abs
   (lambda (x)
     (cond
-      ((legacy-truthy? (< x 0)) t (- x))
+      ((< x 0) 1/1 (- x))
       ((eq t t) (identity-relation same) x)
     )))
 
@@ -820,23 +811,27 @@
 (def min-list
   (lambda (items)
     (cond
-      ((legacy-truthy? (atom items)) t (quote ()))
+      ((atom items) (structural-kind empty-list) (quote ()))
+      ((atom items) (structural-kind atom) (quote ()))
       ((eq t t) (identity-relation same) (let ((rest-min (min-list (cdr items))))
            (cond
-             ((equal? rest-min (quote ())) (car items))
-             ((< (car items) rest-min) (car items))
-             (t rest-min))))
+      ((equal? rest-min (quote ())) (structural-relation same) (car items))
+      ((< (car items) rest-min) 1/1 (car items))
+      ((eq t t) (identity-relation same) rest-min)
+    )))
     )))
 
 (def max-list
   (lambda (items)
     (cond
-      ((legacy-truthy? (atom items)) t (quote ()))
+      ((atom items) (structural-kind empty-list) (quote ()))
+      ((atom items) (structural-kind atom) (quote ()))
       ((eq t t) (identity-relation same) (let ((rest-max (max-list (cdr items))))
            (cond
-             ((equal? rest-max (quote ())) (car items))
-             ((> (car items) rest-max) (car items))
-             (t rest-max))))
+      ((equal? rest-max (quote ())) (structural-relation same) (car items))
+      ((> (car items) rest-max) 1/1 (car items))
+      ((eq t t) (identity-relation same) rest-max)
+    )))
     )))
 
 ; #469 — post-core stable peer materialization.
@@ -875,10 +870,11 @@
       ((atom groups) (structural-kind pair)
        (let ((group (car groups)))
          (cond
-           ((eq semantic-id (car group)) (identity-relation same)
+      ((eq semantic-id (car group)) (identity-relation same)
             group)
-           ((eq semantic-id (car group)) (identity-relation distinct)
-            (my-postcore-peer-group semantic-id (cdr groups))))))
+      ((eq semantic-id (car group)) (identity-relation distinct)
+            (my-postcore-peer-group semantic-id (cdr groups)))
+    )))
     )))
 
 (def my-postcore-binding-status
@@ -889,10 +885,11 @@
       ((atom bindings) (structural-kind pair)
        (let ((binding (car bindings)))
          (cond
-           ((eq (symbol->string surface) (car binding)) (identity-relation same)
+      ((eq (symbol->string surface) (car binding)) (identity-relation same)
             (quote present))
-           ((eq (symbol->string surface) (car binding)) (identity-relation distinct)
-            (my-postcore-binding-status surface (cdr bindings))))))
+      ((eq (symbol->string surface) (car binding)) (identity-relation distinct)
+            (my-postcore-binding-status surface (cdr bindings)))
+    )))
     )))
 
 (def my-postcore-missing-peers
@@ -903,20 +900,22 @@
       ((atom peers) (structural-kind pair)
        (let ((peer (car peers)))
          (cond
-           ((eq source peer) (identity-relation same)
+      ((eq source peer) (identity-relation same)
             (my-postcore-missing-peers source (cdr peers) bindings))
-           ((eq source peer) (identity-relation distinct)
+      ((eq source peer) (identity-relation distinct)
             (cond
-              ((eq (my-postcore-binding-status peer bindings) (quote present))
+      ((eq (my-postcore-binding-status peer bindings) (quote present))
                (identity-relation same)
                (my-postcore-missing-peers source (cdr peers) bindings))
-              ((eq (my-postcore-binding-status peer bindings) (quote absent))
+      ((eq (my-postcore-binding-status peer bindings) (quote absent))
                (identity-relation same)
                (cons peer
                      (my-postcore-missing-peers
                        source
                        (cdr peers)
-                       bindings))))))))
+                       bindings)))
+    ))
+    )))
     )))
 
 ; Build one expression whose nested DEFINE forms all execute in the caller's
