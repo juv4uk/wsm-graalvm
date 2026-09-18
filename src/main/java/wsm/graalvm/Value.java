@@ -22,6 +22,18 @@ public final class Value {
         public Pair(Object car, Object cdr) { this.car = car; this.cdr = cdr; }
     }
 
+    /**
+     * Language-owned callable identity. Equality is semantic-ID equality;
+     * Java object allocation identity is irrelevant.
+     */
+    public record SemanticRef(String id) {
+        public SemanticRef {
+            if (id == null || id.isBlank()) {
+                throw new IllegalArgumentException("semantic id must be non-empty");
+            }
+        }
+    }
+
     private static final java.util.Map<String, Symbol> INTERN = new java.util.HashMap<>();
 
     public static Symbol symbol(String name) {
