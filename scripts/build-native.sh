@@ -11,7 +11,7 @@ MODULE_PATH="$REPO/third_party/truffle-api.jar:$REPO/third_party/truffle-runtime
 
 rm -f "$REPO/native-wsm"
 
-"$G/bin/native-image"   --module-path "$MODULE_PATH"   --no-fallback   -H:IncludeResources='META-INF/services/com[.]oracle[.]truffle[.]api[.]provider[.]TruffleLanguageProvider'   -cp "$CP"   wsm.graalvm.Main   "$REPO/native-wsm"
+"$G/bin/native-image"   --module-path "$MODULE_PATH"   --no-fallback   --initialize-at-build-time=wsm.graalvm.providers.WsmLanguageProvider   -H:IncludeResources='META-INF/services/com[.]oracle[.]truffle[.]api[.]provider[.]TruffleLanguageProvider'   -cp "$CP"   wsm.graalvm.Main   "$REPO/native-wsm"
 
 MYLISP=${MYLISP:-$REPO/external/my-lisp}
 "$REPO/native-wsm"   "$MYLISP/lib/canon.lisp"   "$MYLISP/lib/surface/semantic-registry.lisp"   "$REPO" 2>&1 | tee "$REPO/native-canon.log"
