@@ -153,35 +153,36 @@ public final class Compiler {
     }
 
     /**
-     * #217 dispatch: 3-part clause = (test expected-result-record body) — the
-     * expected result is DATA compared structurally; 2-part clause =
-     * (test body) — the historical migration bridge, ported 1:1.
+     * #217 canonical dispatch only.
+     *
+     * A clause is (query expected-result expression). The query is evaluated,
+     * the expected result is materialized as Lisp DATA (never executed), and
+     * the two values are compared structurally. No generic truth coercion
+     * exists on this path. Historical two-part cond is compatibility debt and
+     * deliberately does not define this substrate's core semantics.
      */
     private WsmNode compileCond(List<Object> clauses, Environment env) {
-        List<WsmNode> tests = new ArrayList<>(), expecteds = new ArrayList<>(), bodies = new ArrayList<>();
-        boolean[] migration = new boolean[clauses.size()];
-        int i = 0;
+        List<WsmNode> tests = new ArrayList<>();
+        List<WsmNode> expecteds = new ArrayList<>();
+        List<WsmNode> bodies = new ArrayList<>();
+
         for (Object clause : clauses) {
             List<Object> parts = items(clause);
-            switch (parts.size()) {
-                case 3 -> {
-                    tests.add(compile(parts.get(0), env));
-                    expecteds.add(new WsmNode.ConstantNode(parts.get(1)));
-                    bodies.add(compile(parts.get(2), env));
-                }
-                case 2 -> {
-                    tests.add(compile(parts.get(0), env));
-                    expecteds.add(WsmNode.MigrationTruthyNode.INSTANCE);
-                    bodies.add(compile(parts.get(1), env));
-                    migration[i] = true;
-                }
-                default -> throw new WsmError(WsmError.Kind.INVALID_FORM,
-                        ID_COND + " expects (query expected-result expression) or (test expression) clauses");
+            if (parts.size() != 3) {
+                throw new WsmError(
+                        WsmError.Kind.INVALID_FORM,
+                        ID_COND + " expects canonical (query expected-result expression) clauses");
             }
-            i++;
+
+            tests.add(compile(parts.get(0), env));
+            expecteds.add(new WsmNode.ConstantNode(ReaderDatum.toValue(parts.get(1))));
+            bodies.add(compile(parts.get(2), env));
         }
-        return new WsmNode.CondNode(tests.toArray(WsmNode[]::new),
-                expecteds.toArray(WsmNode[]::new), bodies.toArray(WsmNode[]::new), migration);
+
+        return new WsmNode.CondNode(
+                tests.toArray(WsmNode[]::new),
+                expecteds.toArray(WsmNode[]::new),
+                bodies.toArray(WsmNode[]::new));
     }
 
     private WsmNode[] compileAll(List<Object> argForms, Environment env) {
