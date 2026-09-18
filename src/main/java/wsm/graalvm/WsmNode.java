@@ -265,13 +265,61 @@ public abstract class WsmNode extends com.oracle.truffle.api.nodes.Node {
             for (int i = 0; i < tests.length; i++) {
                 Object actual = tests[i].executeGeneric(frame);
                 boolean selected = legacyTruthiness[i]
-                        ? actual != Value.NIL
+                        ? migrationOnlyTruthy(actual)
                         : Structural.equals(actual, expecteds[i].executeGeneric(frame));
                 if (selected) {
                     return bodies[i].executeGeneric(frame);
                 }
             }
             return Value.NIL;
+        }
+
+        /**
+         * Temporary compatibility bridge for historical two-part cond only.
+         *
+         * Canonical three-part clauses never call this path: they compare the
+         * produced domain value structurally against an explicit expected
+         * result. This mapping mirrors pinned my-lisp's
+         * migration_only_cond_truthy and can disappear with two-part cond.
+         */
+        private static boolean migrationOnlyTruthy(Object value) {
+            if (value instanceof Value.NumberValue number
+                    && number.denominator().equals(java.math.BigInteger.ONE)) {
+                if (number.numerator().equals(java.math.BigInteger.ZERO)) return false;
+                if (number.numerator().equals(java.math.BigInteger.ONE)) return true;
+            }
+
+            String[] record = twoSymbolRecord(value);
+            if (record != null) {
+                String kind = record[0];
+                String state = record[1];
+
+                if ("structural-kind".equals(kind)) {
+                    if ("empty-list".equals(state) || "atom".equals(state)) return true;
+                    if ("pair".equals(state)) return false;
+                }
+                if ("identity-relation".equals(kind)) {
+                    if ("same".equals(state)) return true;
+                    if ("distinct".equals(state)) return false;
+                }
+                if ("structural-relation".equals(kind)) {
+                    if ("same".equals(state)) return true;
+                    if ("distinct".equals(state)) return false;
+                }
+            }
+
+            return value != Value.NIL;
+        }
+
+        private static String[] twoSymbolRecord(Object value) {
+            if (!(value instanceof Value.Pair first)
+                    || !(first.car instanceof Value.Symbol kind)
+                    || !(first.cdr instanceof Value.Pair second)
+                    || !(second.car instanceof Value.Symbol state)
+                    || second.cdr != Value.NIL) {
+                return null;
+            }
+            return new String[] {kind.name, state.name};
         }
     }
 
