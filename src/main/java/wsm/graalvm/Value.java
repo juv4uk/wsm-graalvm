@@ -91,6 +91,13 @@ public final class Value {
         }
     }
 
+    /**
+     * Pair representation identity is deliberately distinct from Lisp
+     * structural equality. Do not add Java equals/hashCode here: Java object
+     * identity is useful for substrate-local aliasing, while Lisp structural
+     * comparison is the explicit WsmNode.Structural operation. Canon 0003 is
+     * atom-only and therefore does not make Pair identity itself a Lisp eq law.
+     */
     public static final class Pair implements com.oracle.truffle.api.interop.TruffleObject {
         public Object car;
         public Object cdr;
