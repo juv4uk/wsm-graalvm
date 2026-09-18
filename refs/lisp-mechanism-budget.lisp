@@ -37,6 +37,11 @@
     (meaning-source . "lib/core.lisp")
     (evidence . "contracts/structural-query-inventory.lisp"))
 
+  (mechanism "1043" substrate-required
+    (meaning-source . "lib/core.lisp string-append peer derivation")
+    (identity-source . "lib/surface/semantic-registry.lisp (1043 stable)")
+    (evidence . "NumericHeadRouteContract: 1043 head routes to admitted mechanism"))
+
   (mechanism "1052" substrate-required
     (identity-source . "lib/surface/semantic-registry.lisp"))
 
