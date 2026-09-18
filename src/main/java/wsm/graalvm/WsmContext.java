@@ -13,6 +13,7 @@ final class WsmContext {
         }
         this.registryPath = registryPath;
         this.globals = new GlobalBindings();
+        BootstrapHostBindings.install(this.globals);
     }
 
     void initialize() {
