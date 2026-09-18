@@ -22,8 +22,8 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       version: ${{ steps.meta.outputs.version }}
-      tag: ${{ needs.validate.outputs.tag }}
-      source_sha: ${{ needs.validate.outputs.source_sha }}
+      tag: ${{ steps.meta.outputs.tag }}
+      source_sha: ${{ steps.meta.outputs.source_sha }}
     steps:
       - uses: actions/checkout@v5
         with:
