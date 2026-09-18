@@ -29,10 +29,18 @@ awk -F'|' '
 
 [ -s "$SURFACES" ] || fail "no admitted registry surfaces extracted"
 
+# Scan only semantic-routing shapes. A public surface used as ordinary data
+# syntax or serialization text (for example "/" in rational printing) is not
+# semantic authority. The forbidden forms below are places where a spelling
+# can actually select or install language meaning.
 while IFS= read -r surface; do
-  grep -Fxq "$surface" "$ALLOW" && continue
-  if grep -R -n -F -- "\"$surface\"" "$SRC" > "$HITS"; then
-    echo "Public Lisp surface hardcoded in production Java: $surface" >&2
+  grep -Fxq -- "$surface" "$ALLOW" && continue
+
+  escaped=$(printf '%s' "$surface" | sed 's/[][(){}.*+?^$|\\/]/\\&/g')
+  pattern="(semanticIdForToken|idForSpelling|defineMacro|define|declare|isMacro|macro)[[:space:]]*\\([[:space:]]*\\\"$escaped\\\"|case[[:space:]]+\\\"$escaped\\\"|\\.equals[[:space:]]*\\([[:space:]]*\\\"$escaped\\\"|Map\\.(entry|of)[[:space:]]*\\([[:space:]]*\\\"$escaped\\\""
+
+  if grep -R -n -E -- "$pattern" "$SRC" > "$HITS"; then
+    echo "Public Lisp surface used as Java semantic routing authority: $surface" >&2
     cat "$HITS" >&2
     fail "route public spellings through CanonRegistry/semantic ID or document a narrow exception"
   fi
