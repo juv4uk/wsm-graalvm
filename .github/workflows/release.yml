@@ -298,3 +298,7 @@ EOF
             "dist/wsm-graalvm-$VERSION-windows-x86_64.binary.sha256"
           )
           gh release create "$TAG" --target "$SOURCE_SHA" --title "wsm-graalvm $TAG" --notes-file release-notes.md "${ASSETS[@]}"
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
