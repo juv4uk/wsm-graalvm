@@ -21,6 +21,7 @@ public final class SemanticMechanismTable {
             Map.entry("0004", SemanticMechanismTable::invoke0004),
             Map.entry("0005", SemanticMechanismTable::invoke0005),
             Map.entry("0006", SemanticMechanismTable::invoke0006),
+            Map.entry("1001", SemanticMechanismTable::invoke1001),
             Map.entry("1014", SemanticMechanismTable::invoke1014),
             Map.entry("1015", SemanticMechanismTable::invoke1015),
             Map.entry("1016", SemanticMechanismTable::invoke1016),
@@ -74,6 +75,36 @@ public final class SemanticMechanismTable {
             throw new WsmError(WsmError.Kind.TYPE, "0006 expects a pair");
         }
         return pair.cdr;
+    }
+
+    private static Object invoke1001(Object[] args) {
+        if (args.length == 0) {
+            throw new WsmError(
+                    WsmError.Kind.ARITY,
+                    "1001 expects at least 1 argument");
+        }
+
+        Value.NumberValue result = requireNumber("1001", args[0]);
+        if (args.length == 1) {
+            return new Value.NumberValue(
+                    result.numerator().negate(),
+                    result.denominator());
+        }
+
+        for (int i = 1; i < args.length; i++) {
+            Value.NumberValue operand = requireNumber("1001", args[i]);
+            result = subtractExact(result, operand);
+        }
+        return result;
+    }
+
+    private static Value.NumberValue subtractExact(
+            Value.NumberValue left,
+            Value.NumberValue right) {
+        return new Value.NumberValue(
+                left.numerator().multiply(right.denominator())
+                        .subtract(right.numerator().multiply(left.denominator())),
+                left.denominator().multiply(right.denominator()));
     }
 
     private static Object invoke1014(Object[] args) {
