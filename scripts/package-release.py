@@ -109,6 +109,13 @@ def main() -> int:
         encoding="utf-8",
     )
 
+    (package / "wsm.cmd").write_text(
+        "@echo off\r\n"
+        'set "HERE=%~dp0"\r\n'
+        '"%HERE%run.cmd" %*\r\n',
+        encoding="utf-8",
+    )
+
     (package / "MY_LISP_PIN.txt").write_text(args.upstream_pin + "\n", encoding="utf-8")
     (package / "RELEASE_SHA.txt").write_text(args.repo_sha + "\n", encoding="utf-8")
     (package / "RELEASE.txt").write_text(
