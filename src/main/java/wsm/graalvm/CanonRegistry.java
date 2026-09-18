@@ -1,7 +1,5 @@
 package wsm.graalvm;
 
-import wsm.graalvm.Reader.Token;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -21,58 +19,62 @@ public final class CanonRegistry {
 
     public CanonRegistry load(String registrySource) {
         CanonRegistry out = new CanonRegistry();
-        List<Object> forms = new Reader(registrySource).readAll();
-        if (forms.isEmpty()) throw new WsmError(WsmError.Kind.PARSE, "registry empty");
-
-        Object form = forms.get(0);
-        if (!(form instanceof Value.Pair head)
-                || !(head.car instanceof Token t) || !t.spelling().equals("sr/1")) {
-            throw new WsmError(WsmError.Kind.PARSE, "registry must start with (sr/1 ...)");
+        List<Object> forms = new RegistrySexpReader(registrySource).readAll();
+        if (forms.size() != 1 || !(forms.get(0) instanceof List<?> top)
+                || top.isEmpty() || !"sr/1".equals(top.get(0))) {
+            throw new WsmError(
+                    WsmError.Kind.PARSE,
+                    "registry must contain exactly one (sr/1 ...) form");
         }
 
-        for (Object rowO : rows(head.cdr)) {
-            if (!(rowO instanceof Value.Pair row)
-                    || !(row.car instanceof Token idToken)) {
+        for (int i = 1; i < top.size(); i++) {
+            Object rowObject = top.get(i);
+            if (!(rowObject instanceof List<?> row)
+                    || row.isEmpty()
+                    || !(row.get(0) instanceof String id)
+                    || !id.matches("\\d+")) {
                 throw new WsmError(WsmError.Kind.PARSE, "malformed registry row");
             }
 
-            String id = idToken.spelling();
             Map<String, String> faceMap = new java.util.LinkedHashMap<>();
 
-            // The opaque numeric machine ID is itself an admitted runtime route.
+            // Opaque machine ID is itself an admitted runtime route.
             putMapping(out.spellingToId, id, id);
 
-            for (Object surfaceO : rows(row.cdr)) {
-                if (!(surfaceO instanceof Value.Pair surface)) {
-                    throw new WsmError(WsmError.Kind.PARSE, "malformed registry surface");
+            for (int j = 1; j < row.size(); j++) {
+                Object surfaceObject = row.get(j);
+                if (!(surfaceObject instanceof List<?> surface)
+                        || surface.size() < 3
+                        || !(surface.get(0) instanceof String marker)
+                        || !(surface.get(1) instanceof String spelling)
+                        || !(surface.get(surface.size() - 1) instanceof String statusRaw)) {
+                    throw new WsmError(
+                            WsmError.Kind.PARSE,
+                            "malformed registry surface for " + id);
                 }
 
-                List<Object> fields = cellList(surface);
-                if (fields.size() < 3
-                        || !(fields.get(0) instanceof Token markerToken)
-                        || !(fields.get(1) instanceof Token spellingToken)
-                        || !(fields.get(fields.size() - 1) instanceof Token statusToken)) {
-                    throw new WsmError(WsmError.Kind.PARSE, "malformed registry surface fields");
+                String status = statusRaw.toLowerCase();
+                if ("—".equals(spelling) || !isAdmitted(status)) {
+                    continue;
                 }
-
-                String marker = markerToken.spelling();
-                String spelling = spellingToken.spelling();
-                String status = statusToken.spelling().toLowerCase();
-
-                if (spelling.equals("—")) continue;
-                if (!isAdmitted(status)) continue;
 
                 faceMap.put(marker, spelling);
                 putMapping(out.spellingToId, spelling, id);
             }
 
-            out.rows.put(id, new Row(id, faceMap));
+            if (out.rows.putIfAbsent(id, new Row(id, faceMap)) != null) {
+                throw new WsmError(
+                        WsmError.Kind.PARSE,
+                        "duplicate semantic id: " + id);
+            }
         }
 
         return out;
     }
 
-    public static CanonRegistry registry(Map<String, Row> rowsIn, Map<String, String> spellIn) {
+    public static CanonRegistry registry(
+            Map<String, Row> rowsIn,
+            Map<String, String> spellIn) {
         CanonRegistry reg = new CanonRegistry();
         for (Map.Entry<String, Row> e : rowsIn.entrySet()) {
             reg.rows.put(e.getKey(), e.getValue());
@@ -86,7 +88,11 @@ public final class CanonRegistry {
 
     public Row row(String id) {
         Row r = rows.get(id);
-        if (r == null) throw new WsmError(WsmError.Kind.INVALID_FORM, "unknown semantic id " + id);
+        if (r == null) {
+            throw new WsmError(
+                    WsmError.Kind.INVALID_FORM,
+                    "unknown semantic id " + id);
+        }
         return r;
     }
 
@@ -98,7 +104,6 @@ public final class CanonRegistry {
         return spellingToId.get(spelling);
     }
 
-    /** Compatibility name for older M0 callers. */
     @Deprecated
     public String idForSpelling(String spelling) {
         return semanticIdForToken(spelling);
@@ -112,7 +117,10 @@ public final class CanonRegistry {
         return status.equals("stable") || status.equals("compatibility-only");
     }
 
-    private static void putMapping(Map<String, String> index, String spelling, String id) {
+    private static void putMapping(
+            Map<String, String> index,
+            String spelling,
+            String id) {
         String previous = index.putIfAbsent(spelling, id);
         if (previous != null && !previous.equals(id)) {
             throw new WsmError(
@@ -120,31 +128,5 @@ public final class CanonRegistry {
                     "semantic registry surface collision: " + spelling
                             + " maps to both " + previous + " and " + id);
         }
-    }
-
-    private static Iterable<Object> rows(Object list) {
-        List<Object> out = new ArrayList<>();
-        Object cur = list;
-        while (cur instanceof Value.Pair p) {
-            out.add(p.car);
-            cur = p.cdr;
-        }
-        if (cur != Value.NIL) {
-            throw new WsmError(WsmError.Kind.PARSE, "improper registry list");
-        }
-        return out;
-    }
-
-    private static List<Object> cellList(Object list) {
-        List<Object> out = new ArrayList<>();
-        Object cur = list;
-        while (cur instanceof Value.Pair p) {
-            out.add(p.car);
-            cur = p.cdr;
-        }
-        if (cur != Value.NIL) {
-            throw new WsmError(WsmError.Kind.PARSE, "improper request in registry row");
-        }
-        return out;
     }
 }
