@@ -47,10 +47,7 @@ public final class WsmLanguage extends TruffleLanguage<Void> {
         }
         CanonRegistry registry = CanonRegistryLoader.load(registryPath);
         Compiler compiler = new Compiler(registry);
-        List<Object> forms0 = new Reader(code).readAll();
-        // issue #9 gate 5: append the self-verdict form `(canon-conforms?)`
-        forms0.add(new Value.Pair(new Reader.Token("canon-conforms?"), Value.NIL));
-        List<WsmNode> forms = compiler.compileProgram(forms0);
+        List<WsmNode> forms = compiler.compileProgram(new Reader(code).readAll());
         ProgramBodyNode body = new ProgramBodyNode(forms);
         BodyRoot root = new BodyRoot(this, body);
         return root.getCallTarget();
