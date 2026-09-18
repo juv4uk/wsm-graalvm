@@ -80,7 +80,16 @@ jobs:
           rm -rf "$DIST"
           mkdir -p "$DIST/bin" "$DIST/my-lisp"
           cp native-wsm "$DIST/bin/wsm-graalvm"
-          chmod +x "$DIST/bin/wsm-graalvm"
+          cat > "$DIST/bin/wsm-graalvm-run" <<'EOF'
+#!/usr/bin/env bash
+set -euo pipefail
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+if [ "$#" -lt 1 ]; then echo "usage: wsm-graalvm-run <program.lisp> [registry.lisp] [my-lisp-root]" >&2; exit 2; fi
+REGISTRY="${2:-$ROOT/my-lisp/lib/surface/semantic-registry.lisp}"
+LISP_ROOT="${3:-$ROOT/my-lisp}"
+exec "$ROOT/bin/wsm-graalvm" "$1" "$REGISTRY" "$LISP_ROOT"
+EOF
+          chmod +x "$DIST/bin/wsm-graalvm" "$DIST/bin/wsm-graalvm-run"
           git -C external/my-lisp archive --format=tar HEAD | tar -xf - -C "$DIST/my-lisp"
           PIN="$(git -C external/my-lisp rev-parse HEAD)"
           printf 'wsm-graalvm %s\nmy-lisp %s\nplatform linux-x86_64\ngraalvm 25.3.4.1\n' "${ inputs.version }" "$PIN" > "$DIST/RELEASE.txt"
@@ -95,6 +104,16 @@ jobs:
           Remove-Item -Recurse -Force -ErrorAction SilentlyContinue $Dist
           New-Item -ItemType Directory -Force "$Dist/bin", "$Dist/my-lisp" | Out-Null
           Copy-Item native-wsm.exe "$Dist/bin/wsm-graalvm.exe"
+          @(
+            '@echo off',
+            'set ROOT=%~dp0..',
+            'if "%~1"=="" (echo usage: wsm-graalvm-run ^<program.lisp^> [registry.lisp] [my-lisp-root] & exit /b 2)',
+            'set REGISTRY=%~2',
+            'if "%REGISTRY%"=="" set REGISTRY=%ROOT%\my-lisp\lib\surface\semantic-registry.lisp',
+            'set LISP_ROOT=%~3',
+            'if "%LISP_ROOT%"=="" set LISP_ROOT=%ROOT%\my-lisp',
+            '"%ROOT%\bin\wsm-graalvm.exe" "%~1" "%REGISTRY%" "%LISP_ROOT%"'
+          ) | Set-Content "$Dist/bin/wsm-graalvm-run.cmd"
           git -C external/my-lisp archive --format=tar HEAD | tar -xf - -C "$Dist/my-lisp"
           $Pin = git -C external/my-lisp rev-parse HEAD
           @(
