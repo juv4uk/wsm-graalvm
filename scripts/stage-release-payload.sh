@@ -61,17 +61,17 @@ if [ "$PLATFORM" = "linux-x86_64" ]; then
   cat > "$OUT/bin/wsm" <<EOF
 #!/usr/bin/env bash
 set -euo pipefail
-HERE="$(cd "$(dirname "$0")/.." && pwd)"
-SOURCE="${1:-}"
-if [ -z "$SOURCE" ] || [ "$#" -ne 1 ]; then
+HERE="\$(cd "\$(dirname "\$0")/.." && pwd)"
+SOURCE="\${1:-}"
+if [ -z "\$SOURCE" ] || [ "\$#" -ne 1 ]; then
   echo "usage: wsm <program.lisp>" >&2
   exit 2
 fi
-AUTH="$HERE/lib/wsm-graalvm/$RELEASE_VERSION/my-lisp"
-TMP="$(mktemp --suffix=.lisp)"
-trap 'rm -f "$TMP"' EXIT
-cat "$AUTH/lib/canon.lisp" "$AUTH/lib/macro.lisp" "$AUTH/lib/core.lisp" "$SOURCE" > "$TMP"
-"$HERE/lib/wsm-graalvm/$RELEASE_VERSION/native-wsm" "$TMP" "$AUTH/lib/surface/semantic-registry.lisp" "$HERE"
+AUTH="\$HERE/lib/wsm-graalvm/$RELEASE_VERSION/my-lisp"
+TMP="\$(mktemp --suffix=.lisp)"
+trap 'rm -f "\$TMP"' EXIT
+cat "\$AUTH/lib/canon.lisp" "\$AUTH/lib/macro.lisp" "\$AUTH/lib/core.lisp" "\$SOURCE" > "\$TMP"
+"\$HERE/lib/wsm-graalvm/$RELEASE_VERSION/native-wsm" "\$TMP" "\$AUTH/lib/surface/semantic-registry.lisp" "\$HERE"
 EOF
   chmod +x "$OUT/bin/wsm"
 else
