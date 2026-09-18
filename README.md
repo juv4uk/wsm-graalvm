@@ -143,3 +143,35 @@ Reference/digest дані фіксують, проти якої версії `my
 ## Ліцензія / License
 
 [ВОЛЬНІСТЬ](LICENSE) — канонічний текст, дослівно.
+
+## Реліз Linux + Windows / Linux + Windows release
+
+Release pipeline знаходиться в `.github/workflows/release.yml` і є manual/fail-closed:
+він бере один immutable source commit, проганяє semantic/bootstrap gate, а потім
+на native runners будує Native Image для Linux x86_64 і Windows x86_64.
+
+Перед RC треба дочекатися стабільного upstream `my-lisp` pin. Сам release не змінює
+Lisp semantics і не копіює їх у Java.
+
+### Release operator flow
+
+1. Merge release pipeline у `main`.
+2. У GitHub Actions запусти `release-build`.
+3. Передай SemVer, наприклад `0.1.0`.
+4. Для відтворюваності передай точний `source_ref` commit, який треба випустити.
+5. Workflow публікує tag/release лише після semantic gate і обох Native Image builds.
+
+### Artifacts
+
+Для кожної платформи публікуються:
+- native executable;
+- deterministic `.zip` bundle;
+- `.binary.sha256`;
+- `.zip.sha256`.
+
+Bundle містить binary, `README`, `LICENSE`, точний pinned Lisp authority slice
+(`semantic-registry`, `canon`, `macro`, `core`), `MY_LISP_PIN.txt`, source-release metadata
+та native launcher.
+
+Linux запускається через `./run.sh program.lisp`, Windows — через `run.cmd program.lisp`.
+Обидва launchers спочатку виконують `canon → macro → core`, потім переданий user Lisp.
