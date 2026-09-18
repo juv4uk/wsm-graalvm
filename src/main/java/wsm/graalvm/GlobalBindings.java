@@ -33,6 +33,11 @@ final class GlobalBindings {
     void define(String name, Object value) {
         declared.add(name);
         values.put(name, value);
+        if (value instanceof MacroValue macro) {
+            macros.put(name, macro);
+        } else {
+            macros.remove(name);
+        }
     }
 
     Object lookup(String name) {
@@ -46,6 +51,7 @@ final class GlobalBindings {
 
     void defineMacro(String name, WsmFunc macro) {
         declared.add(name);
+        values.put(name, macro);
         macros.put(name, macro);
     }
 
