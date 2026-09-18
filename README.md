@@ -143,3 +143,34 @@ Reference/digest дані фіксують, проти якої версії `my
 ## Ліцензія / License
 
 [ВОЛЬНІСТЬ](LICENSE) — канонічний текст, дослівно.
+
+
+## Release artifacts
+
+The release pipeline produces **native x86_64 artifacts for Linux and Windows** from GraalVM Native Image. The release contains the native executable, the exact pinned `my-lisp` source tree used by the build, the registry, `LICENSE`, and this README.
+
+The release workflow is deliberately manual and gated:
+
+1. run the full M0/M1 semantic and bootstrap gate;
+2. build Linux and Windows independently;
+3. run the Native Image Canon witness on each platform;
+4. package both artifacts;
+5. publish the GitHub tag/release only when **both** platform artifacts exist.
+
+The release artifact records the exact `my-lisp` commit and GraalVM version in `RELEASE.txt`.
+
+### Running a release
+
+Linux:
+
+\`\`\`text
+bin/wsm-graalvm <program.lisp> [registry.lisp] [my-lisp-root]
+\`\`\`
+
+Windows:
+
+\`\`\`text
+bin\\wsm-graalvm.exe <program.lisp> [registry.lisp] [my-lisp-root]
+\`\`\`
+
+When the optional registry/root arguments are omitted, the packaged `my-lisp/lib/surface/semantic-registry.lisp` and packaged `my-lisp` directory are the intended defaults for the release launcher.
