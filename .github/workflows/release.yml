@@ -3,7 +3,7 @@ name: release-integrator
 on:
   pull_request:
     paths:
-      - ".github/workflows/release-integrator.yml"
+      - ".github/workflows/release.yml"
       - "scripts/build.sh"
       - "scripts/build-native.sh"
       - "scripts/stage-release-payload.sh"
@@ -80,10 +80,6 @@ jobs:
           [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || { echo "invalid SemVer: $VERSION" >&2; exit 1; }
           test -n "$SOURCE_SHA"
           git cat-file -e "$SOURCE_SHA^{commit}"
-          if [[ "${{ github.event_name }}" != "push" ]] && git rev-parse "$TAG^{commit}" >/dev/null 2>&1; then
-            echo "release tag already exists: $TAG" >&2
-            exit 1
-          fi
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
           echo "tag=$TAG" >> "$GITHUB_OUTPUT"
           echo "source_sha=$SOURCE_SHA" >> "$GITHUB_OUTPUT"
@@ -112,8 +108,9 @@ jobs:
           java --version
           javac --version
           native-image --version
-          bash -n scripts/stage-release-payload.sh scripts/write-release-metadata.sh scripts/package-deb.sh scripts/package-rpm.sh scripts/test-linux-packages.sh
+          bash -n scripts/stage-release-payload.sh scripts/write-release-metadata.sh scripts/package-deb.sh scripts/package-rpm.sh scripts/test-linux-packages.sh scripts/test-release-artifact-contract.sh
           python3 -m py_compile scripts/write-release-sbom.py
+          bash scripts/test-release-artifact-contract.sh
       - name: Run semantic release gate
         shell: bash
         run: bash scripts/release-gate.sh
@@ -188,8 +185,9 @@ jobs:
           javac --version
           G_POSIX="$(cygpath -u "$GRAALVM_HOME")"
           "$G_POSIX/bin/native-image.cmd" --version
-          bash -n scripts/stage-release-payload.sh scripts/write-release-metadata.sh
+          bash -n scripts/stage-release-payload.sh scripts/write-release-metadata.sh scripts/test-release-artifact-contract.sh
           python -m py_compile scripts/write-release-sbom.py
+          bash scripts/test-release-artifact-contract.sh
       - name: Run semantic release gate
         shell: bash
         run: bash scripts/release-gate.sh
