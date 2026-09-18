@@ -23,6 +23,7 @@ G="${G%/}"
 if [ ! -x "$G/bin/javac" ] && [ -d /home/agents/graalvm-community-25.3.4.1+1.1 ]; then
   G=/home/agents/graalvm-community-25.3.4.1+1.1
 fi
+G=${G:?set G to GraalVM root}
 
 bash "$REPO/scripts/fetch-third-party.sh"
 
