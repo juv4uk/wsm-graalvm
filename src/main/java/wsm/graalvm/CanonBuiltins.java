@@ -1,11 +1,16 @@
 package wsm.graalvm;
 
 /**
- * Canon mechanisms keyed only by numeric semantic id.
- * Ядро не знає слів — тільки IDs. Слова живуть у registry як дані.
+ * Transitional compatibility bridge.
+ *
+ * Canonical Lisp values must move to SemanticRef(ID) (#2). Until that lands,
+ * old M0 callers may still request a WsmFunc wrapper, but the semantic
+ * implementation itself lives in SemanticMechanismTable and is keyed only by
+ * the numeric ID.
  */
 import java.util.List;
 
+@Deprecated
 public final class CanonBuiltins {
 
     public static final java.util.List<String> CALLABLE =
@@ -13,43 +18,16 @@ public final class CanonBuiltins {
 
     private CanonBuiltins() {}
 
+    /**
+     * Compatibility only: do not use this object as language identity.
+     * Remove when #2 wires SemanticRef(ID) directly to SemanticMechanismTable.
+     */
     public static WsmFunc forId(String id) {
-        return switch (id) {
-            case "0002" -> new WsmFunc() {
-                @Override public Object call(Object[] args) {
-                    WsmError.arity(args, 1, "0002");
-                    return Value.structuralKind(args[0]);
-                }
-            };
-            case "0003" -> new WsmFunc() {
-                @Override public Object call(Object[] args) {
-                    WsmError.arity(args, 2, "0003");
-                    return wsm.graalvm.WsmNode.EqNode.eqRecord(args[0], args[1]);
-                }
-            };
-            case "0004" -> new WsmFunc() {
-                @Override public Object call(Object[] args) {
-                    WsmError.arity(args, 2, "0004");
-                    return new Value.Pair(args[0], args[1]);
-                }
-            };
-            case "0005" -> new WsmFunc() {
-                @Override public Object call(Object[] args) {
-                    WsmError.arity(args, 1, "0005");
-                    if (!(args[0] instanceof Value.Pair p))
-                        throw new WsmError(WsmError.Kind.TYPE, "0005 expects a pair");
-                    return p.car;
-                }
-            };
-            case "0006" -> new WsmFunc() {
-                @Override public Object call(Object[] args) {
-                    WsmError.arity(args, 1, "0006");
-                    if (!(args[0] instanceof Value.Pair p))
-                        throw new WsmError(WsmError.Kind.TYPE, "0006 expects a pair");
-                    return p.cdr;
-                }
-            };
-            default -> throw new WsmError(WsmError.Kind.INVALID_FORM, id + " has no callable value");
-        };
+        if (!SemanticMechanismTable.supports(id)) {
+            throw new WsmError(
+                    WsmError.Kind.INVALID_FORM,
+                    id + " has no callable mechanism");
+        }
+        return args -> SemanticMechanismTable.invoke(id, args);
     }
 }
