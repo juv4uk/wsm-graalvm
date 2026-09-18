@@ -67,7 +67,7 @@
     ((atom rest) (structural-kind atom) (car rest))
     (t (identity-relation same)
        (cond
-         ((legacy-truthy? (car rest)) t (quote ()))
+         ((legacy-truthy? (car rest)) t t)
          ((eq t t) (identity-relation same) (or (cdr rest))))))
 ; gensym — my-lisp's defmacro is unhygienic by default (no automatic
 ; protection against accidental variable capture; verified live
