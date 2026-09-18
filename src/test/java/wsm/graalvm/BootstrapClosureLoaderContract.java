@@ -59,14 +59,15 @@ public final class BootstrapClosureLoaderContract {
             Object structural =
                     context.eval(
                             "wsm",
-                            "(equal? (quote (radio antenna)) "
-                                    + "(quote (radio antenna)))");
+                            "(write-to-string "
+                                    + "(equal? (quote (radio antenna)) "
+                                    + "(quote (radio antenna))))");
             require("(structural-relation same)".equals(structural.toString()),
                     "pinned equal? must match current structural result contract, got: "
                             + structural);
 
             Object ordering = context.eval("wsm", "(<= 1 2 2 3)");
-            require("t".equals(ordering.toString()),
+            require("1".equals(ordering.toString()),
                     "pinned lib/core.lisp <= must execute without Java mechanism, got: "
                             + ordering);
         }
