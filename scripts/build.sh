@@ -12,6 +12,16 @@ bash "$REPO/scripts/fetch-third-party.sh"
 
 CP="$REPO/third_party/truffle-api.jar:$REPO/third_party/polyglot.jar:$REPO/third_party/truffle-runtime.jar:$REPO/third_party/graalvm-collections.jar"
 
-"$G/bin/javac" --release 25   -cp "$CP"   -d "$REPO/classes"   $(find "$REPO/src" -name '*.java')
+rm -rf "$REPO/classes"
+mkdir -p "$REPO/classes"
+
+"$G/bin/javac" --release 25 \
+  -cp "$CP" \
+  -d "$REPO/classes" \
+  $(find "$REPO/src/main/java" -name '*.java')
+
+if [ -d "$REPO/src/main/resources" ]; then
+  cp -R "$REPO/src/main/resources/." "$REPO/classes/"
+fi
 
 echo "BUILD-OK"
