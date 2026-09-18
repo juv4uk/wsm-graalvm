@@ -6,7 +6,7 @@
 (
   (schema . 1)
   (upstream . "juv4uk/my-lisp")
-  (pin . "7258812412145021c216eee92ede8772a61d07e2")
+  (pin . "fa9bd8757983eb0eb8b3228c56ccc53471adde0c")
 
   (authority
     ("language-contract.lisp")
@@ -26,7 +26,6 @@
 
   (witness
     ("tests/fixtures/conformance.lisp" . (gate M1))
-    ("tests/fixtures/conformance-transition-witness.lisp" . (gate M1 current-outcomes))
     ("contracts/answer-contract.lisp" . (mechanism-budget canon-results))
     ("contracts/exact-q-binary-contract.lisp" . (mechanism-budget numeric-comparisons))
     ("contracts/structural-query-inventory.lisp" . (mechanism-budget producer-ownership))
