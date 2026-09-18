@@ -48,9 +48,9 @@ public final class WsmLanguage extends TruffleLanguage<WsmContext> {
             throws IOException {
         String code = request.getSource().getCharacters().toString();
         WsmContext context = CONTEXT_REFERENCE.get(null);
-        Compiler compiler = new Compiler(context.registry(), this, context.globals());
-        List<WsmNode> forms = compiler.compileProgram(new Reader(code).readAll());
-        ProgramBodyNode body = new ProgramBodyNode(forms);
+        List<Object> forms = new Reader(code).readAll();
+        SequentialProgramBodyNode body =
+                new SequentialProgramBodyNode(this, context, forms);
         BodyRoot root = new BodyRoot(this, body);
         return root.getCallTarget();
     }
