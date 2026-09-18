@@ -15,7 +15,7 @@ import java.util.Set;
 public final class DeepRecursionProbe {
     private static String spelling(CanonRegistry registry, String id) {
         CanonRegistry.Row row = registry.row(id);
-        for (String key : new String[] {"sym", "en", "uk", "ukr", "sa"}) {
+        for (String key : new String[] {"en", "sym", "uk", "ukr", "sa"}) {
             String value = row.surfaces().get(key);
             if (value != null && !value.isBlank() && !id.equals(value) && !"—".equals(value)) {
                 return value;
