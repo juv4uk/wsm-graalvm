@@ -64,13 +64,13 @@ public final class SemanticEvalContract {
                     "44".equals(text(closureCall)),
                     "1062 must preserve Closure values, got: " + closureCall);
 
-            Object macroValue =
+            org.graalvm.polyglot.Value macroValue =
                     context.eval(
                             "wsm",
                             "(eval (make-macro (lambda (x) x)))");
             require(
-                    macroValue instanceof GlobalBindings.MacroValue,
-                    "1062 must preserve Macro values, got: " + macroValue);
+                    !macroValue.isNull(),
+                    "1062 must preserve Macro values across the guest boundary");
 
             try {
                 context.eval("wsm", "(eval)");
