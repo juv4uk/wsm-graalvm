@@ -17,9 +17,16 @@
   (mechanism "0006" substrate-required
     (meaning-source . "lib/canon.lisp"))
 
+  (mechanism "1014" substrate-required
+    (meaning-source . "contracts/exact-q-binary-contract.lisp")
+    (identity-source . "lib/surface/semantic-registry.lisp"))
+  (mechanism "1015" substrate-required
+    (meaning-source . "contracts/exact-q-binary-contract.lisp")
+    (identity-source . "lib/surface/semantic-registry.lisp"))
   (mechanism "1016" substrate-required
     (meaning-source . "contracts/exact-q-binary-contract.lisp")
-    (evidence . "contracts/structural-query-inventory.lisp"))
+    (evidence . "contracts/structural-query-inventory.lisp")
+    (identity-source . "lib/surface/semantic-registry.lisp"))
 
   (retired "1017" lisp-defined
     (meaning-source . "lib/core.lisp")
