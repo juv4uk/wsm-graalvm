@@ -14,7 +14,7 @@ import java.util.Set;
  */
 final class GlobalBindings {
     private final Map<String, Object> values = new HashMap<>();
-    private final Map<String, MacroDefinition> macros = new HashMap<>();
+    private final Map<String, WsmFunc> macros = new HashMap<>();
     private final Set<String> declared = new HashSet<>();
 
     GlobalBindings() {
@@ -44,7 +44,7 @@ final class GlobalBindings {
         return values.get(name);
     }
 
-    void defineMacro(String name, MacroDefinition macro) {
+    void defineMacro(String name, WsmFunc macro) {
         declared.add(name);
         macros.put(name, macro);
     }
@@ -53,7 +53,7 @@ final class GlobalBindings {
         return macros.containsKey(name);
     }
 
-    MacroDefinition macro(String name) {
+    WsmFunc macro(String name) {
         MacroDefinition macro = macros.get(name);
         if (macro == null) {
             throw new WsmError(
