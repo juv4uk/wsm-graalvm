@@ -50,10 +50,17 @@ jobs:
             exit 1
           fi
           SOURCE_REF="${INPUT_SOURCE_REF:-$GITHUB_SHA}"
-          git rev-parse --verify "$SOURCE_REF^{commit}" >/dev/null
+          if RESOLVED_SHA=$(git rev-parse --verify "$SOURCE_REF^{commit}" 2>/dev/null); then
+            :
+          elif RESOLVED_SHA=$(git rev-parse --verify "origin/$SOURCE_REF^{commit}" 2>/dev/null); then
+            :
+          else
+            echo "source ref does not resolve to a commit: $SOURCE_REF" >&2
+            exit 1
+          fi
           echo "version=$INPUT_VERSION" >> "$GITHUB_OUTPUT"
           echo "tag=$TAG" >> "$GITHUB_OUTPUT"
-          echo "source_ref=$SOURCE_REF" >> "$GITHUB_OUTPUT"
+          echo "source_ref=$RESOLVED_SHA" >> "$GITHUB_OUTPUT"
 
   semantic-gate:
     name: Release semantic/bootstrap gate
