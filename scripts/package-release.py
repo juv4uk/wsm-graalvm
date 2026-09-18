@@ -89,7 +89,7 @@ def main() -> int:
         '"$HERE/authority/lib/macro.lisp" '
         '"$HERE/authority/lib/core.lisp" '
         '"$1" > "$TMP"\n'
-        'exec "$HERE/bin/wsm-graalvm" "$TMP" '
+        '"$HERE/bin/wsm-graalvm" "$TMP" '
         '"$HERE/authority/lib/surface/semantic-registry.lisp" "$HERE/authority"\n',
         encoding="utf-8",
     )
@@ -119,9 +119,11 @@ def main() -> int:
         f"Semantic authority: juv4uk/my-lisp@{args.upstream_pin}\n"
         f"Release source commit: {args.repo_sha}\n\n"
         "Linux/macOS shell:\n"
-        "  ./run.sh path/to/program.lisp\n\n"
+        "  ./run.sh path/to/program.lisp\n"
+        "  (launcher bootstraps canon -> macro -> core first)\n\n"
         "Windows Command Prompt:\n"
-        "  run.cmd path\\to\\program.lisp\n\n"
+        "  run.cmd path\\to\\program.lisp\n"
+        "  (launcher bootstraps canon -> macro -> core first)\n\n"
         "Direct invocation:\n"
         "  <binary> <program.lisp> authority/lib/surface/semantic-registry.lisp authority\n",
         encoding="utf-8",
