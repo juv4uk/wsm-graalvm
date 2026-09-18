@@ -56,7 +56,10 @@ public final class Compiler {
 
     public WsmNode compile(Object form, LexicalScope scope) {
         if (form instanceof Value.Pair p) return compileList(p, scope);
-        if (form instanceof Long l) return new WsmNode.ConstantNode(l);
+        if (form instanceof Value.Symbol s) return symbolNode(s.name, scope);
+        if (form instanceof Value.StringValue || form instanceof Value.NumberValue) {
+            return new WsmNode.ConstantNode(form);
+        }
         if (form instanceof Token token) return symbolNode(token.spelling(), scope);
         if (form == Value.NIL) return new WsmNode.ConstantNode(Value.NIL);
         throw new WsmError(
@@ -131,6 +134,14 @@ public final class Compiler {
         }
 
         String spelling = token.spelling();
+        if (globals.isMacro(spelling)) {
+            Object expanded = MacroExpander.expand(
+                    globals.macro(spelling),
+                    args,
+                    registry);
+            return compile(expanded, scope);
+        }
+
         String id = registry.semanticIdForToken(spelling);
 
         // Canon resolution is immutable and precedes lexical lookup.
@@ -170,9 +181,7 @@ public final class Compiler {
             }
             case ID_LAMBDA -> compileLambda(args, scope);
             case ID_DEFINE, ID_DEF_COMPAT -> compileDefine(args, scope);
-            case ID_DEFMACRO -> throw new WsmError(
-                    WsmError.Kind.INVALID_FORM,
-                    "0012 is not materialized in substrate M0");
+            case ID_DEFMACRO -> compileDefmacro(args);
             case ID_COND -> compileCond(args, scope);
             default -> {
                 if (SemanticMechanismTable.supports(id)) {
@@ -227,6 +236,30 @@ public final class Compiler {
         return new WsmNode.LambdaNode(
                 lambdaRoot.getCallTarget(),
                 !parentScope.isRoot());
+    }
+
+    private WsmNode compileDefmacro(List<Object> args) {
+        if (args.size() < 3) {
+            throw new WsmError(
+                    WsmError.Kind.ARITY,
+                    ID_DEFMACRO + " expects name, params and body");
+        }
+        if (!(args.get(0) instanceof Token nameToken)) {
+            throw new WsmError(
+                    WsmError.Kind.INVALID_FORM,
+                    ID_DEFMACRO + " binder must be a symbol");
+        }
+
+        String name = nameToken.spelling();
+        ensureBinderAllowed(name);
+        LambdaParams params = lambdaParams(args.get(1));
+        globals.defineMacro(
+                name,
+                new MacroDefinition(
+                        params.fixedNames(),
+                        params.restName(),
+                        List.copyOf(args.subList(2, args.size()))));
+        return new WsmNode.ConstantNode(Value.NIL);
     }
 
     private WsmNode compileDefine(
