@@ -14,7 +14,7 @@ import java.util.Set;
  */
 final class GlobalBindings {
     private final Map<String, Object> values = new HashMap<>();
-    private final Map<String, WsmFunc> macros = new HashMap<>();
+    private final Map<String, MacroValue> macros = new HashMap<>();
     private final Set<String> declared = new HashSet<>();
 
     GlobalBindings() {
@@ -66,7 +66,7 @@ final class GlobalBindings {
         return values.get(name);
     }
 
-    void defineMacro(String name, WsmFunc macro) {
+    void defineMacro(String name, MacroValue macro) {
         declared.add(name);
         macros.put(name, macro);
     }
@@ -75,8 +75,8 @@ final class GlobalBindings {
         return macros.containsKey(name);
     }
 
-    WsmFunc macro(String name) {
-        WsmFunc macro = macros.get(name);
+    MacroValue macro(String name) {
+        MacroValue macro = macros.get(name);
         if (macro == null) {
             throw new WsmError(
                     WsmError.Kind.UNKNOWN_SYMBOL,
