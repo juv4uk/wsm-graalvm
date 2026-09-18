@@ -22,5 +22,7 @@ gate "5 current Canon control" "$REPO/scripts/test-current-canon-control.sh"
 gate "6 closed ErrorKind vocabulary" "$REPO/scripts/test-error-kind.sh"
 gate "7 runtime Truffle lexical frames" "$REPO/scripts/test-lexical-frames.sh"
 gate "8 quote identity and apostrophe reader" "$REPO/scripts/test-quote-reader.sh"
+gate "9 compatibility semantic ID 1000" "$REPO/scripts/test-def-compatibility.sh"
+gate "10 real canon.lisp conformance" "$REPO/scripts/test-real-canon-conformance.sh"
 
 echo "SEMANTIC-GATES-GREEN: optimization may consume these admitted semantics; it may not redefine them."
