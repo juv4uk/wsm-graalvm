@@ -68,10 +68,10 @@ if [ -z "\$SOURCE" ] || [ "\$#" -ne 1 ]; then
   exit 2
 fi
 AUTH="\$HERE/lib/wsm-graalvm/$RELEASE_VERSION/my-lisp"
-TMP="\$(mktemp --suffix=.lisp)"
-trap 'rm -f "\$TMP"' EXIT
-cat "\$AUTH/lib/canon.lisp" "\$AUTH/lib/macro.lisp" "\$AUTH/lib/core.lisp" "\$SOURCE" > "\$TMP"
-"\$HERE/lib/wsm-graalvm/$RELEASE_VERSION/native-wsm" "\$TMP" "\$AUTH/lib/surface/semantic-registry.lisp" "\$HERE"
+# Pass each bootstrap stage and the user program as a separate file: the
+# substrate installs macro peers after macro.lisp and must not re-evaluate a
+# concatenated source (rest-taking macros break when flattened into one file).
+"\$HERE/lib/wsm-graalvm/$RELEASE_VERSION/native-wsm"   "\$AUTH/lib/canon.lisp" "\$AUTH/lib/macro.lisp" "\$AUTH/lib/core.lisp"   "\$SOURCE" "\$AUTH/lib/surface/semantic-registry.lisp" "\$HERE"
 EOF
   chmod +x "$OUT/bin/wsm"
 else
@@ -84,14 +84,8 @@ if "%~1"=="" (
 )
 set "ROOT=%~dp0.."
 set "AUTH=%ROOT%\lib\wsm-graalvm\$RELEASE_VERSION\my-lisp"
-set "TMP=%TEMP%\wsm-%RANDOM%-%RANDOM%.lisp"
-type "%AUTH%\lib\canon.lisp" > "%TMP%"
-type "%AUTH%\lib\macro.lisp" >> "%TMP%"
-type "%AUTH%\lib\core.lisp" >> "%TMP%"
-type "%~1" >> "%TMP%"
-"%ROOT%\lib\wsm-graalvm\$RELEASE_VERSION\native-wsm.exe" "%TMP%" "%AUTH%\lib\surface\semantic-registry.lisp" "%ROOT%"
+"%ROOT%\lib\wsm-graalvm\$RELEASE_VERSION\native-wsm.exe" "%AUTH%\lib\canon.lisp" "%AUTH%\lib\macro.lisp" "%AUTH%\lib\core.lisp" "%~1" "%AUTH%\lib\surface\semantic-registry.lisp" "%ROOT%"
 set "ERR=%ERRORLEVEL%"
-del /q "%TMP%" >nul 2>&1
 exit /b %ERR%
 EOF
 fi

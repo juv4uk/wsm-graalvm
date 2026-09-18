@@ -4,30 +4,38 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-/** M0 launcher for a WSM/my-lisp source file on the Truffle substrate. */
+/**
+ * M0 launcher for WSM/my-lisp source files on the Truffle substrate.
+ *
+ * <p>Files are evaluated sequentially in one runtime context.  The last two
+ * arguments are the semantic registry and the my-lisp root directory; all
+ * preceding arguments are source files.  This keeps the CLI stable for a single
+ * file while also supporting the full bootstrap chain canon &rarr; macro &rarr;
+ * core &rarr; user program without concatenating sources.</p>
+ */
 public final class Main {
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) {
         if (args.length < 3) {
-            System.err.println("usage: wsm-graalvm <language-file.lisp> <registry.lisp> <root>");
+            System.err.println("usage: wsm-graalvm <language-file.lisp>... <registry.lisp> <root>");
             System.exit(2);
         }
 
-        String file = args[0];
-        String registry = args[1];
-        Path rootDir = Path.of(args[2]);
+        String registry = args[args.length - 2];
 
-        // Single M0 host boundary. WsmLanguage consumes these properties;
-        // do not duplicate the same data as a Polyglot option.
-        System.setProperty("wsm.registryPath", registry);
-        System.setProperty("wsm.rootDir", rootDir.toString());
+        WsmContext context = new WsmContext(registry);
+        context.initialize();
 
-        try (org.graalvm.polyglot.Context context =
-                     org.graalvm.polyglot.Context.newBuilder("wsm")
-                             .allowHostAccess(org.graalvm.polyglot.HostAccess.ALL)
-                             .build()) {
-            String code = Files.readString(Path.of(file));
-            context.eval(
-                    org.graalvm.polyglot.Source.newBuilder("wsm", code, file).buildLiteral());
+        try {
+            for (int i = 0; i < args.length - 2; i++) {
+                String file = args[i];
+                String code = Files.readString(Path.of(file));
+                Object result = BootstrapRuntime.execute(context, code);
+                if (result instanceof GlobalBindings.MacroValue macro
+                        && file.endsWith("macro.lisp")) {
+                    MacroPeerInstaller.install(context.registry(), context.globals(), macro);
+                }
+                System.out.println("[wsm-graalvm M0] result: " + Printer.print(result));
+            }
         } catch (IOException e) {
             System.err.println("io: " + e.getMessage());
             System.exit(1);
