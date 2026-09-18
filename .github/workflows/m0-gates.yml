@@ -30,6 +30,9 @@ jobs:
       - name: P0 — Lisp-first mechanism budget
         run: bash scripts/check-lisp-mechanism-budget.sh
 
+      - name: P0 — Java public-surface spelling firewall
+        run: bash scripts/check-java-spelling-firewall.sh
+
       - name: Set up GraalVM CE pinned to the runtime the substrate is built for
         uses: graalvm/setup-graalvm@v1
         with:
