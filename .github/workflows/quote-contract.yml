@@ -1,0 +1,43 @@
+name: quote-contract
+
+on:
+  push:
+    paths:
+      - "src/main/java/wsm/graalvm/Reader.java"
+      - "src/main/java/wsm/graalvm/ReaderDatum.java"
+      - "src/main/java/wsm/graalvm/Compiler.java"
+      - "src/main/java/wsm/graalvm/CanonRegistry.java"
+      - "src/main/java/wsm/graalvm/Printer.java"
+      - "src/test/java/wsm/graalvm/QuoteContract.java"
+      - "scripts/test-quote-contract.sh"
+      - ".github/workflows/quote-contract.yml"
+  pull_request:
+    paths:
+      - "src/main/java/wsm/graalvm/Reader.java"
+      - "src/main/java/wsm/graalvm/ReaderDatum.java"
+      - "src/main/java/wsm/graalvm/Compiler.java"
+      - "src/main/java/wsm/graalvm/CanonRegistry.java"
+      - "src/main/java/wsm/graalvm/Printer.java"
+      - "src/test/java/wsm/graalvm/QuoteContract.java"
+      - "scripts/test-quote-contract.sh"
+      - ".github/workflows/quote-contract.yml"
+
+jobs:
+  quote:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          fetch-depth: 0
+      - name: Verify pinned my-lisp authority
+        run: bash scripts/verify-authority.sh external/my-lisp
+      - name: Set up GraalVM
+        uses: graalvm/setup-graalvm@v1
+        with:
+          java-version: "25"
+          distribution: "graalvm-community"
+          version: "25.3.4.1"
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Quote / apostrophe / dotted-data contract
+        run: bash scripts/test-quote-contract.sh
