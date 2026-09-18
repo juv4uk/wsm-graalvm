@@ -72,6 +72,7 @@ public final class RealLispBootstrapContract {
 
         // Post-retirement witness: the Java 1022 mechanism must be absent,
         // while the pinned Lisp-owned equal? definition remains executable.
+        // Keep this on the real bootstrap path so host fallback cannot return silently.
         require(
                 !SemanticMechanismTable.supports("1022"),
                 "Java 1022 mechanism must remain retired");
