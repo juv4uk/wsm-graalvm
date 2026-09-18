@@ -38,6 +38,8 @@ printf 'release-contract-smoke-native\n' > "$TMP/native"
 bash "$REPO/scripts/stage-release-payload.sh" v0.1.0 linux-x86_64 "$TMP/native" "$TMP/payload"
 
 RUNTIME="$TMP/payload/lib/wsm-graalvm/0.1.0"
+test -x "$TMP/payload/bin/wsm"
+bash -n "$TMP/payload/bin/wsm"
 test -f "$RUNTIME/native"
 test -f "$RUNTIME/my-lisp/lib/canon.lisp"
 test -f "$RUNTIME/my-lisp/lib/macro.lisp"
