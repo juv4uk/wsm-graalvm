@@ -62,3 +62,5 @@ final class GlobalBindings {
         }
         return macro;
     }
+
+}
