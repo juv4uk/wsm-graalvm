@@ -1,0 +1,149 @@
+name: release-build
+
+on:
+  pull_request:
+    paths:
+      - "scripts/build.sh"
+      - "scripts/build-native.sh"
+      - "scripts/stage-release.sh"
+      - "release/**"
+      - "src/main/java/**"
+      - "refs/**"
+      - "CHANGELOG.md"
+      - "README.md"
+      - "VERSION"
+      - ".github/workflows/release.yml"
+  push:
+    tags:
+      - "v*.*.*"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  GRAALVM_VERSION: "25.3.4.1"
+
+jobs:
+  build:
+    name: release bundle / ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            platform: linux-x64
+            archive: tar.gz
+          - os: windows-latest
+            platform: windows-x64
+            archive: zip
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          submodules: recursive
+          fetch-depth: 0
+
+      - name: Verify pinned Lisp authority
+        shell: bash
+        run: bash scripts/verify-authority.sh external/my-lisp
+
+      - name: Set up GraalVM CE + Native Image
+        uses: graalvm/setup-graalvm@v1
+        with:
+          java-version: "25"
+          distribution: "graalvm-community"
+          version: "${{ env.GRAALVM_VERSION }}"
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Verify GraalVM toolchain
+        shell: bash
+        run: |
+          java --version
+          javac --version
+          native-image --version
+
+      - name: Build native image and Canon witness
+        shell: bash
+        env:
+          MYLISP: external/my-lisp
+        run: bash scripts/build-native.sh
+
+      - name: Stage release bundle
+        shell: bash
+        env:
+          MYLISP: external/my-lisp
+          RUNNER_OS: ${{ runner.os }}
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          if [[ "$VERSION" == "${GITHUB_REF_NAME}" || -z "$VERSION" ]]; then
+            VERSION="0.1.0-dev"
+          fi
+          bash scripts/stage-release.sh "$VERSION" "$RUNNER_TEMP/wsm-release"
+
+      - name: Package Linux archive
+        if: runner.os == 'Linux'
+        shell: bash
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          [[ "$VERSION" != "${GITHUB_REF_NAME}" ]] || VERSION="0.1.0-dev"
+          OUT="wsm-graalvm-${VERSION}-${{ matrix.platform }}"
+          tar -C "$RUNNER_TEMP/wsm-release" -czf "$RUNNER_TEMP/$OUT.tar.gz" .
+          sha256sum "$RUNNER_TEMP/$OUT.tar.gz" | awk '{print $1}' > "$RUNNER_TEMP/$OUT.sha256"
+          mkdir -p release-dist
+          cp "$RUNNER_TEMP/$OUT.tar.gz" "$RUNNER_TEMP/$OUT.sha256" release-dist/
+
+      - name: Package Windows archive
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $version = $env:GITHUB_REF_NAME
+          if ($version -match '^v(.+)$') { $version = $Matches[1] } else { $version = '0.1.0-dev' }
+          $out = "wsm-graalvm-$version-${{ matrix.platform }}"
+          Compress-Archive -Path "$env:RUNNER_TEMP/wsm-release/*" -DestinationPath "$env:RUNNER_TEMP/$out.zip" -Force
+          $hash = (Get-FileHash "$env:RUNNER_TEMP/$out.zip" -Algorithm SHA256).Hash.ToLowerInvariant()
+          Set-Content -NoNewline -Path "$env:RUNNER_TEMP/$out.sha256" -Value $hash
+          New-Item -ItemType Directory -Force release-dist | Out-Null
+          Copy-Item "$env:RUNNER_TEMP/$out.zip" release-dist/
+          Copy-Item "$env:RUNNER_TEMP/$out.sha256" release-dist/
+
+      - name: Upload platform bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-${{ matrix.platform }}
+          path: release-dist/*
+          if-no-files-found: error
+          retention-days: 14
+
+  publish:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v5
+        with:
+          path: release-dist
+          pattern: release-*
+          merge-multiple: true
+
+      - name: Verify checksums
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd release-dist
+          for f in *.sha256; do
+            archive="${f%.sha256}"
+            test -f "$archive"
+            expected=$(cat "$f")
+            actual=$(sha256sum "$archive" | awk '{print $1}')
+            test "$expected" = "$actual"
+          done
+
+      - name: Publish GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create "${GITHUB_REF_NAME}" release-dist/*             --repo "${GITHUB_REPOSITORY}"             --verify-tag             --title "${GITHUB_REF_NAME}"             --generate-notes
