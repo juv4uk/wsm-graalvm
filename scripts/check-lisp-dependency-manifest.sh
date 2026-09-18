@@ -51,7 +51,7 @@ for path in "${required[@]}"; do
 done
 
 for path in "lib/canon.lisp" "lib/macro.lisp" "lib/core.lisp"; do
-  grep -Fq ""$path"" "$MANIFEST" || fail "bootstrap path absent from manifest: $path"
+  grep -Fq "\"$path\"" "$MANIFEST" || fail "bootstrap path absent from manifest: $path"
 done
 
 LOAD_ORDER=$(awk '
