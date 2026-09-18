@@ -3,9 +3,8 @@ package wsm.graalvm;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
 /**
- * Runtime context passed only to mechanisms that need the current execution
- * environment. Semantic identity remains the numeric ID; this object carries
- * execution state, not language meaning.
+ * Runtime context passed only to mechanisms that need current execution state.
+ * Semantic identity remains the numeric ID; this object carries no language meaning.
  */
 record SemanticInvocationContext(
         WsmLanguage language,
