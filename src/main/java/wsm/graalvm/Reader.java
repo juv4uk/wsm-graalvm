@@ -4,28 +4,29 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * M0 reader: s-expressions, `'` sugar -> (QUOTE_HEAD form), dotted pairs,
- * exact integers, Cyrillic/Latin/Sanskrit symbols.
+ * Reader for the current my-lisp contract.
  *
- * Contract 4.0 (apostrophe) and 5.0 (decimal comma) get full treatment at
- * M1; the Canon contract itself uses only integers and internal apostrophe
- * tokens, which this reader already handles: internal apostrophes are part
- * of a symbol spelling because tokens end only at delimiters.
+ * Contract 4.0:
+ * - apostrophe at expression start is quote syntax;
+ * - apostrophe inside an identifier is an ordinary identifier character.
+ *
+ * The reader uses an internal QUOTE_HEAD marker, never a hardcoded human
+ * surface spelling. Compiler lowering maps that marker to Canon identity 0001.
  */
 public final class Reader {
 
     public static final Object QUOTE_HEAD = new Object() {
-        @Override public String toString() { return "'"; }
+        @Override public String toString() { return "#<quote-syntax:0001>"; }
     };
 
     public record Token(String spelling) {}
 
     private final String text;
     private int pos;
-    private final boolean dataMode; // data files keep opaque tokens even for digits (registry IDs)
 
-    public Reader(String text) { this(text, false); }
-    public Reader(String text, boolean dataMode) { this.text = text; this.dataMode = dataMode; }
+    public Reader(String text) {
+        this.text = text;
+    }
 
     public List<Object> readAll() {
         List<Object> forms = new ArrayList<>();
@@ -41,7 +42,9 @@ public final class Reader {
         while (pos < text.length()) {
             char c = text.charAt(pos);
             if (c == ';') {
-                while (pos < text.length() && text.charAt(pos) != '\n') pos++;
+                while (pos < text.length() && text.charAt(pos) != '\n') {
+                    pos++;
+                }
             } else if (Character.isWhitespace(c)) {
                 pos++;
             } else {
@@ -52,13 +55,39 @@ public final class Reader {
 
     private Object readForm() {
         skipWs();
+        if (pos >= text.length()) {
+            throw new WsmError(
+                    WsmError.Kind.PARSE,
+                    "expected expression after reader syntax");
+        }
+
         char c = text.charAt(pos);
         if (c == '\'' || c == '’') {
             pos++;
-            return new Value.Pair(QUOTE_HEAD, readForm());
+            skipWs();
+            if (pos >= text.length()) {
+                throw new WsmError(
+                        WsmError.Kind.PARSE,
+                        "apostrophe must be followed by an expression");
+            }
+
+            // Proper internal form:
+            //   'x  ->  (QUOTE_HEAD x)
+            // QUOTE_HEAD is an internal syntax identity, not a surface word.
+            Object datum = readForm();
+            return new Value.Pair(
+                    QUOTE_HEAD,
+                    new Value.Pair(datum, Value.NIL));
         }
-        if (c == '(') { pos++; return readList(')'); }
-        if (c == '[') { pos++; return readList(']'); }
+
+        if (c == '(') {
+            pos++;
+            return readList(')');
+        }
+        if (c == '[') {
+            pos++;
+            return readList(']');
+        }
         if (c == '"') return readStringLiteral();
         return readAtom();
     }
@@ -66,22 +95,37 @@ public final class Reader {
     private Object readList(char close) {
         List<Object> items = new ArrayList<>();
         Object tail = Value.NIL;
+
         while (true) {
             skipWs();
-            if (pos >= text.length()) throw new WsmError(WsmError.Kind.PARSE, "unclosed list");
+            if (pos >= text.length()) {
+                throw new WsmError(
+                        WsmError.Kind.PARSE,
+                        "unclosed list");
+            }
+
             char c = text.charAt(pos);
-            if (c == close) { pos++; break; }
+            if (c == close) {
+                pos++;
+                break;
+            }
+
             if (c == '.' && isDelimiterChar(pos + 1)) {
                 pos++;
                 tail = readForm();
                 skipWs();
-                if (pos >= text.length() || text.charAt(pos) != close)
-                    throw new WsmError(WsmError.Kind.PARSE, "dotted tail must end the list");
+                if (pos >= text.length() || text.charAt(pos) != close) {
+                    throw new WsmError(
+                            WsmError.Kind.PARSE,
+                            "dotted tail must end the list");
+                }
                 pos++;
                 break;
             }
+
             items.add(readForm());
         }
+
         Object result = tail;
         for (int i = items.size() - 1; i >= 0; i--) {
             result = new Value.Pair(items.get(i), result);
@@ -90,8 +134,12 @@ public final class Reader {
     }
 
     private boolean isDelimiterChar(int i) {
-        return i >= text.length() || Character.isWhitespace(text.charAt(i))
-                || text.charAt(i) == '(' || text.charAt(i) == ')' || text.charAt(i) == ';';
+        if (i >= text.length()) return true;
+        char c = text.charAt(i);
+        return Character.isWhitespace(c)
+                || c == '(' || c == ')'
+                || c == '[' || c == ']'
+                || c == ';';
     }
 
     private Object readStringLiteral() {
@@ -121,19 +169,27 @@ public final class Reader {
 
     private Object readAtom() {
         int start = pos;
-        while (pos < text.length() && text.charAt(pos) != '(' && text.charAt(pos) != ')'
-                && text.charAt(pos) != ';' && text.charAt(pos) != '\'' && text.charAt(pos) != '’'
-                && !Character.isWhitespace(text.charAt(pos))) {
+
+        // Apostrophes are intentionally NOT delimiters here. If the atom has
+        // already started, Contract 4.0 says they are identifier characters.
+        while (pos < text.length()) {
+            char c = text.charAt(pos);
+            if (Character.isWhitespace(c)
+                    || c == '(' || c == ')'
+                    || c == '[' || c == ']'
+                    || c == ';') {
+                break;
+            }
             pos++;
         }
+
         String token = text.substring(start, pos);
-        if (token.isEmpty()) throw new WsmError(WsmError.Kind.PARSE, "empty token at " + start);
-        if (token.isEmpty()) throw new WsmError(WsmError.Kind.PARSE, "empty token at " + start);
-        if (dataMode) {
-            // data-mode reader: strings already returned as Value.Str by readStringLiteral
+        if (token.isEmpty()) {
+            throw new WsmError(WsmError.Kind.PARSE, "empty token at " + start);
         }
-        // exact integer only when no leading zero ambiguity ("0001" is a registry id token)
-        if (!dataMode && token.matches("[+-]?[1-9]\\d*|0")) {
+
+        // Numeric machine IDs such as 0001 remain symbols, not integers.
+        if (token.matches("[+-]?[1-9]\\d*|0")) {
             return Long.parseLong(token);
         }
         return new Token(token);
