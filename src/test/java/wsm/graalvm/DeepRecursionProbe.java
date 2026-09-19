@@ -8,9 +8,9 @@ import java.util.Set;
 /**
  * Evidence-only probe for #204.
  *
- * This class deliberately does not implement tail calls. It executes ordinary
- * pinned Lisp source through the current Graal substrate and records whether a
- * requested recursion depth completes or reaches the host JVM stack.
+ * Uses an exact integer countdown through semantic 1001 so the recursion
+ * measurement is not contaminated by ReaderDatum converting a huge quoted
+ * list before guest execution begins.
  */
 public final class DeepRecursionProbe {
     private static String spelling(CanonRegistry registry, String id) {
@@ -63,31 +63,21 @@ public final class DeepRecursionProbe {
         String define = spelling(r, "0011");
         String lambda = spelling(r, "0010");
         String cond = spelling(r, "0007");
-        String atom = spelling(r, "0002");
+        String eq = spelling(r, "0003");
         String cons = spelling(r, "0004");
-        String cdr = spelling(r, "0006");
         String quote = spelling(r, "0001");
+        String subtract = spelling(r, "1001");
 
         String recursive = "tail".equals(mode)
-                ? "(deep-loop (" + cdr + " xs))"
-                : "(" + cons + " (" + quote + " probe) (deep-loop (" + cdr + " xs)))";
+                ? "(deep-loop (" + subtract + " n 1))"
+                : "(" + cons + " (" + quote + " probe)"
+                        + " (deep-loop (" + subtract + " n 1)))";
 
-        return "(" + define + " deep-loop (" + lambda + " (xs) "
+        return "(" + define + " deep-loop (" + lambda + " (n) "
                 + "(" + cond
-                + " ((" + atom + " xs) (structural-kind empty-list) (" + quote + " ()))"
-                + " ((" + atom + " xs) (structural-kind pair) " + recursive + ")"
+                + " ((" + eq + " n 0) (identity-relation same) (" + quote + " ()))"
+                + " ((" + eq + " n 0) (identity-relation distinct) " + recursive + ")"
                 + ")))";
-    }
-
-    private static String invocation(int depth) {
-        StringBuilder source = new StringBuilder(depth * 6 + 32);
-        source.append("(deep-loop (quote (");
-        for (int i = 0; i < depth; i++) {
-            if (i != 0) source.append(' ');
-            source.append("probe");
-        }
-        source.append(")))");
-        return source.toString();
     }
 
     public static void main(String[] args) throws Exception {
@@ -107,7 +97,7 @@ public final class DeepRecursionProbe {
         BootstrapRuntime.execute(context, definition(context, mode));
 
         try {
-            Object value = BootstrapRuntime.execute(context, invocation(depth));
+            Object value = BootstrapRuntime.execute(context, "(deep-loop " + depth + ")");
             System.out.println(
                     "DEEP-RECURSION-OBSERVED mode=" + mode
                             + " depth=" + depth
