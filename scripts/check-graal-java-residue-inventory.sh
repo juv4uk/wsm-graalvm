@@ -8,11 +8,12 @@ fail() { echo "graal-java-residue-inventory FAIL-CLOSED: $*" >&2; exit 1; }
 
 [ -s "$INVENTORY" ] || fail "missing inventory: $INVENTORY"
 
-python3 - "$INVENTORY" <<'PY'
+python3 - "$INVENTORY" "$REPO" <<'PY'
 import json, sys
 from pathlib import Path
 
 inventory_path = Path(sys.argv[1])
+repo = Path(sys.argv[2])
 data = json.loads(inventory_path.read_text(encoding="utf-8"))
 
 required = {
@@ -46,9 +47,9 @@ for e in entries:
         raise SystemExit(f"{e['path']}: unknown classification {e['classification']}")
     if not e["methods"]:
         raise SystemExit(f"{e['path']}: empty method inventory")
-    witness = Path(e["witness"])
-    if not (Path(__file__).parent.parent / witness).exists():
-        raise SystemExit(f"{e['path']}: missing witness {witness}")
+    witness = repo / e["witness"]
+    if not witness.is_file():
+        raise SystemExit(f"{e['path']}: missing witness {e['witness']}")
     if not e["owner"]:
         raise SystemExit(f"{e['path']}: empty owner")
 
