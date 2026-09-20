@@ -108,7 +108,7 @@
         "migrationOnlyTruthy",
         "twoSymbolRecord"
       ],
-      "witness": "scripts/check-real-lisp-cond.sh",
+      "witness": "src/test/java/wsm/graalvm/RealLispBootstrapContract.java",
       "retirement": "#199",
       "note": "Only historical two-part COND clauses may use this path. Canonical three-part COND remains explicit structural comparison."
     },
