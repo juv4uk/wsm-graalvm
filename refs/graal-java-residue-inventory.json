@@ -1,0 +1,206 @@
+{
+  "schema": 1,
+  "purpose": "Machine-readable audit of production Java paths at the Graal semantic/substrate boundary for #224.",
+  "authority_rule": "my-lisp remains semantic authority; Java entries are substrate, representation, bootstrap, diagnostic, or explicit temporary debt.",
+  "baseline_main": "858c9a588880d4d20ec181467d0ebcc963351516",
+  "classifications": [
+    "substrate-required",
+    "representation-only",
+    "temporary-bootstrap",
+    "diagnostic/test-only",
+    "semantic-risk"
+  ],
+  "entries": [
+    {
+      "path": "src/main/java/wsm/graalvm/SemanticMechanismTable.java",
+      "class": "SemanticMechanismTable",
+      "classification": "substrate-required",
+      "owner": "refs/lisp-mechanism-budget.lisp",
+      "methods": [
+        "SemanticMechanismTable",
+        "supports",
+        "invoke",
+        "invoke0002",
+        "invoke0003",
+        "invoke0004",
+        "invoke0005",
+        "invoke0006",
+        "invoke1001",
+        "subtractExact",
+        "invoke1014",
+        "invoke1015",
+        "invoke1016",
+        "exactQComparison",
+        "requireNumber",
+        "compareExact",
+        "invoke1052",
+        "invoke1061",
+        "invoke1043"
+      ],
+      "witness": "scripts/check-lisp-mechanism-budget.sh",
+      "note": "Numeric semantic IDs are the only public dispatch key. The table supplies irreducible host/runtime mechanisms; meaning is owned by pinned my-lisp contracts."
+    },
+    {
+      "path": "src/main/java/wsm/graalvm/Compiler.java",
+      "class": "Compiler",
+      "classification": "substrate-required",
+      "owner": "pinned my-lisp registry + canonical source contracts",
+      "methods": [
+        "Compiler",
+        "root",
+        "compileProgram",
+        "compile",
+        "symbolNode",
+        "compileList",
+        "dispatchSemanticHead",
+        "compileLambda",
+        "compileDefine",
+        "defineBinderName",
+        "ensureBinderAllowed",
+        "isCanonPrimitive",
+        "isCanonSyntax",
+        "isSpecial",
+        "compileEval",
+        "compileCond",
+        "lambdaParams",
+        "binderSpelling",
+        "compileAll",
+        "items"
+      ],
+      "witness": "scripts/test-real-lisp-bootstrap.sh",
+      "note": "Parser-to-AST and special-form lowering are substrate compilation machinery. They must route by semantic ID and live bindings, not introduce Java-authored public meaning."
+    },
+    {
+      "path": "src/main/java/wsm/graalvm/WsmNode.java",
+      "class": "WsmNode",
+      "classification": "substrate-required",
+      "owner": "pinned my-lisp canonical/core contracts",
+      "methods": [
+        "ConstantNode",
+        "executeGeneric",
+        "QuoteNode",
+        "AtomNode",
+        "CallNode",
+        "EvalNode",
+        "LocalReadNode",
+        "GlobalReadNode",
+        "LocalDefineNode",
+        "GlobalDefineNode",
+        "LambdaNode",
+        "EqNode",
+        "eqRecord",
+        "CondNode",
+        "migrationOnlyTruthy",
+        "twoSymbolRecord",
+        "frameAtDepth",
+        "Structural",
+        "equals"
+      ],
+      "witness": "src/test/java/wsm/graalvm/RealLispBootstrapContract.java",
+      "note": "AST execution, frames, call routing, and canonical result comparison are substrate mechanisms. The migrationOnlyTruthy method is separately marked temporary-bootstrap below by the audit exception."
+    },
+    {
+      "path": "src/main/java/wsm/graalvm/WsmNode.java#migrationOnlyTruthy",
+      "class": "WsmNode.CondNode",
+      "classification": "temporary-bootstrap",
+      "owner": "pinned my-lisp migration_only_cond_truthy contract",
+      "methods": [
+        "migrationOnlyTruthy",
+        "twoSymbolRecord"
+      ],
+      "witness": "scripts/check-real-lisp-cond.sh",
+      "retirement": "#199",
+      "note": "Only historical two-part COND clauses may use this path. Canonical three-part COND remains explicit structural comparison."
+    },
+    {
+      "path": "src/main/java/wsm/graalvm/Value.java",
+      "class": "Value",
+      "classification": "representation-only",
+      "owner": "Graal runtime representation boundary",
+      "methods": [
+        "TruffleNil",
+        "Str",
+        "Symbol",
+        "StringValue",
+        "NumberValue",
+        "NumberValue.<init>",
+        "NumberValue.integer",
+        "NumberValue.decimal",
+        "NumberValue.toString",
+        "Pair",
+        "SemanticRef",
+        "SemanticRef.<init>",
+        "symbol",
+        "pair",
+        "list",
+        "record",
+        "isAtom",
+        "identitySame",
+        "structuralKind"
+      ],
+      "witness": "src/test/java/wsm/graalvm/PairRepresentationContract.java",
+      "note": "These are substrate representations/helpers. structuralKind supplies the runtime representation required for canonical result records but does not define a new Lisp ontology."
+    },
+    {
+      "path": "src/main/java/wsm/graalvm/RegistryPeerInstaller.java",
+      "class": "RegistryPeerInstaller",
+      "classification": "substrate-required",
+      "owner": "pinned semantic-registry.lisp",
+      "methods": [
+        "RegistryPeerInstaller",
+        "installValue",
+        "materializeBoundValuePeers"
+      ],
+      "witness": "src/test/java/wsm/graalvm/RegistryPeerInstallerContract.java",
+      "note": "Semantics-blind projection of one live Lisp value onto registry-admitted peer spellings; never invents spelling meaning."
+    },
+    {
+      "path": "src/main/java/wsm/graalvm/SemanticResolver.java",
+      "class": "SemanticResolver",
+      "classification": "substrate-required",
+      "owner": "pinned semantic-registry.lisp",
+      "methods": [
+        "SemanticResolver",
+        "resolve"
+      ],
+      "witness": "src/test/java/wsm/graalvm/RegistryIdentityContract.java",
+      "note": "One-way frontend boundary from source token to numeric semantic ID or ordinary lexical spelling."
+    },
+    {
+      "path": "src/main/java/wsm/graalvm/BootstrapClosureLoader.java",
+      "class": "BootstrapClosureLoader",
+      "classification": "substrate-required",
+      "owner": "refs/lisp-dependency-manifest.lisp + external/my-lisp",
+      "methods": [
+        "Source",
+        "Closure",
+        "Closure.<init>",
+        "BootstrapClosureLoader",
+        "load(Path)",
+        "load(Path,Path)",
+        "readLoadOrder",
+        "resolveInsideAuthority",
+        "requireRegularFile"
+      ],
+      "witness": "src/test/java/wsm/graalvm/BootstrapClosureLoaderContract.java",
+      "note": "Transport-only source closure loader. It validates containment and declared order but does not define Lisp meaning."
+    },
+    {
+      "path": "src/main/java/wsm/graalvm/BootstrapRuntime.java",
+      "class": "BootstrapRuntime",
+      "classification": "substrate-required",
+      "owner": "pinned source closure execution boundary",
+      "methods": [
+        "BootstrapRuntime",
+        "execute",
+        "executeAuthoritySource",
+        "BootstrapRootNode",
+        "BootstrapRootNode.<init>",
+        "BootstrapRootNode.execute",
+        "BootstrapRootNode.getName"
+      ],
+      "witness": "src/test/java/wsm/graalvm/RealLispBootstrapContract.java",
+      "note": "Bootstrap plumbing invokes the normal reader/compiler/runtime in one WSM context. Authority peer projection is explicit and limited to pinned source loading."
+    }
+  ]
+}
