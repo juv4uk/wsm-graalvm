@@ -108,7 +108,7 @@
         "migrationOnlyTruthy",
         "twoSymbolRecord"
       ],
-      "witness": "src/test/java/wsm/graalvm/RealLispBootstrapContract.java",
+      "witness": "src/test/java/wsm/graalvm/MigrationCondTruthinessContract.java",
       "retirement": "#199",
       "note": "Only historical two-part COND clauses may use this path. Canonical three-part COND remains explicit structural comparison."
     },
@@ -163,7 +163,7 @@
         "SemanticResolver",
         "resolve"
       ],
-      "witness": "src/test/java/wsm/graalvm/RegistryIdentityContract.java",
+      "witness": "src/test/java/wsm/graalvm/UkrainianSurfaceParityContract.java",
       "note": "One-way frontend boundary from source token to numeric semantic ID or ordinary lexical spelling."
     },
     {
