@@ -62,6 +62,56 @@ public abstract class WsmNode extends com.oracle.truffle.api.nodes.Node {
         }
     }
 
+    /** Internal control value; never a Lisp-visible value. */
+    static final class TailCallRequest {
+        final Closure closure;
+        final Object[] args;
+
+        TailCallRequest(Closure closure, Object[] args) {
+            this.closure = closure;
+            this.args = args;
+        }
+    }
+
+    /**
+     * Tail-position call candidate.
+     *
+     * Closure calls are deferred to LambdaRootNode, which may reuse the
+     * current frame only when this is truly a self-tail call. SemanticRef and
+     * other host/substrate callables keep their ordinary invocation path.
+     */
+    @NodeInfo(shortName = "tail-call")
+    public static final class TailCallNode extends WsmNode {
+        @Child private WsmNode fn;
+        @Children private final WsmNode[] args;
+
+        TailCallNode(WsmNode fn, WsmNode[] args) {
+            this.fn = fn;
+            this.args = args;
+        }
+
+        @Override public Object executeGeneric(VirtualFrame frame) {
+            Object f = fn.executeGeneric(frame);
+            Object[] argv = new Object[args.length];
+            for (int i = 0; i < args.length; i++) {
+                argv[i] = args[i].executeGeneric(frame);
+            }
+
+            if (f instanceof Value.SemanticRef semantic) {
+                return SemanticMechanismTable.invoke(semantic.id(), argv);
+            }
+            if (f instanceof Closure closure) {
+                return new TailCallRequest(closure, argv);
+            }
+            if (f instanceof WsmFunc func) {
+                return func.call(argv);
+            }
+            throw new WsmError(
+                    WsmError.Kind.TYPE,
+                    "not callable: " + Printer.print(f));
+        }
+    }
+
     /**
      * 1062 EVAL: evaluate a Lisp datum in the same WSM compiler/context and
      * current Truffle lexical frame. No fresh Polyglot Context or string
@@ -187,10 +237,15 @@ public abstract class WsmNode extends com.oracle.truffle.api.nodes.Node {
     public static final class LambdaNode extends WsmNode {
         private final CallTarget target;
         private final boolean captureCurrentFrame;
+        private final int parentCaptureFlagSlot;
 
-        LambdaNode(CallTarget target, boolean captureCurrentFrame) {
+        LambdaNode(
+                CallTarget target,
+                boolean captureCurrentFrame,
+                int parentCaptureFlagSlot) {
             this.target = target;
             this.captureCurrentFrame = captureCurrentFrame;
+            this.parentCaptureFlagSlot = parentCaptureFlagSlot;
         }
 
         @Override public Object executeGeneric(VirtualFrame frame) {
@@ -201,6 +256,11 @@ public abstract class WsmNode extends com.oracle.truffle.api.nodes.Node {
                             WsmError.Kind.INVALID_FORM,
                             "nested lambda created without a Truffle frame");
                 }
+                // Reusing a materialized frame across a self-tail iteration
+                // would mutate an already-captured lexical environment.
+                // Mark the frame before materialization so LambdaRootNode can
+                // conservatively fall back to the ordinary CallTarget path.
+                frame.setObject(parentCaptureFlagSlot, Boolean.TRUE);
                 captured = frame.materialize();
             }
             return new Closure(target, captured);

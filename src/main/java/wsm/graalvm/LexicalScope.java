@@ -16,6 +16,9 @@ final class LexicalScope {
     private final boolean root;
     private final FrameDescriptor.Builder builder;
     private final Map<String, Integer> locals = new LinkedHashMap<>();
+    private final int captureFlagSlot;
+    private final int tailArgsSlot;
+    private final int tailResultSlot;
     private boolean finished;
 
     private LexicalScope(
@@ -28,6 +31,18 @@ final class LexicalScope {
         this.builder = root
                 ? null
                 : FrameDescriptor.newBuilder().defaultValue(Value.UNBOUND);
+        if (root) {
+            this.captureFlagSlot = -1;
+            this.tailArgsSlot = -1;
+            this.tailResultSlot = -1;
+        } else {
+            this.captureFlagSlot = builder.addSlot(
+                    FrameSlotKind.Object, new Object(), null);
+            this.tailArgsSlot = builder.addSlot(
+                    FrameSlotKind.Object, new Object(), null);
+            this.tailResultSlot = builder.addSlot(
+                    FrameSlotKind.Object, new Object(), null);
+        }
     }
 
     static LexicalScope root(GlobalBindings globals) {
@@ -44,6 +59,21 @@ final class LexicalScope {
 
     GlobalBindings globals() {
         return globals;
+    }
+
+    int captureFlagSlot() {
+        if (root) throw new IllegalStateException("root scope has no frame slots");
+        return captureFlagSlot;
+    }
+
+    int tailArgsSlot() {
+        if (root) throw new IllegalStateException("root scope has no frame slots");
+        return tailArgsSlot;
+    }
+
+    int tailResultSlot() {
+        if (root) throw new IllegalStateException("root scope has no frame slots");
+        return tailResultSlot;
     }
 
     int declareLocal(String name) {
