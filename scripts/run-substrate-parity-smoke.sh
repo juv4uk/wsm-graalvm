@@ -40,9 +40,21 @@ PY
 
 printf '%s\n' '(atom (quote radio))' > "$TMP/probe.lisp"
 
+# Graal intentionally consumes a sparse Lisp-only authority closure. The Rust
+# reference substrate needs the complete source tree, but must remain at the
+# exact same pin. Clone locally from the already-fetched submodule object store
+# instead of widening the Graal authority closure or fetching a different ref.
+RUST_TREE="$TMP/my-lisp-rust"
+git clone -q --no-hardlinks "$MYLISP" "$RUST_TREE"
+git -C "$RUST_TREE" checkout -q --detach "$PIN"
+test -f "$RUST_TREE/Cargo.toml" || {
+  echo "Rust reference clone is not a full tree at $PIN" >&2
+  exit 1
+}
+
 echo "parity: building/running Rust substrate at $PIN" >&2
 RUST_STDOUT=$(
-  cd "$MYLISP"
+  cd "$RUST_TREE"
   cargo run -q -p my-lisp-cli --bin my-lisp -- "$TMP/probe.lisp"
 )
 RUST_OBS=$(printf '%s\n' "$RUST_STDOUT" | awk 'NF {last=$0} END {print last}')
