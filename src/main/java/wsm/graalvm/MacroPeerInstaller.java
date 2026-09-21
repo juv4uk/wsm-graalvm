@@ -3,13 +3,13 @@ package wsm.graalvm;
 import java.util.Set;
 
 /**
- * 0012 bootstrap wrapper over the generic registry peer installer.
+ * 00001010 bootstrap wrapper over the generic registry peer installer.
  *
  * The MacroValue meaning comes from external/my-lisp/lib/macro.lisp; this
- * class names only the numeric bootstrap identity required by that source.
+ * class names only the exact 8-bit bootstrap identity required by that source.
  */
 final class MacroPeerInstaller {
-    static final String DEFMACRO_ID = "0012";
+    static final String DEFMACRO_ID = "00001010";
 
     private MacroPeerInstaller() {}
 
@@ -23,7 +23,7 @@ final class MacroPeerInstaller {
         if (installed.isEmpty()) {
             throw new WsmError(
                     WsmError.Kind.INVALID_FORM,
-                    "semantic 0012 has no admitted public macro surfaces");
+                    "semantic 00001010 has no admitted public macro surfaces");
         }
         return installed;
     }
