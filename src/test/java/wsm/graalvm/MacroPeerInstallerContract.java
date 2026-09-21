@@ -28,12 +28,12 @@ public final class MacroPeerInstallerContract {
 
         Set<String> installed = MacroPeerInstaller.install(registry, globals, macro);
         Set<String> expected =
-                new LinkedHashSet<>(registry.row("0012").surfaces().values());
-        expected.remove("0012");
+                new LinkedHashSet<>(registry.row("00001010").surfaces().values());
+        expected.remove("00001010");
 
         require(installed.equals(expected),
                 "installed 0012 peers differ from registry: " + installed + " vs " + expected);
-        require(!globals.isMacro("0012"),
+        require(!globals.isMacro("00001010"),
                 "opaque machine ID 0012 must not become an ordinary macro binding");
 
         for (String spelling : expected) {
