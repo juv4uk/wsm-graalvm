@@ -55,9 +55,9 @@ public final class ExactQComparisonContract {
             expectKind(id, WsmError.Kind.TYPE, n(1), Value.symbol("not-a-number"));
         }
 
-        require(!SemanticMechanismTable.supports("1017"),
+        require(!SemanticMechanismTable.supports("00011101"),
                 "derived <= must remain Lisp-owned");
-        require(!SemanticMechanismTable.supports("1018"),
+        require(!SemanticMechanismTable.supports("00011110"),
                 "derived >= must remain Lisp-owned");
 
         System.out.println("EXACT-Q-COMPARISON-CONTRACT-OK");
