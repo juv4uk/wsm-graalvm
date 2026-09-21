@@ -6,7 +6,7 @@ import java.nio.file.Path;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
-/** Focused contract for Lisp-owned semantic 0012 macro peer installation. */
+/** Focused contract for Lisp-owned semantic 00000000001000000010 macro peer installation. */
 public final class MacroPeerInstallerContract {
     private static void require(boolean ok, String message) {
         if (!ok) throw new AssertionError(message);
@@ -28,19 +28,19 @@ public final class MacroPeerInstallerContract {
 
         Set<String> installed = MacroPeerInstaller.install(registry, globals, macro);
         Set<String> expected =
-                new LinkedHashSet<>(registry.row("0012").surfaces().values());
-        expected.remove("0012");
+                new LinkedHashSet<>(registry.row("00000000001000000010").surfaces().values());
+        expected.remove("00000000001000000010");
 
         require(installed.equals(expected),
-                "installed 0012 peers differ from registry: " + installed + " vs " + expected);
-        require(!globals.isMacro("0012"),
-                "opaque machine ID 0012 must not become an ordinary macro binding");
+                "installed 00000000001000000010 peers differ from registry: " + installed + " vs " + expected);
+        require(!globals.isMacro("00000000001000000010"),
+                "opaque machine ID 00000000001000000010 must not become an ordinary macro binding");
 
         for (String spelling : expected) {
             require(globals.isMacro(spelling),
                     "missing registry-owned macro peer: " + spelling);
             require(globals.macro(spelling) == macro,
-                    "all 0012 peers must share the exact same MacroValue: " + spelling);
+                    "all 00000000001000000010 peers must share the exact same MacroValue: " + spelling);
 
             Compiler compiler = new Compiler(registry, null, globals);
             Object form = new Reader("(" + spelling + " ignored)").readAll().get(0);
