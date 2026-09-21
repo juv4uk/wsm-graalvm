@@ -9,7 +9,7 @@ fail() { echo "graal-java-residue-inventory FAIL-CLOSED: $*" >&2; exit 1; }
 [ -s "$INVENTORY" ] || fail "missing inventory: $INVENTORY"
 
 python3 - "$INVENTORY" "$REPO" <<'PY'
-import json, sys
+import json, sys, re
 from pathlib import Path
 
 inventory_path = Path(sys.argv[1])
@@ -52,6 +52,32 @@ for e in entries:
         raise SystemExit(f"{e['path']}: missing witness {e['witness']}")
     if not e["owner"]:
         raise SystemExit(f"{e['path']}: empty owner")
+
+    # NEW: validate each method exists in the source file
+    src_file = repo / e["path"]
+    if src_file.exists():
+        src_text = src_file.read_text(encoding="utf-8")
+        for method in e["methods"]:
+            # Extract bare method name: strip parameters, generics, constructor suffix
+            bare = method
+            # Remove generics: foo<String> -> foo
+            bare = re.sub(r'<[^>]*>', '', bare)
+            # Remove parameter list: load(Path) -> load
+            bare = re.sub(r'\([^)]*\)', '', bare)
+            # Remove .<init>
+            bare = bare.replace('.<init>', '')
+            # Take last component after . or $
+            bare = bare.split('.')[-1].split('$')[-1].strip()
+            
+            # Handle constructors: Class.<init> -> look for "Class("
+            if method.endswith(".<init>"):
+                class_name = method.split(".")[-2] if "." in method else bare
+                pattern = rf'\b{re.escape(class_name)}\s*\('
+            else:
+                # Search for bare method name followed by ( or < (generic)
+                pattern = rf'\b{re.escape(bare)}\s*[\(<]'
+            if not re.search(pattern, src_text):
+                raise SystemExit(f"{e['path']}: method {method} (bare={bare}) NOT FOUND in source")
 
 temp = [e["path"] for e in entries if e["classification"] == "temporary-bootstrap"]
 for e in entries:
