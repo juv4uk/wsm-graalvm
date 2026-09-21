@@ -3,8 +3,9 @@ package wsm.graalvm;
 import java.util.List;
 
 /**
- * Issue #47: numeric heads of admitted machine IDs route through registry
- * identity, unknown numeric heads stay data. Rule source = pinned registry.
+ * #230 current identity rule: exact eight-bit SID spellings route through the
+ * registry. Decimal numbers are ordinary numeric values and must never be
+ * reconstructed into a semantic identity.
  */
 public final class NumericHeadRouteContract {
     private static void require(boolean ok, String message) {
@@ -13,28 +14,39 @@ public final class NumericHeadRouteContract {
 
     public static void main(String[] args) {
         if (args.length != 1) {
-            throw new IllegalArgumentException("usage: NumericHeadRouteContract <semantic-registry.lisp>");
+            throw new IllegalArgumentException(
+                    "usage: NumericHeadRouteContract <semantic-registry.lisp>");
         }
         CanonRegistry registry = CanonRegistryLoader.load(args[0]);
         Compiler compiler = new Compiler(registry);
 
-        // 1043 = string-append (stable, 10xx band). Admitted numeric head routes
-        // to the substrate mechanism (the same identity the spelling surface uses).
-        Object routed = evalOne(compiler, "(1043 \"ліве\" \"праве\")");
+        // Current string-append identity. Its exact bit spelling is a token,
+        // not a decimal number, and routes exactly as the human surfaces do.
+        Object routed = evalOne(compiler, "(00111010 \"ліве\" \"праве\")");
         require("лівеправе".equals(rawText(routed)),
-                "1043 head must route to its admitted mechanism; got " + routed);
+                "00111010 head must route to its admitted mechanism; got " + routed);
 
-        // 1999 = not admitted -> stays UnknownSymbol; no silent route
+        // Decimal 58 is the numeric value of 00111010, but must NOT become SID.
+        expectNotCallable(compiler, "(58 \"ліве\" \"праве\")", "decimal 58");
+
+        // Historical decimal-looking ID must also remain ordinary numeric data.
+        expectNotCallable(compiler, "(1043 \"ліве\" \"праве\")", "legacy 1043");
+
+        System.out.println("NUMERIC-HEAD-ROUTE-CONTRACT-OK exact-byte-only");
+    }
+
+    private static void expectNotCallable(
+            Compiler compiler,
+            String expr,
+            String label) {
         String error = "none";
         try {
-            evalOne(compiler, "(1999 1)");
+            evalOne(compiler, expr);
         } catch (WsmError e) {
             error = e.kind.name();
         }
-        require("UNKNOWN_SYMBOL".equals(error) || "TYPE".equals(error),
-                "non-admitted numeric head must fail as data, got " + error);
-
-        System.out.println("NUMERIC-HEAD-ROUTE-CONTRACT-OK");
+        require("TYPE".equals(error) || "UNKNOWN_SYMBOL".equals(error),
+                label + " must not route as SID, got " + error);
     }
 
     private static Object evalOne(Compiler compiler, String expr) {
@@ -46,6 +58,7 @@ public final class NumericHeadRouteContract {
 
     private static String rawText(Object v) {
         if (v instanceof Value.Str s) return s.value;
+        if (v instanceof Value.StringValue s) return s.value;
         return String.valueOf(v);
     }
 }
