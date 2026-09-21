@@ -33,9 +33,36 @@ public final class Reader {
         while (true) {
             skipWs();
             if (pos >= text.length()) break;
-            forms.add(readForm());
+            Object form = readForm();
+            if (isBinaryFormatDeclaration(form)) {
+                // A leading (binary WIDTH) is source-format metadata that
+                // activates fixed-width binary token syntax; it is not a
+                // form to evaluate. Upstream contract: the declaration is
+                // consumed by the reader, never executed as a call to SID
+                // 10101001 (binary).
+                continue;
+            }
+            forms.add(form);
         }
         return forms;
+    }
+
+    private static boolean isBinaryFormatDeclaration(Object form) {
+        if (!(form instanceof Value.Pair pair)) return false;
+        Object head = pair.car;
+        if (head instanceof Token token && token.spelling().equals("binary")) {
+            Object width = pair.cdr instanceof Value.Pair widthCell
+                    ? widthCell.car
+                    : null;
+            if (width instanceof Token widthToken) {
+                return widthToken.spelling().matches("[1-9]\\d*");
+            }
+            if (width instanceof Value.NumberValue number) {
+                return number.denominator().equals(java.math.BigInteger.ONE)
+                        && number.numerator().compareTo(java.math.BigInteger.ONE) >= 0;
+            }
+        }
+        return false;
     }
 
     private void skipWs() {
@@ -194,6 +221,13 @@ public final class Reader {
             throw new WsmError(WsmError.Kind.PARSE, "empty token at " + start);
         }
 
+        // Exact bare 8-bit spellings are semantic identities, never decimals.
+        // A token such as 10101001 must stay a Token so the Compiler can
+        // resolve it through CanonRegistry, not be reconstructed as a decimal
+        // NumberValue. This mirrors the upstream fixed-width binary reader.
+        if (token.matches("[01]{8}")) {
+            return new Token(token);
+        }
         // Numeric machine IDs such as 0001 remain symbols, not numbers.
         if (token.matches("[+-]?[1-9]\\d*|0")) {
             return Value.NumberValue.integer(new java.math.BigInteger(token));
