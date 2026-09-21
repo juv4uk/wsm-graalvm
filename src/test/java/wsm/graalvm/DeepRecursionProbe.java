@@ -8,7 +8,7 @@ import java.util.Set;
 /**
  * Evidence-only probe for #204.
  *
- * Uses an exact integer countdown through semantic 1001 so the recursion
+ * Uses an exact integer countdown through semantic 0000000000100101 so the recursion
  * measurement is not contaminated by ReaderDatum converting a huge quoted
  * list before guest execution begins.
  */
@@ -47,7 +47,7 @@ public final class DeepRecursionProbe {
         }
         Set<String> peers = MacroPeerInstaller.install(context.registry(), context.globals(), macro);
         if (peers.isEmpty()) {
-            throw new AssertionError("semantic 0012 has no admitted macro peers");
+            throw new AssertionError("semantic 00001010 has no admitted macro peers");
         }
 
         BootstrapClosureLoader.Source coreSource = closure.executableSources().stream()
@@ -60,13 +60,13 @@ public final class DeepRecursionProbe {
 
     private static String definition(WsmContext context, String mode) {
         CanonRegistry r = context.registry();
-        String define = spelling(r, "0011");
-        String lambda = spelling(r, "0010");
-        String cond = spelling(r, "0007");
-        String eq = spelling(r, "0003");
-        String cons = spelling(r, "0004");
-        String quote = spelling(r, "0001");
-        String subtract = spelling(r, "1001");
+        String define = spelling(r, "00001001");
+        String lambda = spelling(r, "00001000");
+        String cond = spelling(r, "000000010011");
+        String eq = spelling(r, "000000001001");
+        String cons = spelling(r, "000000010000");
+        String quote = spelling(r, "00000001");
+        String subtract = spelling(r, "0000000000100101");
 
         String recursive = "tail".equals(mode)
                 ? "(deep-loop (" + subtract + " n 1))"
