@@ -1,0 +1,42 @@
+name: cold-start-no-rust
+
+on:
+  pull_request:
+    paths:
+      - 'src/test/java/wsm/graalvm/ColdStartNoRustContract.java'
+      - 'scripts/test-cold-start-no-rust.sh'
+      - 'scripts/check-no-rust-runtime-bridge.sh'
+      - '.github/workflows/cold-start-no-rust.yml'
+  push:
+    branches:
+      - main
+    paths:
+      - 'src/test/java/wsm/graalvm/ColdStartNoRustContract.java'
+      - 'scripts/test-cold-start-no-rust.sh'
+      - 'scripts/check-no-rust-runtime-bridge.sh'
+      - '.github/workflows/cold-start-no-rust.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  cold-start:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Set up GraalVM
+        uses: graalvm/setup-graalvm@v1
+        with:
+          java-version: '25'
+          distribution: 'graalvm-community'
+          version: '25.3.4.1'
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Initialize pinned Lisp authority
+        run: git submodule update --init external/my-lisp
+
+      - name: Prove cold start with Rust unavailable
+        env:
+          G: ${{ env.JAVA_HOME }}
+        run: bash scripts/test-cold-start-no-rust.sh
