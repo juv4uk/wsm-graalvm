@@ -33,7 +33,7 @@ public final class RegistryPeerInstallerContract {
 
         // 1022 is Lisp-owned on the current Graal substrate: the Java mechanism
         // is retired, so it is a suitable identity for live-value peer plumbing.
-        String id = "1022";
+        String id = "00100010";
         String en = requiredSurface(registry, id, "en");
         String uk = requiredSurface(registry, id, "uk");
         require(!en.equals(uk), "1022 EN/UK witness requires distinct spellings");
@@ -62,11 +62,11 @@ public final class RegistryPeerInstallerContract {
                 new GlobalBindings.MacroValue(args2 -> Value.NIL);
         Set<String> macroPeers =
                 RegistryPeerInstaller.installValue(
-                        registry, macroGlobals, "0012", macro);
+                        registry, macroGlobals, "00001010", macro);
 
         Set<String> expectedMacroPeers =
-                new LinkedHashSet<>(registry.row("0012").surfaces().values());
-        expectedMacroPeers.remove("0012");
+                new LinkedHashSet<>(registry.row("00001010").surfaces().values());
+        expectedMacroPeers.remove("00001010");
 
         require(macroPeers.equals(expectedMacroPeers),
                 "generic 0012 peer set differs from registry");
