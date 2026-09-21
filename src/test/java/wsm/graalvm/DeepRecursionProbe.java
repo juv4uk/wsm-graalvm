@@ -60,13 +60,13 @@ public final class DeepRecursionProbe {
 
     private static String definition(WsmContext context, String mode) {
         CanonRegistry r = context.registry();
-        String define = spelling(r, "0011");
-        String lambda = spelling(r, "0010");
-        String cond = spelling(r, "0007");
-        String eq = spelling(r, "0003");
-        String cons = spelling(r, "0004");
-        String quote = spelling(r, "0001");
-        String subtract = spelling(r, "1001");
+        String define = spelling(r, "00001001");
+        String lambda = spelling(r, "00001000");
+        String cond = spelling(r, "00000111");
+        String eq = spelling(r, "00000011");
+        String cons = spelling(r, "00000100");
+        String quote = spelling(r, "00000001");
+        String subtract = spelling(r, "00001101");
 
         String recursive = "tail".equals(mode)
                 ? "(deep-loop (" + subtract + " n 1))"

@@ -3,7 +3,7 @@ package wsm.graalvm;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
-/** Executable evidence for #8: quote sugar and semantic identity 0001. */
+/** Executable evidence for #8: quote sugar and semantic identity 00000001. */
 public final class QuoteContract {
     private static void require(boolean ok, String message) {
         if (!ok) throw new AssertionError(message);
@@ -27,25 +27,25 @@ public final class QuoteContract {
         Compiler compiler = new Compiler(registry);
 
         Object sugar = eval(compiler, "'surface-probe");
-        Object numeric = eval(compiler, "(0001 surface-probe)");
+        Object numeric = eval(compiler, "(00000001 surface-probe)");
         require(WsmNode.Structural.equals(sugar, numeric),
-                "apostrophe sugar must lower to the same observable datum as 0001");
+                "apostrophe sugar must lower to the same observable datum as 00000001");
 
         Set<String> surfaces = new LinkedHashSet<>(
-                registry.row("0001").surfaces().values());
+                registry.row("00000001").surfaces().values());
         int checkedSurfaces = 0;
         for (String surface : surfaces) {
             if ("'".equals(surface)) continue; // reader sugar is tested above
-            require("0001".equals(registry.semanticIdForToken(surface)),
-                    "registry surface must resolve to 0001: " + surface);
+            require("00000001".equals(registry.semanticIdForToken(surface)),
+                    "registry surface must resolve to 00000001: " + surface);
             Object viaSurface = eval(
                     new Compiler(registry),
                     "(" + surface + " surface-probe)");
             require(WsmNode.Structural.equals(sugar, viaSurface),
-                    "quote surface diverged from 0001: " + surface);
+                    "quote surface diverged from 00000001: " + surface);
             checkedSurfaces++;
         }
-        require(checkedSurfaces > 0, "expected at least one non-sugar 0001 surface");
+        require(checkedSurfaces > 0, "expected at least one non-sugar 00000001 surface");
 
         Object straight = new Reader("об'єкт").readAll().get(0);
         require(straight instanceof Reader.Token t
@@ -70,7 +70,7 @@ public final class QuoteContract {
                 "quoted proper list must preserve exact list shape");
 
         Object nested = eval(new Compiler(registry), "''x");
-        require(Printer.print(nested).equals("(0001 x)"),
+        require(Printer.print(nested).equals("(00000001 x)"),
                 "nested quote must materialize quote identity as data, not a human spelling");
 
         Object empty = eval(new Compiler(registry), "'()");

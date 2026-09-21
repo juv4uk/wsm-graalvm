@@ -17,7 +17,17 @@ ALLOW=$(mktemp)
 HITS=$(mktemp)
 trap 'rm -f "$SURFACES" "$ALLOW" "$HITS"' EXIT
 
-grep -oE '\((en|uk|ukr|sa|sym|compat) [^()[:space:]]+ (stable|compatibility-only)\)' "$REGISTRY"   | awk '{print $2}'   | grep -v '^—$'   | LC_ALL=C sort -u > "$SURFACES"
+if grep -Fq '(binary 8)' "$REGISTRY"; then
+  grep -oE '\((en|ук|укр|sa|sym) ("[^"]*"|[^()[:space:]]+)\)' "$REGISTRY" \
+    | sed -E 's/^\([^[:space:]]+[[:space:]]+//; s/\)$//; s/^"//; s/"$//' \
+    | grep -v '^$' \
+    | LC_ALL=C sort -u > "$SURFACES"
+else
+  grep -oE '\((en|uk|ukr|sa|sym|compat) [^()[:space:]]+ (stable|compatibility-only)\)' "$REGISTRY" \
+    | awk '{print $2}' \
+    | grep -v '^—$' \
+    | LC_ALL=C sort -u > "$SURFACES"
+fi
 
 awk -F'|' '
   /^[[:space:]]*#/ || /^[[:space:]]*$/ { next }

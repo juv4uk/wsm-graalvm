@@ -63,7 +63,7 @@ public abstract class WsmNode extends com.oracle.truffle.api.nodes.Node {
     }
 
     /**
-     * 1062 EVAL: evaluate a Lisp datum in the same WSM compiler/context and
+     * 01001101 EVAL: evaluate a Lisp datum in the same WSM compiler/context and
      * current Truffle lexical frame. No fresh Polyglot Context or string
      * serialization boundary is introduced.
      */
@@ -207,7 +207,7 @@ public abstract class WsmNode extends com.oracle.truffle.api.nodes.Node {
         }
     }
 
-    /** 0003: atom-only; identity-relation record; never a bool. */
+    /** 00000011: atom-only; identity-relation record; never a bool. */
     @NodeInfo(shortName = "eq")
     public static final class EqNode extends WsmNode {
         @Child private WsmNode a;
@@ -226,7 +226,7 @@ public abstract class WsmNode extends com.oracle.truffle.api.nodes.Node {
             if (!Value.isAtom(x) || !Value.isAtom(y)) {
                 throw new WsmError(
                         WsmError.Kind.TYPE,
-                        "0003 expects two atoms");
+                        "00000011 expects two atoms");
             }
             boolean same = x == y
                     || (x instanceof Value.Symbol sx
@@ -277,7 +277,21 @@ public abstract class WsmNode extends com.oracle.truffle.api.nodes.Node {
                     return bodies[i].executeGeneric(frame);
                 }
             }
-            return Value.NIL;
+
+            boolean migrationOnly = false;
+            for (boolean legacy : legacyTruthiness) {
+                if (legacy) {
+                    migrationOnly = true;
+                    break;
+                }
+            }
+            if (migrationOnly) {
+                return Value.NIL;
+            }
+
+            throw new WsmError(
+                    WsmError.Kind.UNSATISFIED_CONDITIONAL,
+                    "canonical cond: no query matched its expected result");
         }
 
         /**

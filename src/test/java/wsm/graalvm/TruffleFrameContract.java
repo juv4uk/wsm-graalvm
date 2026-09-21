@@ -37,33 +37,33 @@ public final class TruffleFrameContract {
         CanonRegistry registry = CanonRegistryLoader.load(args[0]);
 
         Compiler direct = new Compiler(registry);
-        Object directResult = eval(direct, "((0010 (x) x) 42)");
+        Object directResult = eval(direct, "((00001000 (x) x) 42)");
         require(directResult.toString().equals("42"),
                 "direct lambda parameter must live in runtime Truffle frame");
 
         Compiler nested = new Compiler(registry);
         Object nestedResult = eval(
                 nested,
-                "(((0010 (x) (0010 (y) x)) 41) 99)");
+                "(((00001000 (x) (00001000 (y) x)) 41) 99)");
         require(nestedResult.toString().equals("41"),
                 "nested closure must read captured parent MaterializedFrame");
 
         Compiler shadow = new Compiler(registry);
         Object shadowResult = eval(
                 shadow,
-                "((0010 (lambda) (lambda 9)) (0010 (x) x))");
+                "((00001000 (lambda) (lambda 9)) (00001000 (x) x))");
         require(shadowResult.toString().equals("9"),
                 "non-Canon lambda spelling must remain lexically shadowable");
 
         Compiler globals = new Compiler(registry);
         Object globalResult = eval(
                 globals,
-                "(0011 shared 7) ((0010 () shared))");
+                "(00001001 shared 7) ((00001000 () shared))");
         require(globalResult.toString().equals("7"),
                 "top-level definition must be visible through shared globals");
 
-        expectInvalid(new Compiler(registry), "((0010 (0005) 0005) 1)");
-        expectInvalid(new Compiler(registry), "((0010 (car) car) 1)");
+        expectInvalid(new Compiler(registry), "((00001000 (00000101) 00000101) 1)");
+        expectInvalid(new Compiler(registry), "((00001000 (car) car) 1)");
 
         System.out.println("TRUFFLE-FRAME-CONTRACT-OK");
     }

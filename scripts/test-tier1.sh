@@ -19,6 +19,8 @@ trap 'rm -rf "$TMP"' EXIT
 cat > "$TMP/DeferredMechanismContract.java" <<'JAVA'
 package wsm.graalvm;
 
+import java.util.List;
+
 /** RED/green contract for #45: missing mechanisms fail only when invoked. */
 public final class DeferredMechanismContract {
     private static void require(boolean ok, String message) {
@@ -31,20 +33,20 @@ public final class DeferredMechanismContract {
 
         try {
             compiler.compileProgram(
-                    new Reader("(lambda () (string-append \"a\" \"b\"))").readAll());
+                    new Reader("(lambda () (abs 3))").readAll());
         } catch (WsmError error) {
             throw new AssertionError(
                     "definition/closure compilation must not require a mechanism: "
                             + error.getMessage(), error);
         }
 
-        WsmNode[] forms = compiler.compileProgram(
-                new Reader("(string-append \"a\" \"b\")").readAll());
+        List<WsmNode> forms = compiler.compileProgram(
+                new Reader("(abs 3)").readAll());
         require(forms.size() == 1, "expected one executable form");
 
         try {
-            forms[0].executeGeneric(null);
-            throw new AssertionError("missing 1043 mechanism must fail at invocation");
+            forms.get(0).executeGeneric(null);
+            throw new AssertionError("missing 00010000 mechanism must fail at invocation");
         } catch (WsmError error) {
             require(
                     error.kind == WsmError.Kind.TYPE,

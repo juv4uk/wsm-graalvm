@@ -30,7 +30,7 @@ public final class Tier1ErrorParityContract {
                         .filter(fixture -> fixture.error() != null)
                         .toList();
 
-        require(errors.size() == 8,
+        require(errors.size() == 9,
                 "pinned Tier-1 error fixture count drifted: " + errors.size());
 
         Compiler compiler = new Compiler(registry);

@@ -58,7 +58,7 @@ public final class LetRawExpansionContract {
                 .orElseThrow();
         BootstrapRuntime.executeAuthoritySource(context, coreSource.text());
 
-        String let = spelling(context.registry(), "1141");
+        String let = spelling(context.registry(), "10011100");
         GlobalBindings.MacroValue letMacro = context.globals().macro(let);
 
         Object bindings = ReaderDatum.toValue(oneForm("((cutover-value 42))"));
@@ -69,7 +69,7 @@ public final class LetRawExpansionContract {
         System.out.println("LET-RAW-EXPANSION=" + printed);
 
         require(
-                "((lambda (cutover-value) cutover-value) 42)".equals(printed),
+                "((00001000 (cutover-value) cutover-value) 42)".equals(printed),
                 "unexpected pinned let expansion: " + printed);
 
         Compiler compiler = new Compiler(context.registry(), null, context.globals());

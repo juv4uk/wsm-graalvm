@@ -4,10 +4,10 @@ import java.util.Arrays;
 import java.util.List;
 
 /**
- * Observable error vocabulary owned by my-lisp Contract 6.0.
+ * Observable error vocabulary owned by the pinned my-lisp contract.
  *
  * Internal Java control flow may vary, but every surfaced failure must map to
- * exactly one of these eight contract names. Adding/removing a kind is a
+ * exactly one of these ten contract names. Adding/removing a kind is a
  * semantic change, not a local refactor.
  */
 public final class WsmError extends RuntimeException {
@@ -18,6 +18,8 @@ public final class WsmError extends RuntimeException {
         ARITY("Arity"),
         TYPE("Type"),
         INVALID_FORM("InvalidForm"),
+        UNSATISFIED_CONDITIONAL("UnsatisfiedConditional"),
+        MECHANISM_UNAVAILABLE("MechanismUnavailable"),
         OUT_OF_MEMORY("OutOfMemory"),
         NUMERIC_OVERFLOW("NumericOverflow"),
         DIVISION_BY_ZERO("DivisionByZero");
@@ -39,6 +41,8 @@ public final class WsmError extends RuntimeException {
             "Arity",
             "Type",
             "InvalidForm",
+            "UnsatisfiedConditional",
+            "MechanismUnavailable",
             "OutOfMemory",
             "NumericOverflow",
             "DivisionByZero"

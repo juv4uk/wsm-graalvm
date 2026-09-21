@@ -17,9 +17,9 @@ LEDGER_ROWS=$(mktemp)
 DEBT_IDS=$(mktemp)
 trap 'rm -f "$TABLE_IDS" "$LEDGER_ROWS" "$DEBT_IDS"' EXIT
 
-grep -oE '"[0-9]{4}"' "$TABLE" | tr -d '"' | LC_ALL=C sort -u > "$TABLE_IDS"
+grep -oE '"[01]{8}"' "$TABLE" | tr -d '"' | LC_ALL=C sort -u > "$TABLE_IDS"
 
-sed -n 's/^[[:space:]]*(mechanism "\([0-9][0-9][0-9][0-9]\)" \([^[:space:]]*\).*/\1 \2/p' "$LEDGER"   | LC_ALL=C sort -u > "$LEDGER_ROWS"
+sed -n 's/^[[:space:]]*(mechanism "\([01][01][01][01][01][01][01][01]\)" \([^[:space:]]*\).*/\1 \2/p' "$LEDGER"   | LC_ALL=C sort -u > "$LEDGER_ROWS"
 
 [ -s "$TABLE_IDS" ] || fail "no semantic IDs discovered in SemanticMechanismTable"
 [ -s "$LEDGER_ROWS" ] || fail "no mechanism rows discovered in ledger"

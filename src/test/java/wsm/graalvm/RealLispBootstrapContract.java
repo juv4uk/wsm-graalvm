@@ -63,9 +63,9 @@ public final class RealLispBootstrapContract {
 
         BootstrapRuntime.execute(context, coreSource.text());
 
-        String defmacro = spelling(context.registry(), "0012");
-        String let = spelling(context.registry(), "1141");
-        String equal = spelling(context.registry(), "1022");
+        String defmacro = spelling(context.registry(), "00001010");
+        String let = spelling(context.registry(), "10011100");
+        String equal = spelling(context.registry(), "00100010");
         require(
                 peers.contains(defmacro),
                 "registry-selected defmacro peer was not installed: " + defmacro);
@@ -74,7 +74,7 @@ public final class RealLispBootstrapContract {
         // while the pinned Lisp-owned equal? definition remains executable.
         // Keep this on the real bootstrap path so host fallback cannot return silently.
         require(
-                !SemanticMechanismTable.supports("1022"),
+                !SemanticMechanismTable.supports("00100010"),
                 "Java 1022 mechanism must remain retired");
         Object equalSame = BootstrapRuntime.execute(
                 context,

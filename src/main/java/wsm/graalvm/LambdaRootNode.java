@@ -36,13 +36,13 @@ final class LambdaRootNode extends RootNode {
         if (restSlot < 0 && received != parameterSlots.length) {
             throw new WsmError(
                     WsmError.Kind.ARITY,
-                    "0010 lambda expects " + parameterSlots.length
+                    "00001000 lambda expects " + parameterSlots.length
                             + " argument(s), received " + received);
         }
         if (restSlot >= 0 && received < parameterSlots.length) {
             throw new WsmError(
                     WsmError.Kind.ARITY,
-                    "0010 lambda expects at least " + parameterSlots.length
+                    "00001000 lambda expects at least " + parameterSlots.length
                             + " argument(s), received " + received);
         }
 

@@ -13,18 +13,18 @@ import java.util.List;
  */
 public final class Compiler {
 
-    private static final String ID_QUOTE = "0001";
-    private static final String ID_ATOM = "0002";
-    private static final String ID_EQ = "0003";
-    private static final String ID_CONS = "0004";
-    private static final String ID_CAR = "0005";
-    private static final String ID_CDR = "0006";
-    private static final String ID_COND = "0007";
+    private static final String ID_QUOTE = "00000001";
+    private static final String ID_ATOM = "00000010";
+    private static final String ID_EQ = "00000011";
+    private static final String ID_CONS = "00000100";
+    private static final String ID_CAR = "00000101";
+    private static final String ID_CDR = "00000110";
+    private static final String ID_COND = "00000111";
 
-    private static final String ID_LAMBDA = "0010";
-    private static final String ID_DEFINE = "0011";
-    private static final String ID_DEF_COMPAT = "1000";
-    private static final String ID_EVAL = "1062";
+    private static final String ID_LAMBDA = "00001000";
+    private static final String ID_DEFINE = "00001001";
+    private static final String ID_DEF_COMPAT = "00001011";
+    private static final String ID_EVAL = "01001101";
 
     private final WsmLanguage language;
     private final CanonRegistry registry;
