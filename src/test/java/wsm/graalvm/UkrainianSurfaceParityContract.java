@@ -7,15 +7,14 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Registry-derived Ukrainian surface admission contract.
+ * Registry-derived Ukrainian surface admission contract for the current
+ * exact-byte registry schema.
  *
- * The test owns no Ukrainian spelling table. It reads uk/ukr markers and
- * statuses from the pinned semantic-registry and exercises the normal
- * CanonRegistry resolver.
+ * The test owns no Ukrainian spelling table. Non-empty `ук` / `укр`
+ * surfaces are admitted directly by the pinned semantic registry; `()`
+ * means that the namespace has no spelling for that SID.
  */
 public final class UkrainianSurfaceParityContract {
-    private record Surface(String marker, String spelling, String status) {}
-
     private static void require(boolean ok, String message) {
         if (!ok) throw new AssertionError(message);
     }
@@ -30,17 +29,11 @@ public final class UkrainianSurfaceParityContract {
         throw new AssertionError(context + " must be an atom: " + value);
     }
 
-    private static boolean admitted(String status) {
-        return "stable".equals(status) || "compatibility-only".equals(status);
-    }
-
-    private static Surface surface(Object value, String id) {
-        List<?> items = list(value, "surface for " + id);
-        require(items.size() >= 3, "malformed surface for " + id + ": " + items);
-        return new Surface(
-                atom(items.get(0), "surface marker"),
-                atom(items.get(1), "surface spelling"),
-                atom(items.get(items.size() - 1), "surface status"));
+    private static String spelling(Object value, String id, String marker) {
+        if (value instanceof String s) return s;
+        if (value instanceof List<?> missing && missing.isEmpty()) return null;
+        throw new AssertionError(
+                "surface must be spelling or () for " + id + " " + marker + ": " + value);
     }
 
     public static void main(String[] args) throws Exception {
@@ -55,121 +48,71 @@ public final class UkrainianSurfaceParityContract {
 
         require(forms.size() == 1, "registry must contain exactly one top-level form");
         List<?> top = list(forms.get(0), "registry");
-        require(!top.isEmpty() && "sr/1".equals(top.get(0)), "registry schema must be sr/1");
+        require(top.size() >= 2, "registry must contain header and rows");
 
-        // Build the globally admitted spelling owner map from authority data.
-        // This distinguishes "candidate became admitted" from "candidate
-        // reuses a spelling already stable for another semantic identity".
-        Map<String, String> globallyAdmittedOwner = new LinkedHashMap<>();
-        for (int i = 1; i < top.size(); i++) {
-            List<?> row = list(top.get(i), "registry row");
-            require(!row.isEmpty(), "empty registry row");
-            String id = atom(row.get(0), "semantic id");
+        List<?> header = list(top.get(0), "registry header");
+        require(header.size() == 2
+                        && "binary".equals(atom(header.get(0), "header kind"))
+                        && "8".equals(atom(header.get(1), "header width")),
+                "registry header must be (binary 8)");
 
-            for (int j = 1; j < row.size(); j++) {
-                Surface s = surface(row.get(j), id);
-                if ("—".equals(s.spelling()) || !admitted(s.status())) continue;
-
-                String previous = globallyAdmittedOwner.putIfAbsent(s.spelling(), id);
-                require(previous == null || previous.equals(id),
-                        "admitted spelling collision: " + s.spelling()
-                                + " -> " + previous + " and " + id);
-            }
-        }
-
+        Map<String, String> admittedOwner = new LinkedHashMap<>();
         int rows = 0;
-        int ukStable = 0;
-        int ukrStable = 0;
-        int ukCandidate = 0;
-        int ukrCandidate = 0;
-        int candidateOnlyUnadmitted = 0;
-        int candidateAlsoStableSameId = 0;
-        int candidateSpellingOwnedByOtherStableId = 0;
+        int ukPresent = 0;
+        int ukMissing = 0;
+        int ukrPresent = 0;
+        int ukrMissing = 0;
 
         for (int i = 1; i < top.size(); i++) {
             List<?> row = list(top.get(i), "registry row");
             require(!row.isEmpty(), "empty registry row");
-            String id = atom(row.get(0), "semantic id");
-            rows++;
-
+            String id = atom(row.get(0), "semantic SID");
+            require(id.matches("[01]{8}"), "SID must be exactly 8 bits: " + id);
             require(id.equals(registry.semanticIdForToken(id)),
-                    "opaque numeric ID route missing: " + id);
+                    "exact SID route missing: " + id);
+            rows++;
 
             boolean sawUk = false;
             boolean sawUkr = false;
 
             for (int j = 1; j < row.size(); j++) {
-                Surface s = surface(row.get(j), id);
-                boolean isUk = "uk".equals(s.marker());
-                boolean isUkr = "ukr".equals(s.marker());
-                if (!isUk && !isUkr) continue;
+                List<?> surface = list(row.get(j), "surface for " + id);
+                require(surface.size() == 2, "surface must have marker + spelling: " + surface);
+                String marker = atom(surface.get(0), "surface marker");
+                String value = spelling(surface.get(1), id, marker);
 
-                if (isUk) sawUk = true;
-                if (isUkr) sawUkr = true;
-
-                if ("stable".equals(s.status())) {
-                    require(!"—".equals(s.spelling()),
-                            s.marker() + " stable surface cannot be missing for " + id);
-                    require(id.equals(registry.semanticIdForToken(s.spelling())),
-                            s.marker() + " stable surface did not resolve to " + id
-                                    + ": " + s.spelling());
-                    if (isUk) ukStable++;
-                    if (isUkr) ukrStable++;
-                    continue;
+                if (value != null) {
+                    String previous = admittedOwner.putIfAbsent(value, id);
+                    require(previous == null || previous.equals(id),
+                            "admitted spelling collision: " + value
+                                    + " -> " + previous + " and " + id);
+                    require(id.equals(registry.semanticIdForToken(value)),
+                            "surface did not resolve to " + id + ": " + value);
                 }
 
-                if ("candidate".equals(s.status())) {
-                    if (isUk) ukCandidate++;
-                    if (isUkr) ukrCandidate++;
-                    if ("—".equals(s.spelling())) continue;
-
-                    String resolved = registry.semanticIdForToken(s.spelling());
-                    String stableOwner = globallyAdmittedOwner.get(s.spelling());
-
-                    if (stableOwner == null) {
-                        require(resolved == null,
-                                "candidate-only spelling became admitted: "
-                                        + s.marker() + " " + id + " " + s.spelling()
-                                        + " -> " + resolved);
-                        candidateOnlyUnadmitted++;
-                    } else {
-                        require(stableOwner.equals(resolved),
-                                "candidate spelling no longer resolves to its stable owner: "
-                                        + s.spelling() + " expected " + stableOwner
-                                        + " got " + resolved);
-                        if (stableOwner.equals(id)) {
-                            candidateAlsoStableSameId++;
-                        } else {
-                            candidateSpellingOwnedByOtherStableId++;
-                        }
-                    }
-                    continue;
-                }
-
-                if ("compatibility-only".equals(s.status())
-                        && !"—".equals(s.spelling())) {
-                    require(id.equals(registry.semanticIdForToken(s.spelling())),
-                            s.marker() + " compatibility surface did not resolve to " + id
-                                    + ": " + s.spelling());
+                if ("ук".equals(marker)) {
+                    sawUk = true;
+                    if (value == null) ukMissing++; else ukPresent++;
+                } else if ("укр".equals(marker)) {
+                    sawUkr = true;
+                    if (value == null) ukrMissing++; else ukrPresent++;
                 }
             }
 
-            require(sawUk, "registry row missing uk marker: " + id);
-            require(sawUkr, "registry row missing ukr marker: " + id);
+            require(sawUk, "registry row missing ук marker: " + id);
+            require(sawUkr, "registry row missing укр marker: " + id);
         }
+
+        require(rows == registry.ids().size(),
+                "parsed row count differs from CanonRegistry row count");
 
         System.out.println(
                 "(uk-surface-parity"
                         + " (rows " + rows + ")"
-                        + " (uk-stable " + ukStable + ")"
-                        + " (ukr-stable " + ukrStable + ")"
-                        + " (uk-candidate " + ukCandidate + ")"
-                        + " (ukr-candidate " + ukrCandidate + ")"
-                        + " (candidate-only-unadmitted " + candidateOnlyUnadmitted + ")"
-                        + " (candidate-also-stable-same-id "
-                        + candidateAlsoStableSameId + ")"
-                        + " (candidate-spelling-owned-by-other-stable-id "
-                        + candidateSpellingOwnedByOtherStableId + ")"
+                        + " (ук-present " + ukPresent + ")"
+                        + " (ук-missing " + ukMissing + ")"
+                        + " (укр-present " + ukrPresent + ")"
+                        + " (укр-missing " + ukrMissing + ")"
                         + " (status pass))");
     }
 }
