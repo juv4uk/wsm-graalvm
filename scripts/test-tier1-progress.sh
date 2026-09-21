@@ -36,7 +36,7 @@ ACTUAL_CONTRACT_MINOR=$(sed -n 's/^((major \. \([0-9][0-9]*\)) (minor \. \([0-9]
 
 bash "$REPO/scripts/build.sh"
 
-CP="$REPO/classes:$REPO/third_party/truffle-api.jar:$REPO/third_party/polyglot.jar:$REPO/third_party/truffle-runtime.jar:$REPO/third_party/graalvm-collections.jar"
+CP="$REPO/classes:$REPO/third_party/truffle-api.jar:$REPO/third_party/polyglot.jar:$REPO/third_party/truffle-runtime.jar:$REPO/third_party/graalvm-collections.jar:$REPO/third_party/nativeimage.jar:$REPO/third_party/truffle-compiler.jar"
 TEST_CLASSES="$REPO/test-classes-ledger"
 rm -rf "$TEST_CLASSES"
 mkdir -p "$TEST_CLASSES"
