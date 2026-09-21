@@ -4,10 +4,10 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Mechanical projection from the Lisp-owned semantic registry to numeric IDs.
+ * Mechanical projection from the Lisp-owned semantic registry to exact 8-bit SIDs.
  *
  * This class owns no language meaning. It only answers:
- * "which admitted semantic ID does this token spelling denote?"
+ * "which admitted semantic SID does this token spelling denote?"
  */
 public final class CanonRegistry {
     public record Row(String id, Map<String, String> surfaces) {}
@@ -21,10 +21,10 @@ public final class CanonRegistry {
         CanonRegistry out = new CanonRegistry();
         List<Object> forms = new RegistrySexpReader(registrySource).readAll();
         if (forms.size() != 1 || !(forms.get(0) instanceof List<?> top)
-                || top.isEmpty() || !"sr/1".equals(top.get(0))) {
+                || top.size() < 2 || !isBinary8Header(top.get(0))) {
             throw new WsmError(
                     WsmError.Kind.PARSE,
-                    "registry must contain exactly one (sr/1 ...) form");
+                    "registry must contain exactly one ((binary 8) <8-bit rows...>) form");
         }
 
         for (int i = 1; i < top.size(); i++) {
@@ -32,29 +32,27 @@ public final class CanonRegistry {
             if (!(rowObject instanceof List<?> row)
                     || row.isEmpty()
                     || !(row.get(0) instanceof String id)
-                    || !id.matches("\\d+")) {
-                throw new WsmError(WsmError.Kind.PARSE, "malformed registry row");
+                    || !id.matches("[01]{8}")) {
+                throw new WsmError(WsmError.Kind.PARSE, "malformed 8-bit registry row");
             }
 
             Map<String, String> faceMap = new java.util.LinkedHashMap<>();
 
-            // Opaque machine ID is itself an admitted runtime route.
+            // Exact bit spelling is itself the semantic identity route.
             putMapping(out.spellingToId, id, id);
 
             for (int j = 1; j < row.size(); j++) {
                 Object surfaceObject = row.get(j);
                 if (!(surfaceObject instanceof List<?> surface)
-                        || surface.size() < 3
-                        || !(surface.get(0) instanceof String marker)
-                        || !(surface.get(1) instanceof String spelling)
-                        || !(surface.get(surface.size() - 1) instanceof String statusRaw)) {
+                        || surface.size() != 2
+                        || !(surface.get(0) instanceof String marker)) {
                     throw new WsmError(
                             WsmError.Kind.PARSE,
                             "malformed registry surface for " + id);
                 }
 
-                String status = statusRaw.toLowerCase();
-                if ("—".equals(spelling) || !isAdmitted(status)) {
+                String spelling = surfaceSpelling(surface.get(1), id, marker);
+                if (spelling == null) {
                     continue;
                 }
 
@@ -65,7 +63,7 @@ public final class CanonRegistry {
             if (out.rows.putIfAbsent(id, new Row(id, faceMap)) != null) {
                 throw new WsmError(
                         WsmError.Kind.PARSE,
-                        "duplicate semantic id: " + id);
+                        "duplicate semantic SID: " + id);
             }
         }
 
@@ -77,8 +75,12 @@ public final class CanonRegistry {
             Map<String, String> spellIn) {
         CanonRegistry reg = new CanonRegistry();
         for (Map.Entry<String, Row> e : rowsIn.entrySet()) {
-            reg.rows.put(e.getKey(), e.getValue());
-            putMapping(reg.spellingToId, e.getKey(), e.getKey());
+            String id = e.getKey();
+            if (!id.matches("[01]{8}")) {
+                throw new IllegalArgumentException("semantic SID must be exactly 8 bits: " + id);
+            }
+            reg.rows.put(id, e.getValue());
+            putMapping(reg.spellingToId, id, id);
         }
         for (Map.Entry<String, String> e : spellIn.entrySet()) {
             putMapping(reg.spellingToId, e.getKey(), e.getValue());
@@ -91,42 +93,46 @@ public final class CanonRegistry {
         if (r == null) {
             throw new WsmError(
                     WsmError.Kind.INVALID_FORM,
-                    "unknown semantic id " + id);
+                    "unknown semantic SID " + id);
         }
         return r;
     }
 
     /**
-     * Resolve an admitted language surface OR the numeric machine ID itself.
-     * Returns null for ordinary user-level symbols.
+     * Resolve an admitted language surface OR the exact 8-bit SID itself.
+     * Returns null for ordinary user-level symbols and historical short IDs.
      */
     public String semanticIdForToken(String spelling) {
         return spellingToId.get(spelling);
-    }
-
-    /**
-     * Issue #47 rule: an arbitrary numeric head can still be an admitted
-     * machine ID when its integer value equals a registry row's numeric
-     * value (10xx, 11xx IDs have no leading zero, so the Reader hands them
-     * to us as Long). The admitted set comes only from the pinned registry
-     * file; unknown numeric heads never route.
-     */
-    public String semanticIdForNumeric(long value) {
-        String id = String.format("%04d", value);
-        return rows.containsKey(id) ? id : null;
-    }
-
-    @Deprecated
-    public String idForSpelling(String spelling) {
-        return semanticIdForToken(spelling);
     }
 
     public java.util.Set<String> ids() {
         return java.util.Collections.unmodifiableSet(rows.keySet());
     }
 
-    private static boolean isAdmitted(String status) {
-        return status.equals("stable") || status.equals("compatibility-only");
+    private static boolean isBinary8Header(Object value) {
+        if (!(value instanceof List<?> header) || header.size() != 2) return false;
+        return "binary".equals(header.get(0)) && "8".equals(header.get(1));
+    }
+
+    private static String surfaceSpelling(
+            Object raw,
+            String id,
+            String marker) {
+        if (raw instanceof String spelling) {
+            if (spelling.isBlank()) {
+                throw new WsmError(
+                        WsmError.Kind.PARSE,
+                        "blank registry surface for " + id + " " + marker);
+            }
+            return spelling;
+        }
+        if (raw instanceof List<?> missing && missing.isEmpty()) {
+            return null;
+        }
+        throw new WsmError(
+                WsmError.Kind.PARSE,
+                "registry surface must be spelling or () for " + id + " " + marker);
     }
 
     private static void putMapping(
