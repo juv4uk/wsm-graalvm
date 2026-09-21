@@ -3,7 +3,7 @@ package wsm.graalvm;
 import java.util.Map;
 
 /**
- * Graal/JVM execution mechanisms keyed only by my-lisp numeric semantic IDs.
+ * Graal/JVM execution mechanisms keyed only by my-lisp exact 8-bit semantic SIDs.
  *
  * This table owns mechanism, not meaning. Source spellings are resolved before
  * this boundary and must never be accepted here.
@@ -16,18 +16,18 @@ public final class SemanticMechanismTable {
     }
 
     private static final Map<String, Mechanism> TABLE = Map.ofEntries(
-            Map.entry("0002", SemanticMechanismTable::invoke0002),
-            Map.entry("0003", SemanticMechanismTable::invoke0003),
-            Map.entry("0004", SemanticMechanismTable::invoke0004),
-            Map.entry("0005", SemanticMechanismTable::invoke0005),
-            Map.entry("0006", SemanticMechanismTable::invoke0006),
-            Map.entry("1001", SemanticMechanismTable::invoke1001),
-            Map.entry("1014", SemanticMechanismTable::invoke1014),
-            Map.entry("1015", SemanticMechanismTable::invoke1015),
-            Map.entry("1016", SemanticMechanismTable::invoke1016),
-            Map.entry("1052", SemanticMechanismTable::invoke1052),
-            Map.entry("1061", SemanticMechanismTable::invoke1061),
-            Map.entry("1043", SemanticMechanismTable::invoke1043)
+            Map.entry("00000010", SemanticMechanismTable::invoke00000010),
+            Map.entry("00000011", SemanticMechanismTable::invoke00000011),
+            Map.entry("00000100", SemanticMechanismTable::invoke00000100),
+            Map.entry("00000101", SemanticMechanismTable::invoke00000101),
+            Map.entry("00000110", SemanticMechanismTable::invoke00000110),
+            Map.entry("00001101", SemanticMechanismTable::invoke00001101),
+            Map.entry("00011010", SemanticMechanismTable::invoke00011010),
+            Map.entry("00011011", SemanticMechanismTable::invoke00011011),
+            Map.entry("00011100", SemanticMechanismTable::invoke00011100),
+            Map.entry("01000011", SemanticMechanismTable::invoke01000011),
+            Map.entry("01001100", SemanticMechanismTable::invoke01001100),
+            Map.entry("00111010", SemanticMechanismTable::invoke00111010)
     );
 
     private SemanticMechanismTable() {}
@@ -46,45 +46,45 @@ public final class SemanticMechanismTable {
         return mechanism.invoke(args);
     }
 
-    private static Object invoke0002(Object[] args) {
-        WsmError.arity(args, 1, "0002");
+    private static Object invoke00000010(Object[] args) {
+        WsmError.arity(args, 1, "00000010");
         return Value.structuralKind(args[0]);
     }
 
-    private static Object invoke0003(Object[] args) {
-        WsmError.arity(args, 2, "0003");
+    private static Object invoke00000011(Object[] args) {
+        WsmError.arity(args, 2, "00000011");
         return WsmNode.EqNode.eqRecord(args[0], args[1]);
     }
 
-    private static Object invoke0004(Object[] args) {
-        WsmError.arity(args, 2, "0004");
+    private static Object invoke00000100(Object[] args) {
+        WsmError.arity(args, 2, "00000100");
         return new Value.Pair(args[0], args[1]);
     }
 
-    private static Object invoke0005(Object[] args) {
-        WsmError.arity(args, 1, "0005");
+    private static Object invoke00000101(Object[] args) {
+        WsmError.arity(args, 1, "00000101");
         if (!(args[0] instanceof Value.Pair pair)) {
             throw new WsmError(WsmError.Kind.TYPE, "0005 expects a pair");
         }
         return pair.car;
     }
 
-    private static Object invoke0006(Object[] args) {
-        WsmError.arity(args, 1, "0006");
+    private static Object invoke00000110(Object[] args) {
+        WsmError.arity(args, 1, "00000110");
         if (!(args[0] instanceof Value.Pair pair)) {
             throw new WsmError(WsmError.Kind.TYPE, "0006 expects a pair");
         }
         return pair.cdr;
     }
 
-    private static Object invoke1001(Object[] args) {
+    private static Object invoke00001101(Object[] args) {
         if (args.length == 0) {
             throw new WsmError(
                     WsmError.Kind.ARITY,
                     "1001 expects at least 1 argument");
         }
 
-        Value.NumberValue result = requireNumber("1001", args[0]);
+        Value.NumberValue result = requireNumber("00001101", args[0]);
         if (args.length == 1) {
             return new Value.NumberValue(
                     result.numerator().negate(),
@@ -92,7 +92,7 @@ public final class SemanticMechanismTable {
         }
 
         for (int i = 1; i < args.length; i++) {
-            Value.NumberValue operand = requireNumber("1001", args[i]);
+            Value.NumberValue operand = requireNumber("00001101", args[i]);
             result = subtractExact(result, operand);
         }
         return result;
@@ -107,16 +107,16 @@ public final class SemanticMechanismTable {
                 left.denominator().multiply(right.denominator()));
     }
 
-    private static Object invoke1014(Object[] args) {
-        return exactQComparison("1014", args, -1);
+    private static Object invoke00011010(Object[] args) {
+        return exactQComparison("00011010", args, -1);
     }
 
-    private static Object invoke1015(Object[] args) {
-        return exactQComparison("1015", args, 1);
+    private static Object invoke00011011(Object[] args) {
+        return exactQComparison("00011011", args, 1);
     }
 
-    private static Object invoke1016(Object[] args) {
-        return exactQComparison("1016", args, 0);
+    private static Object invoke00011100(Object[] args) {
+        return exactQComparison("00011100", args, 0);
     }
 
     private static Object exactQComparison(String id, Object[] args, int relation) {
@@ -155,20 +155,20 @@ public final class SemanticMechanismTable {
                 .compareTo(right.numerator().multiply(left.denominator()));
     }
 
-    private static Object invoke1052(Object[] args) {
-        WsmError.arity(args, 1, "1052");
+    private static Object invoke01000011(Object[] args) {
+        WsmError.arity(args, 1, "01000011");
         if (!(args[0] instanceof Value.StringValue text)) {
             throw new WsmError(WsmError.Kind.TYPE, "1052 expects a string");
         }
         return Value.symbol(text.value);
     }
 
-    private static Object invoke1061(Object[] args) {
-        WsmError.arity(args, 1, "1061");
+    private static Object invoke01001100(Object[] args) {
+        WsmError.arity(args, 1, "01001100");
         return new Value.StringValue(CanonicalSerializer.write(args[0]));
     }
 
-    private static Object invoke1043(Object[] args) {
+    private static Object invoke00111010(Object[] args) {
         if (args.length != 2) {
             throw new WsmError(WsmError.Kind.ARITY, "1043 expects 2 string arguments");
         }
