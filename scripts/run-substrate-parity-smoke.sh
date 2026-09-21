@@ -17,26 +17,31 @@ REGISTRY="$MYLISP/lib/surface/semantic-registry.lisp"
 [ -f "$CONSTITUTION" ] || { echo "missing constitution: $CONSTITUTION" >&2; exit 1; }
 [ -f "$REGISTRY" ] || { echo "missing registry: $REGISTRY" >&2; exit 1; }
 
-EXPECTED=$(python3 - "$CONSTITUTION" <<'PY'
+readarray -t UPSTREAM_EXPECTED < <(python3 - "$CONSTITUTION" <<'PY'
 import json
 import re
 import sys
 from pathlib import Path
 
-path = Path(sys.argv[1])
-needle = '(fixture (expr . "(atom (quote radio))")'
-for line in path.read_text(encoding="utf-8").splitlines():
-    if needle not in line:
-        continue
-    match = re.search(r'\(expected \. "((?:\\.|[^"])*)"\)', line)
-    if not match:
-        raise SystemExit("fixture found but expected field missing")
-    print(json.loads('"' + match.group(1) + '"'))
-    break
-else:
-    raise SystemExit("upstream constitution fixture not found: (atom (quote radio))")
+text = Path(sys.argv[1]).read_text(encoding="utf-8").splitlines()
+
+def expected(expr: str) -> str:
+    needle = f'(fixture (expr . "{expr}")'
+    for line in text:
+        if needle not in line:
+            continue
+        match = re.search(r'\(expected \. "((?:\\.|[^"])*)"\)', line)
+        if not match:
+            raise SystemExit(f"fixture found but expected field missing: {expr}")
+        return json.loads('"' + match.group(1) + '"')
+    raise SystemExit(f"upstream constitution fixture not found: {expr}")
+
+print(expected("(atom (quote radio))"))
+print(expected("(abs -5)"))
 PY
 )
+EXPECTED=${UPSTREAM_EXPECTED[0]}
+ABS_EXPECTED=${UPSTREAM_EXPECTED[1]}
 
 printf '%s\n' '(atom (quote radio))' > "$TMP/probe.lisp"
 
@@ -73,6 +78,26 @@ public final class ParityProbe {
         try (Context context = Context.newBuilder("wsm").build()) {
             context.eval("wsm", "(atom (quote radio))");
         }
+
+        // Negative route: 00010000/abs is Lisp-owned in lib/core.lisp.
+        // Deliberately do NOT bootstrap core here. The exact SID must fail
+        // closed rather than finding a hidden Java semantic duplicate.
+        try (Context context = Context.newBuilder("wsm").build()) {
+            context.eval("wsm", "(00010000 -5)");
+            System.out.println("NEGATIVE-ROUTE-UNEXPECTED-RESULT");
+            System.exit(23);
+        } catch (org.graalvm.polyglot.PolyglotException error) {
+            String message = error.getMessage();
+            if (message == null) message = "";
+            if (message.contains("Type:")) {
+                System.out.println("NEGATIVE-ROUTE-FAILURE: Type");
+            } else if (message.contains("MechanismUnavailable:")) {
+                System.out.println("NEGATIVE-ROUTE-FAILURE: MechanismUnavailable");
+            } else {
+                System.out.println("NEGATIVE-ROUTE-FAILURE: Unexpected:" + message);
+                System.exit(24);
+            }
+        }
     }
 }
 JAVA
@@ -91,7 +116,17 @@ GRAAL_OBS=$(
 )
 [ -n "$GRAAL_OBS" ] || { echo "Graal observation empty" >&2; exit 1; }
 
-export PIN WSM_COMMIT EXPECTED RUST_OBS GRAAL_OBS OUT
+NEGATIVE_FAILURE=$(
+  printf '%s\n' "$GRAAL_STDOUT" |
+    sed -n 's/^NEGATIVE-ROUTE-FAILURE: //p' |
+    tail -n 1
+)
+[ -n "$NEGATIVE_FAILURE" ] || {
+  echo "negative route produced neither named failure nor explicit evidence" >&2
+  exit 1
+}
+
+export PIN WSM_COMMIT EXPECTED ABS_EXPECTED RUST_OBS GRAAL_OBS NEGATIVE_FAILURE OUT
 python3 - <<'PY'
 import json
 import os
@@ -139,6 +174,38 @@ doc = {
                 "provenance": "wsm Context.eval exact-byte SID route at exact wsm commit",
                 "normalized": graal,
             },
+        },
+        {
+            "id": "negative-abs-no-java-fallback-jvm",
+            "kind": "negative-route",
+            "status": "green",
+            "upstream_pin": os.environ["PIN"],
+            "wsm_commit": os.environ["WSM_COMMIT"],
+            "contract_id": "lisp-owned-abs-no-substrate-fallback",
+            "fixture_path": "my-lisp-constitution.lisp",
+            "sid": "00010000",
+            "source_owner": {
+                "repository": "juv4uk/my-lisp",
+                "path": "lib/core.lisp",
+            },
+            "normalization_rule": "named failure class after deliberate Lisp-owner suppression",
+            "expected": {
+                "repository": "juv4uk/my-lisp",
+                "path": "my-lisp-constitution.lisp",
+                "normalized": os.environ["ABS_EXPECTED"],
+            },
+            "graal": {
+                "substrate": "graalvm",
+                "mode": "jvm",
+                "provenance": "core.lisp deliberately not bootstrapped; exact SID invoked directly",
+                "fallback_used": False,
+                "normalized": os.environ["NEGATIVE_FAILURE"],
+            },
+            "negative_route": {
+                "disabled_execution_owner": "lisp-binding:00010000",
+                "observed_failure": os.environ["NEGATIVE_FAILURE"],
+                "fallback_used": False,
+            },
         }
     ],
 }
@@ -153,4 +220,4 @@ if rust != expected or graal != expected:
 print("SUBSTRATE-PARITY-SMOKE-GREEN expected={} rust={} graal={}".format(expected, rust, graal))
 PY
 
-python3 "$REPO/scripts/check-substrate-parity-evidence.py" "$OUT"
+python3 "$REPO/scripts/check-substrate-parity-evidence.py" "$OUT" --require-ready
