@@ -32,11 +32,11 @@ public final class QuoteContract {
                 "apostrophe sugar must lower to the same observable datum as 0001");
 
         Set<String> surfaces = new LinkedHashSet<>(
-                registry.row("0001").surfaces().values());
+                registry.row("00000001").surfaces().values());
         int checkedSurfaces = 0;
         for (String surface : surfaces) {
             if ("'".equals(surface)) continue; // reader sugar is tested above
-            require("0001".equals(registry.semanticIdForToken(surface)),
+            require("00000001".equals(registry.semanticIdForToken(surface)),
                     "registry surface must resolve to 0001: " + surface);
             Object viaSurface = eval(
                     new Compiler(registry),
