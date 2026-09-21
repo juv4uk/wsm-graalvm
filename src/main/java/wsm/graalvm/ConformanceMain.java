@@ -116,7 +116,7 @@ public final class ConformanceMain {
         Set<String> peers =
                 MacroPeerInstaller.install(context.registry(), context.globals(), macro);
         if (peers.isEmpty()) {
-            throw new IllegalStateException("registry identity 0012 has no admitted peers");
+            throw new IllegalStateException("registry identity 00001010 has no admitted peers");
         }
 
         BootstrapClosureLoader.Source coreSource =
