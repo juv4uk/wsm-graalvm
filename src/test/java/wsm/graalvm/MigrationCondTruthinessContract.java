@@ -35,6 +35,24 @@ public final class MigrationCondTruthinessContract {
         return node.executeGeneric(null) == SELECTED;
     }
 
+    private static void requireThreePartUnsatisfied(Object actual, Object expected) {
+        WsmNode.CondNode node =
+                new WsmNode.CondNode(
+                        new WsmNode[] {new WsmNode.ConstantNode(actual)},
+                        new WsmNode[] {new WsmNode.ConstantNode(expected)},
+                        new WsmNode[] {new WsmNode.ConstantNode(SELECTED)},
+                        new boolean[] {false});
+        try {
+            node.executeGeneric(null);
+            throw new AssertionError("canonical three-part cond must fail on exhaustion");
+        } catch (WsmError error) {
+            require(
+                    error.kind == WsmError.Kind.UNSATISFIED_CONDITIONAL,
+                    "canonical exhaustion must be UnsatisfiedConditional, got "
+                            + error.contractKind());
+        }
+    }
+
     public static void main(String[] args) {
         if (args.length != 1) {
             throw new IllegalArgumentException(
@@ -69,13 +87,13 @@ public final class MigrationCondTruthinessContract {
         Object pairRecord = Value.record("structural-kind", "pair");
         require(threePartSelects(pairRecord, Value.record("structural-kind", "pair")),
                 "canonical three-part cond must match explicit pair record");
-        require(!threePartSelects(pairRecord, Value.record("structural-kind", "atom")),
-                "canonical three-part cond must ignore migration truthiness");
+        requireThreePartUnsatisfied(
+                pairRecord,
+                Value.record("structural-kind", "atom"));
 
         require(threePartSelects(exact(0), exact(0)),
                 "canonical three-part cond must match explicit exact zero");
-        require(!threePartSelects(exact(0), exact(1)),
-                "canonical three-part cond must not coerce exact decisions");
+        requireThreePartUnsatisfied(exact(0), exact(1));
 
         // Source-level witnesses prove the Reader -> Compiler -> CondNode path
         // uses the same temporary bridge and that canonical three-part cond
@@ -112,6 +130,30 @@ public final class MigrationCondTruthinessContract {
                     "canonical-pair".equals(canonical.toString()),
                     "source three-part cond must match explicit pair record: "
                             + canonical);
+
+            try {
+                context.eval(
+                        "wsm",
+                        "(cond ((quote radio) antenna (quote wrong)))");
+                throw new AssertionError(
+                        "source canonical cond must fail on exhaustion");
+            } catch (org.graalvm.polyglot.PolyglotException error) {
+                require(
+                        error.getMessage().contains("UnsatisfiedConditional"),
+                        "source canonical exhaustion must surface UnsatisfiedConditional: "
+                                + error.getMessage());
+            }
+
+            try {
+                context.eval("wsm", "(cond)");
+                throw new AssertionError(
+                        "empty canonical cond must fail on exhaustion");
+            } catch (org.graalvm.polyglot.PolyglotException error) {
+                require(
+                        error.getMessage().contains("UnsatisfiedConditional"),
+                        "empty canonical cond must surface UnsatisfiedConditional: "
+                                + error.getMessage());
+            }
         }
 
         System.out.println("MIGRATION-COND-TRUTHINESS-CONTRACT-OK");
