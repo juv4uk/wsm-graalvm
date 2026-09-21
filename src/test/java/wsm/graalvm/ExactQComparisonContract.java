@@ -39,16 +39,16 @@ public final class ExactQComparisonContract {
     }
 
     public static void main(String[] args) {
-        require(decision("1014", n(1), n(2), n(3)) == 1, "1014 chained true");
-        require(decision("1014", n(1), n(3), n(2)) == 0, "1014 chained false");
-        require(decision("1015", n(3), n(2), n(1)) == 1, "1015 chained true");
-        require(decision("1015", n(3), n(1), n(2)) == 0, "1015 chained false");
-        require(decision("1016", q(2, 4), q(1, 2), q(3, 6)) == 1,
+        require(decision("00011010", n(1), n(2), n(3)) == 1, "1014 chained true");
+        require(decision("00011010", n(1), n(3), n(2)) == 0, "1014 chained false");
+        require(decision("00011011", n(3), n(2), n(1)) == 1, "1015 chained true");
+        require(decision("00011011", n(3), n(1), n(2)) == 0, "1015 chained false");
+        require(decision("00011100", q(2, 4), q(1, 2), q(3, 6)) == 1,
                 "1016 exact rational equality");
-        require(decision("1016", n(1), n(1), n(2)) == 0,
+        require(decision("00011100", n(1), n(1), n(2)) == 0,
                 "1016 chained false");
 
-        for (String id : new String[] {"1014", "1015", "1016"}) {
+        for (String id : new String[] {"00011010", "00011011", "00011100"}) {
             require(decision(id, q(7, 9)) == 1,
                     id + " one-argument comparison must be true");
             expectKind(id, WsmError.Kind.ARITY);
