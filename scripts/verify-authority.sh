@@ -5,11 +5,11 @@ ROOT="${1:?usage: verify-authority.sh <my-lisp-root>}"
 test -d "$ROOT"
 
 cat > "${TMPDIR:-/tmp}/wsm-authority.$$.sha256" <<'EOF'
-737cc3373abca40ae511ea0114609fdcb7a172b918e69dced615a458ff5818a9  PLACEHOLDER/language-contract.lisp
-65f0f19cbb7c6a911430754349cc4828c1ce2df9be94a4693c9cece215a12369  PLACEHOLDER/my-lisp-constitution.lisp
+615660828fe4a4abab73d910d095653d4dfe16b7c4143f140c0b9fcd5362e80c  PLACEHOLDER/language-contract.lisp
+aa3ce61ed29de928909281ca78767b10528574a5c9cbf877a4305097ff7957b4  PLACEHOLDER/my-lisp-constitution.lisp
 9b7b10861944b9b51d8b1a33aadb8109c7ee384b8e15d84485de71710007a991  PLACEHOLDER/lib/canon.lisp
-f64f5ea7341a5f8d2c873d1f5f2731e7b30befda8b6593a9af3a596942e51d72  PLACEHOLDER/lib/surface/semantic-registry.lisp
-e0b50161d1919f2c26c8c7549b583876acb5cebad437441ed0e1d47514bec3f3  PLACEHOLDER/tests/fixtures/conformance.lisp
+7f532c203be8a271f3f0a2a2b33dd12da92e3bd83fd414ea00e4842052a98208  PLACEHOLDER/lib/surface/semantic-registry.lisp
+19ee5b5752b05f7db53c43dffd89fa36edb2247ea02c5f9dc822a2026217f8d3  PLACEHOLDER/tests/fixtures/conformance.lisp
 EOF
 CHECK="${TMPDIR:-/tmp}/wsm-authority.$$.sha256"
 trap 'rm -f "$CHECK"' EXIT
