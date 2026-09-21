@@ -3,7 +3,7 @@ package wsm.graalvm;
 import org.graalvm.polyglot.Context;
 import org.graalvm.polyglot.PolyglotException;
 
-/** Focused contract for semantic ID 1062: EVAL in the current WSM environment. */
+/** Focused contract for semantic ID 010000000000100000000101: EVAL in the current WSM environment. */
 public final class SemanticEvalContract {
     private static void require(boolean ok, String message) {
         if (!ok) throw new AssertionError(message);
@@ -29,7 +29,7 @@ public final class SemanticEvalContract {
                                     + "(eval (quote eval-contract-global))");
             require(
                     "41".equals(text(global)),
-                    "1062 must see current shared globals, got: " + global);
+                    "010000000000100000000101 must see current shared globals, got: " + global);
 
             Object lexical =
                     context.eval(
@@ -38,7 +38,7 @@ public final class SemanticEvalContract {
                                     + "(eval (quote eval-contract-local))) 42)");
             require(
                     "42".equals(text(lexical)),
-                    "1062 must see current lexical frame, got: " + lexical);
+                    "010000000000100000000101 must see current lexical frame, got: " + lexical);
 
             Object datum =
                     context.eval(
@@ -46,7 +46,7 @@ public final class SemanticEvalContract {
                             "(eval (quote (car (quote (radio antenna)))))");
             require(
                     "radio".equals(text(datum)),
-                    "1062 must execute Lisp datum without string round-trip, got: " + datum);
+                    "010000000000100000000101 must execute Lisp datum without string round-trip, got: " + datum);
 
             Object lambdaDatum =
                     context.eval(
@@ -54,7 +54,7 @@ public final class SemanticEvalContract {
                             "(eval (quote ((lambda (x) x) 43)))");
             require(
                     "43".equals(text(lambdaDatum)),
-                    "1062 must compile materialized Lisp-symbol binders, got: " + lambdaDatum);
+                    "010000000000100000000101 must compile materialized Lisp-symbol binders, got: " + lambdaDatum);
 
             Object closureCall =
                     context.eval(
@@ -62,7 +62,7 @@ public final class SemanticEvalContract {
                             "((eval (lambda (x) x)) 44)");
             require(
                     "44".equals(text(closureCall)),
-                    "1062 must preserve Closure values, got: " + closureCall);
+                    "010000000000100000000101 must preserve Closure values, got: " + closureCall);
 
             org.graalvm.polyglot.Value macroValue =
                     context.eval(
@@ -70,19 +70,19 @@ public final class SemanticEvalContract {
                             "(eval (make-macro (lambda (x) x)))");
             require(
                     !macroValue.isNull(),
-                    "1062 must preserve Macro values across the guest boundary");
+                    "010000000000100000000101 must preserve Macro values across the guest boundary");
 
             try {
                 context.eval("wsm", "(eval)");
-                throw new AssertionError("1062 arity-0 must fail");
+                throw new AssertionError("010000000000100000000101 arity-0 must fail");
             } catch (PolyglotException error) {
                 require(
                         error.getMessage().contains("Arity")
                                 || error.getMessage().contains("expects 1 argument"),
-                        "1062 arity must preserve language error, got: " + error.getMessage());
+                        "010000000000100000000101 arity must preserve language error, got: " + error.getMessage());
             }
         }
 
-        System.out.println("SEMANTIC-EVAL-1062-CONTRACT-OK");
+        System.out.println("SEMANTIC-EVAL-010000000000100000000101-CONTRACT-OK");
     }
 }
