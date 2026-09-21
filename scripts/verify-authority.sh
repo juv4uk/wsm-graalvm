@@ -2,25 +2,66 @@
 set -euo pipefail
 
 ROOT="${1:?usage: verify-authority.sh <my-lisp-root>}"
-test -d "$ROOT"
+REPO=$(cd "$(dirname "$0")/.." && pwd)
+MANIFEST="$REPO/refs/lisp-dependency-manifest.lisp"
 
-cat > "${TMPDIR:-/tmp}/wsm-authority.$$.sha256" <<'EOF'
-737cc3373abca40ae511ea0114609fdcb7a172b918e69dced615a458ff5818a9  PLACEHOLDER/language-contract.lisp
-65f0f19cbb7c6a911430754349cc4828c1ce2df9be94a4693c9cece215a12369  PLACEHOLDER/my-lisp-constitution.lisp
-9b7b10861944b9b51d8b1a33aadb8109c7ee384b8e15d84485de71710007a991  PLACEHOLDER/lib/canon.lisp
-f64f5ea7341a5f8d2c873d1f5f2731e7b30befda8b6593a9af3a596942e51d72  PLACEHOLDER/lib/surface/semantic-registry.lisp
-e0b50161d1919f2c26c8c7549b583876acb5cebad437441ed0e1d47514bec3f3  PLACEHOLDER/tests/fixtures/conformance.lisp
-EOF
-CHECK="${TMPDIR:-/tmp}/wsm-authority.$$.sha256"
-trap 'rm -f "$CHECK"' EXIT
-sed -i "s#PLACEHOLDER/#$ROOT/#g" "$CHECK"
+test -d "$ROOT" || {
+  echo "FAIL-CLOSED: authority root missing: $ROOT" >&2
+  exit 1
+}
+test -f "$MANIFEST" || {
+  echo "FAIL-CLOSED: dependency manifest missing: $MANIFEST" >&2
+  exit 1
+}
 
-for f in   language-contract.lisp   my-lisp-constitution.lisp   lib/canon.lisp   lib/surface/semantic-registry.lisp   tests/fixtures/conformance.lisp; do
+MANIFEST_PIN=$(sed -n 's/.*(pin \. "\([0-9a-f]\{40\}\)").*/\1/p' "$MANIFEST" | head -1)
+GITLINK_PIN=$(git -C "$REPO" ls-files -s external/my-lisp | awk '$1 == "160000" {print $2}')
+HEAD_PIN=$(git -C "$ROOT" rev-parse HEAD)
+
+[ -n "$MANIFEST_PIN" ] || {
+  echo "FAIL-CLOSED: cannot parse pin from $MANIFEST" >&2
+  exit 1
+}
+[ -n "$GITLINK_PIN" ] || {
+  echo "FAIL-CLOSED: cannot read external/my-lisp gitlink" >&2
+  exit 1
+}
+
+[ "$MANIFEST_PIN" = "$GITLINK_PIN" ] || {
+  echo "FAIL-CLOSED: manifest pin and gitlink differ" >&2
+  echo "  manifest=$MANIFEST_PIN" >&2
+  echo "  gitlink=$GITLINK_PIN" >&2
+  exit 1
+}
+[ "$HEAD_PIN" = "$GITLINK_PIN" ] || {
+  echo "FAIL-CLOSED: checked-out authority differs from gitlink" >&2
+  echo "  head=$HEAD_PIN" >&2
+  echo "  gitlink=$GITLINK_PIN" >&2
+  exit 1
+}
+
+for f in \
+  language-contract.lisp \
+  my-lisp-constitution.lisp \
+  lib/canon.lisp \
+  lib/macro.lisp \
+  lib/core.lisp \
+  lib/surface/semantic-registry.lisp \
+  tests/fixtures/conformance.lisp; do
   test -f "$ROOT/$f" || {
     echo "FAIL-CLOSED: missing $ROOT/$f" >&2
     exit 1
   }
 done
 
-sha256sum --check "$CHECK"
-echo "AUTHORITY-DIGESTS-GREEN"
+REGISTRY="$ROOT/lib/surface/semantic-registry.lisp"
+grep -Eq '^[[:space:]]*\(binary[[:space:]]+8\)[[:space:]]*$' "$REGISTRY" || {
+  echo "FAIL-CLOSED: authority registry is not the exact (binary 8) schema" >&2
+  exit 1
+}
+grep -Eq '^[[:space:]]*\([01]{8}[[:space:]]' "$REGISTRY" || {
+  echo "FAIL-CLOSED: authority registry has no exact 8-bit SID rows" >&2
+  exit 1
+}
+
+echo "AUTHORITY-PIN-GREEN pin=$HEAD_PIN registry=binary-8"
