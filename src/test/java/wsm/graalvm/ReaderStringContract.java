@@ -31,7 +31,7 @@ public final class ReaderStringContract {
         require(commaDecimal.equals(dotDecimal),
                 "12,455 must denote the same exact rational as 12.455");
 
-        Object numericId = new Reader("0001").readAll().get(0);
+        Object numericId = new Reader("00000001").readAll().get(0);
         require(numericId instanceof Reader.Token,
                 "numeric semantic IDs with leading zero must remain symbols");
 
