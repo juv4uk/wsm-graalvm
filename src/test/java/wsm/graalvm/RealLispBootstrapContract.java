@@ -8,7 +8,7 @@ import java.util.Set;
 /**
  * End-to-end M1 witness:
  * pinned Lisp macro source produces the MacroValue consumed by the
- * registry-owned 0012 peer installer before pinned core.lisp executes.
+ * registry-owned 00001010 peer installer before pinned core.lisp executes.
  */
 public final class RealLispBootstrapContract {
     private static void require(boolean ok, String message) {
@@ -54,7 +54,7 @@ public final class RealLispBootstrapContract {
                 context.registry(),
                 context.globals(),
                 (GlobalBindings.MacroValue) macroValue);
-        require(!peers.isEmpty(), "registry identity 0012 has no admitted peers");
+        require(!peers.isEmpty(), "registry identity 00001010 has no admitted peers");
 
         BootstrapClosureLoader.Source coreSource = closure.executableSources().stream()
                 .filter(s -> s.path().endsWith("lib/core.lisp"))
@@ -63,19 +63,19 @@ public final class RealLispBootstrapContract {
 
         BootstrapRuntime.execute(context, coreSource.text());
 
-        String defmacro = spelling(context.registry(), "0012");
-        String let = spelling(context.registry(), "1141");
-        String equal = spelling(context.registry(), "1022");
+        String defmacro = spelling(context.registry(), "00001010");
+        String let = spelling(context.registry(), "100001001100");
+        String equal = spelling(context.registry(), "00001000000000001000");
         require(
                 peers.contains(defmacro),
                 "registry-selected defmacro peer was not installed: " + defmacro);
 
-        // Post-retirement witness: the Java 1022 mechanism must be absent,
+        // Post-retirement witness: the Java 00001000000000001000 mechanism must be absent,
         // while the pinned Lisp-owned equal? definition remains executable.
         // Keep this on the real bootstrap path so host fallback cannot return silently.
         require(
-                !SemanticMechanismTable.supports("1022"),
-                "Java 1022 mechanism must remain retired");
+                !SemanticMechanismTable.supports("00001000000000001000"),
+                "Java 00001000000000001000 mechanism must remain retired");
         Object equalSame = BootstrapRuntime.execute(
                 context,
                 "(" + equal + " (quote (1 2)) (quote (1 2)))");
@@ -91,7 +91,7 @@ public final class RealLispBootstrapContract {
 
         // let is Lisp-defined in pinned core.lisp. Running it here proves
         // the MacroValue returned by lib/macro.lisp was installed on the
-        // 0012 peers before core.lisp was evaluated.
+        // 00001010 peers before core.lisp was evaluated.
         Object result = BootstrapRuntime.execute(
                 context,
                 "(" + let + " ((cutover-value 42)) cutover-value)");
