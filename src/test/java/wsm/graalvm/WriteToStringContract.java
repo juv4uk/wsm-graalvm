@@ -3,7 +3,7 @@ package wsm.graalvm;
 import java.math.BigInteger;
 import java.util.List;
 
-/** Focused executable witness for stable semantic ID 1061. */
+/** Focused executable witness for stable semantic ID 010000100100. */
 public final class WriteToStringContract {
     private static void require(boolean ok, String message) {
         if (!ok) throw new AssertionError(message);
@@ -11,7 +11,7 @@ public final class WriteToStringContract {
 
     private static Object invoke(Object value) {
         return SemanticMechanismTable.invoke(
-                "1061",
+                "010000100100",
                 new Object[] { value });
     }
 
@@ -35,7 +35,7 @@ public final class WriteToStringContract {
 
     public static void main(String[] args) {
         require(invoke(Value.NIL) instanceof Value.StringValue,
-                "1061 must return a language StringValue");
+                "010000100100 must return a language StringValue");
         require(((Value.StringValue) invoke(Value.symbol("radio"))).value.equals("radio"),
                 "symbol must use readable token");
 
@@ -71,14 +71,14 @@ public final class WriteToStringContract {
                 "exact rational must be reduced canonically");
 
         try {
-            SemanticMechanismTable.invoke("1061", new Object[0]);
+            SemanticMechanismTable.invoke("010000100100", new Object[0]);
             throw new AssertionError("expected Arity");
         } catch (WsmError error) {
             require(error.kind == WsmError.Kind.ARITY,
                     "expected Arity, got " + error.contractKind());
         }
-        expectError(new Value.SemanticRef("0010"), WsmError.Kind.TYPE);
+        expectError(new Value.SemanticRef("00001000"), WsmError.Kind.TYPE);
 
-        System.out.println("WRITE-TO-STRING-1061-CONTRACT-OK");
+        System.out.println("WRITE-TO-STRING-010000100100-CONTRACT-OK");
     }
 }
