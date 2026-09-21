@@ -53,7 +53,7 @@ public final class MaterializedDefineBinderContract {
                 42,
                 "materialized DEFINE binding must be readable normally");
 
-        Object sourceDefine = new Reader("(0011 source-binding 7)").readAll().get(0);
+        Object sourceDefine = new Reader("(00001001 source-binding 7)").readAll().get(0);
         requireNumber(
                 execute(compiler, sourceDefine),
                 7,
