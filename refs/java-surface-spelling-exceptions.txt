@@ -1,3 +1,4 @@
 # Public surface literals temporarily allowed in production Java.
 # Format: spelling | reason
 t | bootstrap truth singleton; retire when truth binding is registry-installed
+binary | reader consumes the leading (binary WIDTH) source-format metadata declaration, not a semantic route (SID 10101001 stays registry-owned)
