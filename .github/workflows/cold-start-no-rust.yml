@@ -39,4 +39,5 @@ jobs:
       - name: Prove cold start with Rust unavailable
         env:
           G: ${{ env.JAVA_HOME }}
+          WSM_EVIDENCE_COMMIT: ${{ github.event.pull_request.head.sha || github.sha }}
         run: bash scripts/test-cold-start-no-rust.sh
