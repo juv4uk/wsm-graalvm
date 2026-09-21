@@ -1,0 +1,8 @@
+{
+  "schema": "wsm-substrate-parity-evidence/1",
+  "authority": {
+    "semantic_owner": "juv4uk/my-lisp",
+    "rule": "Lisp-owned expected evidence judges both substrates; Rust and GraalVM are witnesses, never each other's sole oracle."
+  },
+  "rows": []
+}
