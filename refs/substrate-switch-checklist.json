@@ -1,0 +1,81 @@
+{
+  "schema": "wsm-substrate-switch-checklist/1",
+  "theorem_issue": 92,
+  "operational_gate_issue": 98,
+  "authority": {
+    "repository": "juv4uk/my-lisp",
+    "rule": "Rust and GraalVM are execution substrates; neither owns Lisp meaning."
+  },
+  "required_evidence": [
+    {
+      "id": "exact-byte-identity",
+      "source": "#230",
+      "merged_commit": "6520d4347f0af643466812ca022a41ba94efdcbd",
+      "kind": "merged-foundation",
+      "claim": "Graal consumes current exact 8-bit SID identity without a legacy-ID semantic remap."
+    },
+    {
+      "id": "differential-parity",
+      "source": "#93",
+      "merged_commit": "6d02ddacd5a9006dae3a998cf14ca39d6afc8a45",
+      "kind": "replay-on-current-pair",
+      "command": "bash scripts/run-substrate-parity-smoke.sh build/substrate-parity-smoke.json",
+      "claim": "Rust and Graal are judged against Lisp-owned expected evidence, not against each other."
+    },
+    {
+      "id": "rust-free-cold-start",
+      "source": "#95",
+      "merged_commit": "c8051f5e8ed830082fe4596c91864b2113b7a4a2",
+      "kind": "replay-on-current-pair",
+      "command": "bash scripts/test-cold-start-no-rust.sh",
+      "claim": "Graal bootstraps canon→macro→core and executes Lisp-owned values with Rust runtime unavailable."
+    },
+    {
+      "id": "truthful-java-residue",
+      "source": "#236",
+      "merged_commit": "d072cf3522f14c19b6e7704e01ea72258120db6e",
+      "kind": "replay-on-current-pair",
+      "command": "bash scripts/check-graal-java-residue-inventory.sh && bash scripts/test-inventory-negative-regression.sh",
+      "claim": "Every inventoried Java residue names real source and fabricated residue fails closed."
+    },
+    {
+      "id": "manifest-closure",
+      "source": "#31/#96",
+      "kind": "replay-on-current-pair",
+      "command": "bash scripts/check-lisp-dependency-manifest.sh && bash scripts/test-real-lisp-bootstrap.sh",
+      "claim": "Pinned registry/canon/macro/core closure is transported and executed from admitted Lisp source."
+    }
+  ],
+  "open_obligations": [
+    {
+      "issue": 78,
+      "id": "provider-edge-derived-bootstrap",
+      "why": "Load order still needs provider-edge graph/topological derivation, cycle detection, and missing/multiple-provider evidence."
+    },
+    {
+      "issue": 94,
+      "id": "semantic-authority-firewall",
+      "why": "Truthful inventory is complete, but the broader permanent duplication/source-ownership firewall policy remains open."
+    },
+    {
+      "issue": 196,
+      "id": "live-binding-precedence",
+      "why": "Dedicated proof that a live Lisp definition shadows an available registry/substrate mechanism is still open."
+    },
+    {
+      "issue": 197,
+      "id": "post-selection-fail-closed-owner",
+      "why": "Parity/cold-start prove important no-fallback cases, but the full execution-owner provenance law remains open."
+    },
+    {
+      "issue": 200,
+      "id": "exact-pair-evidence-freshness",
+      "why": "This proof workflow advances the law, but release/cutover freshness enforcement remains open."
+    },
+    {
+      "issue": 98,
+      "id": "operational-cutover-gate",
+      "why": "Final cutover report cannot close until all mandatory open obligations are discharged."
+    }
+  ]
+}
