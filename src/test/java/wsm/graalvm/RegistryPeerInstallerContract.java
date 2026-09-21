@@ -56,27 +56,27 @@ public final class RegistryPeerInstallerContract {
         require(globals.lookup(uk) == laterShadow, "later UK shadow did not take effect");
         require(globals.lookup(en) == liveValue, "later UK shadow retargeted EN peer");
 
-        // 0012 macro installation must use the same generic peer machinery.
+        // 00000000001000000010 macro installation must use the same generic peer machinery.
         GlobalBindings macroGlobals = new GlobalBindings();
         GlobalBindings.MacroValue macro =
                 new GlobalBindings.MacroValue(args2 -> Value.NIL);
         Set<String> macroPeers =
                 RegistryPeerInstaller.installValue(
-                        registry, macroGlobals, "0012", macro);
+                        registry, macroGlobals, "00000000001000000010", macro);
 
         Set<String> expectedMacroPeers =
-                new LinkedHashSet<>(registry.row("0012").surfaces().values());
-        expectedMacroPeers.remove("0012");
+                new LinkedHashSet<>(registry.row("00000000001000000010").surfaces().values());
+        expectedMacroPeers.remove("00000000001000000010");
 
         require(macroPeers.equals(expectedMacroPeers),
-                "generic 0012 peer set differs from registry");
+                "generic 00000000001000000010 peer set differs from registry");
         for (String spelling : expectedMacroPeers) {
             require(macroGlobals.lookup(spelling) == macro,
-                    "0012 value peer is not exact same MacroValue: " + spelling);
+                    "00000000001000000010 value peer is not exact same MacroValue: " + spelling);
             require(macroGlobals.isMacro(spelling),
-                    "0012 macro dispatch peer missing: " + spelling);
+                    "00000000001000000010 macro dispatch peer missing: " + spelling);
             require(macroGlobals.macro(spelling) == macro,
-                    "0012 macro peer is not exact same MacroValue: " + spelling);
+                    "00000000001000000010 macro peer is not exact same MacroValue: " + spelling);
         }
 
         System.out.println(
