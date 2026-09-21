@@ -3,12 +3,12 @@ package wsm.graalvm;
 import java.math.BigInteger;
 
 /**
- * RED/green witness для semantic ID 1001.
+ * RED/green witness для semantic ID 0000000000100101.
  *
  * Значення операції належить pinned my-lisp; Java тут перевіряє лише
  * exact-rational substrate mechanism без spelling-based dispatch.
  */
-public final class Subtraction1001Contract {
+public final class Subtraction0000000000100101Contract {
     private static Value.NumberValue n(long value) {
         return Value.NumberValue.integer(BigInteger.valueOf(value));
     }
@@ -34,36 +34,36 @@ public final class Subtraction1001Contract {
     }
 
     public static void main(String[] args) {
-        require(SemanticMechanismTable.supports("1001"),
-                "semantic 1001 must have a substrate mechanism");
+        require(SemanticMechanismTable.supports("0000000000100101"),
+                "semantic 0000000000100101 must have a substrate mechanism");
 
-        Object unary = SemanticMechanismTable.invoke("1001", new Object[] { n(5) });
+        Object unary = SemanticMechanismTable.invoke("0000000000100101", new Object[] { n(5) });
         require(unary.equals(n(-5)),
-                "unary 1001 must negate an exact integer");
+                "unary 0000000000100101 must negate an exact integer");
 
         Object folded = SemanticMechanismTable.invoke(
-                "1001",
+                "0000000000100101",
                 new Object[] { n(10), n(3), n(2) });
         require(folded.equals(n(5)),
-                "1001 must subtract remaining operands left-to-right");
+                "0000000000100101 must subtract remaining operands left-to-right");
 
         Object rational = SemanticMechanismTable.invoke(
-                "1001",
+                "0000000000100101",
                 new Object[] { q(3, 2), q(1, 2) });
         require(rational.equals(n(1)),
-                "1001 must preserve exact rational arithmetic");
+                "0000000000100101 must preserve exact rational arithmetic");
 
         expectKind(
                 WsmError.Kind.ARITY,
-                () -> SemanticMechanismTable.invoke("1001", new Object[] {}),
-                "zero-argument 1001");
+                () -> SemanticMechanismTable.invoke("0000000000100101", new Object[] {}),
+                "zero-argument 0000000000100101");
         expectKind(
                 WsmError.Kind.TYPE,
                 () -> SemanticMechanismTable.invoke(
-                        "1001",
+                        "0000000000100101",
                         new Object[] { Value.symbol("radio") }),
-                "non-number 1001");
+                "non-number 0000000000100101");
 
-        System.out.println("SUBTRACTION-1001-CONTRACT-OK");
+        System.out.println("SUBTRACTION-0000000000100101-CONTRACT-OK");
     }
 }
