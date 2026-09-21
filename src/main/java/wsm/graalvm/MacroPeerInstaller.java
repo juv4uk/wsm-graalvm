@@ -9,7 +9,7 @@ import java.util.Set;
  * class names only the numeric bootstrap identity required by that source.
  */
 final class MacroPeerInstaller {
-    static final String DEFMACRO_ID = "0012";
+    static final String DEFMACRO_ID = "00001010";
 
     private MacroPeerInstaller() {}
 
