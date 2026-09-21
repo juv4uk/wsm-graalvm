@@ -41,7 +41,7 @@ public final class MaterializedDefineBinderContract {
         Object materializedDefine =
                 Value.list(
                         List.of(
-                                Value.symbol("0011"),
+                                Value.symbol("00001001"),
                                 Value.symbol("generated-binding"),
                                 number(42)));
         requireNumber(
@@ -66,8 +66,8 @@ public final class MaterializedDefineBinderContract {
         Object canonBinder =
                 Value.list(
                         List.of(
-                                Value.symbol("0011"),
-                                Value.symbol("0005"),
+                                Value.symbol("00001001"),
+                                Value.symbol("00000101"),
                                 number(1)));
         try {
             execute(compiler, canonBinder);
@@ -81,7 +81,7 @@ public final class MaterializedDefineBinderContract {
         Object numericBinder =
                 Value.list(
                         List.of(
-                                Value.symbol("0011"),
+                                Value.symbol("00001001"),
                                 number(99),
                                 number(1)));
         try {
