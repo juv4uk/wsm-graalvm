@@ -47,7 +47,7 @@
   (mechanism "00111010" substrate-required
     (meaning-source . "lib/core.lisp")
     (identity-source . "lib/surface/semantic-registry.lisp")
-    (evidence . "NumericHeadRouteContract: 1043 head routes to admitted mechanism")
+    (evidence . "NumericHeadRouteContract: exact 00111010 head routes; decimal 58/1043 do not become SID")
     (note . "string-append is exercised by Lisp-owned gensym; Java supplies only the irreducible string concatenation mechanism"))
 
   (mechanism "01000011" substrate-required
