@@ -64,7 +64,7 @@ public final class RealLispBootstrapContract {
         BootstrapRuntime.execute(context, coreSource.text());
 
         String defmacro = spelling(context.registry(), "00001010");
-        String let = spelling(context.registry(), "1141");
+        String let = spelling(context.registry(), "10011100");
         String equal = spelling(context.registry(), "00100010");
         require(
                 peers.contains(defmacro),
