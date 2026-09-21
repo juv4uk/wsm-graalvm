@@ -55,6 +55,9 @@ jobs:
           G=$(dirname "$(dirname "$(readlink -f "$(command -v java)")")")
           G=${G} bash scripts/build.sh
 
+      - name: P0 — current exact byte-SID registry ingestion
+        run: bash scripts/test-current-byte-registry.sh
+
       - name: P1 — Pair identity versus structural equality invariant
         run: bash scripts/test-pair-representation.sh
 
