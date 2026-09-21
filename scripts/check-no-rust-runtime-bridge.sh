@@ -11,11 +11,11 @@ fail() {
 
 [ -d "$SRC" ] || fail "missing production Java source tree"
 
-# Production Graal execution must not shell out to Rust or the my-lisp CLI.
-# Keep this deliberately narrow: documentation may name Rust, but runtime Java
-# must not contain process-spawn APIs or executable/toolchain paths for it.
-if grep -RInE   'ProcessBuilder|Runtime\.getRuntime\(\)\.exec|(^|[^A-Za-z0-9_])(cargo|rustc)([^A-Za-z0-9_]|$)|target/(debug|release)/my-lisp|my-lisp(\.exe)?[[:space:]]'   "$SRC"; then
-  fail "production Java contains a Rust/runtime process bridge"
+# Production Graal execution must not spawn a helper runtime at all.
+# If Java cannot create a subprocess, it cannot secretly shell out to cargo,
+# rustc, my-lisp, or any replay helper. Documentation/comments may name Rust.
+if grep -RInE   'new[[:space:]]+ProcessBuilder|Runtime\.getRuntime\(\)\.exec|\.exec\([[:space:]]*new[[:space:]]+String'   "$SRC"; then
+  fail "production Java contains a subprocess bridge"
 fi
 
 echo "NO-RUST-RUNTIME-BRIDGE-GREEN"
