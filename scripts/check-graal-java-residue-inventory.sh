@@ -2,7 +2,7 @@
 set -euo pipefail
 
 REPO=$(cd "$(dirname "$0")/.." && pwd)
-INVENTORY="$REPO/refs/graal-java-residue-inventory.json"
+INVENTORY="${INVENTORY:-$REPO/refs/graal-java-residue-inventory.json}"
 
 fail() { echo "graal-java-residue-inventory FAIL-CLOSED: $*" >&2; exit 1; }
 
@@ -31,8 +31,15 @@ entries = data.get("entries")
 if not isinstance(entries, list):
     raise SystemExit("entries must be a list")
 
-paths = {e.get("path") for e in entries if isinstance(e, dict)}
-missing = sorted(required - paths)
+# Normalize paths: strip #fragment for filesystem checks
+normalized_paths = set()
+for e in entries:
+    if isinstance(e, dict):
+        raw_path = e.get("path", "")
+        normalized = raw_path.split("#")[0]
+        normalized_paths.add(normalized)
+
+missing = sorted(required - normalized_paths)
 if missing:
     raise SystemExit("missing mandatory inventory paths: " + ", ".join(missing))
 
@@ -53,20 +60,17 @@ for e in entries:
     if not e["owner"]:
         raise SystemExit(f"{e['path']}: empty owner")
 
-    # NEW: validate each method exists in the source file
-    src_file = repo / e["path"]
+    # validate each method exists in the source file (strip #fragment for path)
+    raw_path = e["path"]
+    src_file = repo / raw_path.split("#")[0]
     if src_file.exists():
         src_text = src_file.read_text(encoding="utf-8")
         for method in e["methods"]:
             # Extract bare method name: strip parameters, generics, constructor suffix
             bare = method
-            # Remove generics: foo<String> -> foo
             bare = re.sub(r'<[^>]*>', '', bare)
-            # Remove parameter list: load(Path) -> load
             bare = re.sub(r'\([^)]*\)', '', bare)
-            # Remove .<init>
             bare = bare.replace('.<init>', '')
-            # Take last component after . or $
             bare = bare.split('.')[-1].split('$')[-1].strip()
             
             # Handle constructors: Class.<init> -> look for "Class("

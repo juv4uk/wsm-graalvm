@@ -5,6 +5,7 @@ on:
     paths:
       - 'refs/graal-java-residue-inventory.json'
       - 'scripts/check-graal-java-residue-inventory.sh'
+      - 'scripts/test-inventory-negative-regression.sh'
       - 'src/main/java/wsm/graalvm/SemanticMechanismTable.java'
       - 'src/main/java/wsm/graalvm/Compiler.java'
       - 'src/main/java/wsm/graalvm/WsmNode.java'
@@ -19,6 +20,7 @@ on:
     paths:
       - 'refs/graal-java-residue-inventory.json'
       - 'scripts/check-graal-java-residue-inventory.sh'
+      - 'scripts/test-inventory-negative-regression.sh'
       - 'src/main/java/wsm/graalvm/SemanticMechanismTable.java'
       - 'src/main/java/wsm/graalvm/Compiler.java'
       - 'src/main/java/wsm/graalvm/WsmNode.java'
@@ -35,3 +37,5 @@ jobs:
       - uses: actions/checkout@v4
       - name: Validate machine-readable Java residue inventory
         run: bash scripts/check-graal-java-residue-inventory.sh
+      - name: Negative regression — fabricated method must be rejected
+        run: bash scripts/test-inventory-negative-regression.sh
