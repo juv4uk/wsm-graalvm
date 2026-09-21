@@ -2,7 +2,7 @@ package wsm.graalvm;
 
 import java.math.BigInteger;
 
-/** Contract for pinned exact-Q comparison mechanisms 1014/1015/1016. */
+/** Contract for pinned exact-Q comparison mechanisms 0000000001001010/0000000001001011/0000000001001100. */
 public final class ExactQComparisonContract {
     private static void require(boolean ok, String message) {
         if (!ok) throw new AssertionError(message);
@@ -39,25 +39,25 @@ public final class ExactQComparisonContract {
     }
 
     public static void main(String[] args) {
-        require(decision("1014", n(1), n(2), n(3)) == 1, "1014 chained true");
-        require(decision("1014", n(1), n(3), n(2)) == 0, "1014 chained false");
-        require(decision("1015", n(3), n(2), n(1)) == 1, "1015 chained true");
-        require(decision("1015", n(3), n(1), n(2)) == 0, "1015 chained false");
-        require(decision("1016", q(2, 4), q(1, 2), q(3, 6)) == 1,
-                "1016 exact rational equality");
-        require(decision("1016", n(1), n(1), n(2)) == 0,
-                "1016 chained false");
+        require(decision("0000000001001010", n(1), n(2), n(3)) == 1, "0000000001001010 chained true");
+        require(decision("0000000001001010", n(1), n(3), n(2)) == 0, "0000000001001010 chained false");
+        require(decision("0000000001001011", n(3), n(2), n(1)) == 1, "0000000001001011 chained true");
+        require(decision("0000000001001011", n(3), n(1), n(2)) == 0, "0000000001001011 chained false");
+        require(decision("0000000001001100", q(2, 4), q(1, 2), q(3, 6)) == 1,
+                "0000000001001100 exact rational equality");
+        require(decision("0000000001001100", n(1), n(1), n(2)) == 0,
+                "0000000001001100 chained false");
 
-        for (String id : new String[] {"1014", "1015", "1016"}) {
+        for (String id : new String[] {"0000000001001010", "0000000001001011", "0000000001001100"}) {
             require(decision(id, q(7, 9)) == 1,
                     id + " one-argument comparison must be true");
             expectKind(id, WsmError.Kind.ARITY);
             expectKind(id, WsmError.Kind.TYPE, n(1), Value.symbol("not-a-number"));
         }
 
-        require(!SemanticMechanismTable.supports("1017"),
+        require(!SemanticMechanismTable.supports("0000000001001101"),
                 "derived <= must remain Lisp-owned");
-        require(!SemanticMechanismTable.supports("1018"),
+        require(!SemanticMechanismTable.supports("0000000001001110"),
                 "derived >= must remain Lisp-owned");
 
         System.out.println("EXACT-Q-COMPARISON-CONTRACT-OK");
