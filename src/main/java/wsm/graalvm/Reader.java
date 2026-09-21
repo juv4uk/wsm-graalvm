@@ -11,12 +11,12 @@ import java.util.List;
  * - apostrophe inside an identifier is an ordinary identifier character.
  *
  * The reader uses an internal QUOTE_HEAD marker, never a hardcoded human
- * surface spelling. Compiler lowering maps that marker to Canon identity 0001.
+ * surface spelling. Compiler lowering maps that marker to Canon identity 00000001.
  */
 public final class Reader {
 
     public static final Object QUOTE_HEAD = new Object() {
-        @Override public String toString() { return "#<quote-syntax:0001>"; }
+        @Override public String toString() { return "#<quote-syntax:00000001>"; }
     };
 
     public record Token(String spelling) {}
@@ -194,7 +194,10 @@ public final class Reader {
             throw new WsmError(WsmError.Kind.PARSE, "empty token at " + start);
         }
 
-        // Numeric machine IDs such as 0001 remain symbols, not numbers.
+        // Exact bare 8-bit spellings are semantic identities, never decimals.
+        if (token.matches("[01]{8}")) {
+            return new Token(token);
+        }
         if (token.matches("[+-]?[1-9]\\d*|0")) {
             return Value.NumberValue.integer(new java.math.BigInteger(token));
         }
