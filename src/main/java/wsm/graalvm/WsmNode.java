@@ -277,7 +277,21 @@ public abstract class WsmNode extends com.oracle.truffle.api.nodes.Node {
                     return bodies[i].executeGeneric(frame);
                 }
             }
-            return Value.NIL;
+
+            boolean migrationOnly = false;
+            for (boolean legacy : legacyTruthiness) {
+                if (legacy) {
+                    migrationOnly = true;
+                    break;
+                }
+            }
+            if (migrationOnly) {
+                return Value.NIL;
+            }
+
+            throw new WsmError(
+                    WsmError.Kind.UNSATISFIED_CONDITIONAL,
+                    "canonical cond: no query matched its expected result");
         }
 
         /**
