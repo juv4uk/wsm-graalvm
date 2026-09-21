@@ -58,7 +58,7 @@ public final class LetRawExpansionContract {
                 .orElseThrow();
         BootstrapRuntime.executeAuthoritySource(context, coreSource.text());
 
-        String let = spelling(context.registry(), "1141");
+        String let = spelling(context.registry(), "100001001100");
         GlobalBindings.MacroValue letMacro = context.globals().macro(let);
 
         Object bindings = ReaderDatum.toValue(oneForm("((cutover-value 42))"));
