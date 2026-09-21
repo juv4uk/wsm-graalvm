@@ -3,8 +3,10 @@ package wsm.graalvm;
 import java.util.List;
 
 /**
- * Issue #47: numeric heads of admitted machine IDs route through registry
- * identity, unknown numeric heads stay data. Rule source = pinned registry.
+ * #233 retirement witness for the historical numeric-ID route.
+ *
+ * Exact 8-bit SID spellings are semantic identities. Decimal integers are
+ * ordinary numeric data/call targets and must never be reinterpreted as SIDs.
  */
 public final class NumericHeadRouteContract {
     private static void require(boolean ok, String message) {
@@ -13,28 +15,35 @@ public final class NumericHeadRouteContract {
 
     public static void main(String[] args) {
         if (args.length != 1) {
-            throw new IllegalArgumentException("usage: NumericHeadRouteContract <semantic-registry.lisp>");
+            throw new IllegalArgumentException(
+                    "usage: NumericHeadRouteContract <semantic-registry.lisp>");
         }
         CanonRegistry registry = CanonRegistryLoader.load(args[0]);
         Compiler compiler = new Compiler(registry);
 
-        // 1043 = string-append (stable, 10xx band). Admitted numeric head routes
-        // to the substrate mechanism (the same identity the spelling surface uses).
-        Object routed = evalOne(compiler, "(1043 \"ліве\" \"праве\")");
+        // Current string-append SID is the exact bit spelling 00111010.
+        Object routed = evalOne(compiler, "(00111010 \"ліве\" \"праве\")");
         require("лівеправе".equals(rawText(routed)),
-                "1043 head must route to its admitted mechanism; got " + routed);
+                "exact byte SID 00111010 must route to its substrate mechanism; got " + routed);
 
-        // 1999 = not admitted -> stays UnknownSymbol; no silent route
-        String error = "none";
+        require("00111010".equals(registry.semanticIdForToken("00111010")),
+                "exact 8-bit SID must resolve to itself");
+        require(registry.semanticIdForToken("1043") == null,
+                "historical decimal ID 1043 must not remain an admitted semantic route");
+
+        // Historical 1043 is now an ordinary integer in call position, never
+        // a semantic identity. It must fail rather than silently dispatch.
+        String oldRouteError = "none";
         try {
-            evalOne(compiler, "(1999 1)");
+            evalOne(compiler, "(1043 \"ліве\" \"праве\")");
         } catch (WsmError e) {
-            error = e.kind.name();
+            oldRouteError = e.kind.name();
         }
-        require("UNKNOWN_SYMBOL".equals(error) || "TYPE".equals(error),
-                "non-admitted numeric head must fail as data, got " + error);
+        require("TYPE".equals(oldRouteError) || "INVALID_FORM".equals(oldRouteError),
+                "historical decimal head must fail as a non-callable number, got "
+                        + oldRouteError);
 
-        System.out.println("NUMERIC-HEAD-ROUTE-CONTRACT-OK");
+        System.out.println("EXACT-BYTE-SID-ROUTE-CONTRACT-OK");
     }
 
     private static Object evalOne(Compiler compiler, String expr) {
@@ -46,6 +55,7 @@ public final class NumericHeadRouteContract {
 
     private static String rawText(Object v) {
         if (v instanceof Value.Str s) return s.value;
+        if (v instanceof Value.StringValue s) return s.value;
         return String.valueOf(v);
     }
 }
