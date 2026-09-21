@@ -35,7 +35,7 @@ public final class RegistryPeerInstallerContract {
         // is retired, so it is a suitable identity for live-value peer plumbing.
         String id = "00100010";
         String en = requiredSurface(registry, id, "en");
-        String uk = requiredSurface(registry, id, "uk");
+        String uk = requiredSurface(registry, id, "ук");
         require(!en.equals(uk), "1022 EN/UK witness requires distinct spellings");
 
         GlobalBindings globals = new GlobalBindings();
