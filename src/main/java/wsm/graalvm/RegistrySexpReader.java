@@ -38,6 +38,9 @@ final class RegistrySexpReader {
         if (text.charAt(pos) == ')') {
             throw new WsmError(WsmError.Kind.PARSE, "unexpected ) in registry");
         }
+        if (text.charAt(pos) == '"') {
+            return readString();
+        }
         return readAtom();
     }
 
@@ -54,6 +57,34 @@ final class RegistrySexpReader {
             }
             items.add(readForm());
         }
+    }
+
+    private String readString() {
+        pos++; // opening quote
+        StringBuilder out = new StringBuilder();
+        while (pos < text.length()) {
+            char c = text.charAt(pos++);
+            if (c == '"') return out.toString();
+            if (c != '\\') {
+                out.append(c);
+                continue;
+            }
+            if (pos >= text.length()) {
+                throw new WsmError(WsmError.Kind.PARSE, "unterminated registry string escape");
+            }
+            char escaped = text.charAt(pos++);
+            switch (escaped) {
+                case 'n' -> out.append('\n');
+                case 'r' -> out.append('\r');
+                case 't' -> out.append('\t');
+                case '"' -> out.append('"');
+                case '\\' -> out.append('\\');
+                default -> throw new WsmError(
+                        WsmError.Kind.PARSE,
+                        "unsupported registry string escape: \\" + escaped);
+            }
+        }
+        throw new WsmError(WsmError.Kind.PARSE, "unterminated registry string");
     }
 
     private String readAtom() {
