@@ -1,0 +1,59 @@
+name: substrate-switch-proof
+
+on:
+  pull_request:
+    paths:
+      - 'refs/substrate-switch-checklist.json'
+      - 'scripts/run-substrate-switch-proof.sh'
+      - 'scripts/write-substrate-switch-proof.py'
+      - 'scripts/check-evidence-freshness.sh'
+      - 'scripts/test-cold-start-no-rust.sh'
+      - '.github/workflows/substrate-switch-proof.yml'
+  push:
+    branches:
+      - main
+    paths:
+      - 'refs/substrate-switch-checklist.json'
+      - 'scripts/run-substrate-switch-proof.sh'
+      - 'scripts/write-substrate-switch-proof.py'
+      - 'scripts/check-evidence-freshness.sh'
+      - 'scripts/test-cold-start-no-rust.sh'
+      - '.github/workflows/substrate-switch-proof.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  proof:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Set up GraalVM
+        uses: graalvm/setup-graalvm@v1
+        with:
+          java-version: '25'
+          distribution: 'graalvm-community'
+          version: '25.3.4.1'
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Initialize pinned my-lisp authority
+        run: git submodule update --init external/my-lisp
+
+      - name: Replay substrate-switch proof on exact pair
+        env:
+          G: ${{ env.JAVA_HOME }}
+          WSM_EVIDENCE_COMMIT: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: bash scripts/run-substrate-switch-proof.sh build/substrate-switch-proof.json
+
+      - name: Freshness check — evidence must belong to current exact pair
+        run: bash scripts/check-evidence-freshness.sh
+
+      - name: Upload machine-readable proof
+        uses: actions/upload-artifact@v4
+        with:
+          name: substrate-switch-proof
+          path: |
+            build/substrate-switch-proof.json
+            build/substrate-parity-smoke.json
+            build/cold-start-no-rust.json

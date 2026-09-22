@@ -37,17 +37,14 @@ rm -f "$MARKER"
 trap 'rm -rf "$POISON" "$MARKER"' EXIT
 
 for tool in cargo rustc my-lisp my-lisp-cli; do
-  cat > "$POISON/$tool" <<EOF
+  cat > "$POISON/$tool" <<EOSH
 #!/usr/bin/env bash
 echo "$tool invoked" >> "$MARKER"
 exit 97
-EOF
+EOSH
   chmod +x "$POISON/$tool"
 done
 
-# Runtime execution itself gets no normal PATH at all. Java is invoked by
-# absolute path; any accidental Rust/CLI subprocess lookup can only hit the
-# poison shims and will make the witness fail.
 set +e
 OUTPUT=$(
   env -i     PATH="$POISON"     HOME="${HOME:-/tmp}"     JAVA_HOME="$G"     WSM_COLD_START_NO_RUST=1     "$G/bin/java"       -cp "$TEST_CLASSES:$CP"       wsm.graalvm.ColdStartNoRustContract       "$REPO" "$WSM_COMMIT" "$MY_LISP_PIN" 2>&1
@@ -72,5 +69,76 @@ grep -Fq "COLD-START-NO-RUST-GREEN" <<<"$OUTPUT" || {
   echo "missing cold-start GREEN marker" >&2
   exit 1
 }
+
+# Extract structured data from output for machine-readable evidence
+MISSING_OWNER=$(echo "$OUTPUT" | sed -n 's/.*missing-owner=\([^ ]*\).*/\1/p')
+ABS_VALUE=$(echo "$OUTPUT" | sed -n 's/.*abs=\([^ ]*\).*/\1/p')
+EQUAL_VALUE=$(echo "$OUTPUT" | sed -n 's/.*equal=\([^ ]*\).*/\1/p')
+MACRO_PEERS=$(echo "$OUTPUT" | sed -n 's/.*macro-peers=\([^ ]*\).*/\1/p')
+
+# Write machine-readable evidence
+EVIDENCE_FILE="$REPO/build/cold-start-no-rust.json"
+mkdir -p "$(dirname "$EVIDENCE_FILE")"
+python3 - "$EVIDENCE_FILE" "$WSM_COMMIT" "$MY_LISP_PIN" "$MISSING_OWNER" "$ABS_VALUE" "$EQUAL_VALUE" "$MACRO_PEERS" <<'PY'
+import json
+import sys
+from pathlib import Path
+
+evidence_file = sys.argv[1]
+wsm_commit = sys.argv[2]
+my_lisp_pin = sys.argv[3]
+missing_owner = sys.argv[4]
+abs_value = sys.argv[5]
+equal_value = sys.argv[6]
+macro_peers = int(sys.argv[7])
+
+doc = {
+    "schema": "wsm-cold-start-evidence/1",
+    "exact_pair": {
+        "wsm_graalvm_head": wsm_commit,
+        "my_lisp_pin": my_lisp_pin,
+    },
+    "witnesses": {
+        "missing_abs_mechanism": {
+            "status": "green",
+            "expected_failure": missing_owner,
+            "claim": "Lisp-owned abs has no Java mechanism before bootstrap"
+        },
+        "canon_bootstrap": {
+            "status": "green",
+            "claim": "Canon closure loads and executes successfully"
+        },
+        "macro_bootstrap": {
+            "status": "green",
+            "admitted_peer_count": macro_peers,
+            "claim": "lib/macro.lisp returns MacroValue with admitted peers"
+        },
+        "core_bootstrap": {
+            "status": "green",
+            "claim": "lib/core.lisp executes and establishes Lisp-owned bindings"
+        },
+        "abs_execution": {
+            "status": "green",
+            "result": abs_value,
+            "claim": "Lisp-owned abs executes via live binding after cold start"
+        },
+        "equal_execution": {
+            "status": "green",
+            "result": equal_value,
+            "claim": "Lisp-owned equal? executes via live binding after cold start"
+        },
+        "no_java_abs_mechanism_post_bootstrap": {
+            "status": "green",
+            "claim": "Cold start does not manufacture Java abs mechanism"
+        },
+        "no_java_equal_mechanism_post_bootstrap": {
+            "status": "green",
+            "claim": "Lisp-owned equal? still has no Java mechanism"
+        }
+    }
+}
+
+Path(evidence_file).write_text(json.dumps(doc, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+PY
 
 echo "COLD-START-RUST-UNAVAILABLE-GREEN wsm=$WSM_COMMIT my-lisp=$MY_LISP_PIN"
