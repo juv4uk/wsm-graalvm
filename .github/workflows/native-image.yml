@@ -35,6 +35,20 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build and run native Canon witness
+        env:
+          WSM_EVIDENCE_COMMIT: ${{ github.event.pull_request.head.sha || github.sha }}
         run: |
           G=$(dirname "$(dirname "$(readlink -f "$(command -v java)")")")
-          G=$G MYLISP=external/my-lisp bash scripts/build-native.sh
+          G=$G MYLISP=external/my-lisp WSM_EVIDENCE_COMMIT="$WSM_EVIDENCE_COMMIT" bash scripts/build-native.sh
+
+      - name: Freshness check — Native Image evidence
+        env:
+          WSM_EVIDENCE_COMMIT: ${{ github.event.pull_request.head.sha || github.sha }}
+          EVIDENCE_FILES: native-image-evidence.json
+        run: bash scripts/check-evidence-freshness.sh
+
+      - name: Upload Native Image evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: native-image-evidence
+          path: build/native-image-evidence.json
