@@ -6,6 +6,12 @@ on:
       - ".github/workflows/release.yml"
       - "scripts/build.sh"
       - "scripts/build-native.sh"
+      - "scripts/release-gate.sh"
+      - "scripts/check-evidence-freshness.sh"
+      - "scripts/run-substrate-switch-proof.sh"
+      - "scripts/test-real-tier1-inventory.sh"
+      - "scripts/test-real-lisp-bootstrap.sh"
+      - "scripts/test-cold-start-no-rust.sh"
       - "scripts/stage-release-payload.sh"
       - "scripts/write-release-metadata.sh"
       - "scripts/write-release-sbom.py"
@@ -118,8 +124,10 @@ jobs:
         shell: bash
         env:
           MYLISP: external/my-lisp
+          WSM_EVIDENCE_COMMIT: ${{ needs.validate.outputs.source_sha }}
         run: |
           bash scripts/build-native.sh
+          EVIDENCE_FILES=native-image-evidence.json WSM_EVIDENCE_COMMIT="$WSM_EVIDENCE_COMMIT" bash scripts/check-evidence-freshness.sh
           test -x native-wsm
           rm -rf dist
           bash scripts/stage-release-payload.sh "v${{ needs.validate.outputs.version }}" linux-x86_64 native-wsm dist/linux-x86_64
@@ -195,8 +203,10 @@ jobs:
         shell: bash
         env:
           MYLISP: external/my-lisp
+          WSM_EVIDENCE_COMMIT: ${{ needs.validate.outputs.source_sha }}
         run: |
           bash scripts/build-native.sh
+          EVIDENCE_FILES=native-image-evidence.json WSM_EVIDENCE_COMMIT="$WSM_EVIDENCE_COMMIT" bash scripts/check-evidence-freshness.sh
           test -f native-wsm.exe
           rm -rf dist
           bash scripts/stage-release-payload.sh "v${{ needs.validate.outputs.version }}" windows-x86_64 native-wsm.exe dist/windows-x86_64
