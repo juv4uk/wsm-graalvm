@@ -44,6 +44,13 @@
       "kind": "replay-on-current-pair",
       "command": "bash scripts/check-lisp-dependency-manifest.sh && bash scripts/test-real-lisp-bootstrap.sh",
       "claim": "Pinned registry/canon/macro/core closure is transported and executed from admitted Lisp source."
+    },
+    {
+      "id": "exact-pair-evidence-freshness",
+      "source": "#200",
+      "kind": "replay-on-current-pair",
+      "command": "bash scripts/check-evidence-freshness.sh && bash scripts/test-evidence-freshness-negative.sh",
+      "claim": "Current certification belongs only to the exact wsm-graalvm head + my-lisp pin; stale evidence fails closed."
     }
   ],
   "open_obligations": [
@@ -66,11 +73,6 @@
       "issue": 197,
       "id": "post-selection-fail-closed-owner",
       "why": "Parity/cold-start prove important no-fallback cases, but the full execution-owner provenance law remains open."
-    },
-    {
-      "issue": 200,
-      "id": "exact-pair-evidence-freshness",
-      "why": "This proof workflow advances the law, but release/cutover freshness enforcement remains open."
     },
     {
       "issue": 98,
