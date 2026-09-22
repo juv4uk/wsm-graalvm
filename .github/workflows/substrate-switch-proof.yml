@@ -6,6 +6,13 @@ on:
       - 'refs/substrate-switch-checklist.json'
       - 'scripts/run-substrate-switch-proof.sh'
       - 'scripts/write-substrate-switch-proof.py'
+      - 'scripts/check-evidence-freshness.sh'
+      - 'scripts/test-evidence-freshness-negative.sh'
+      - 'scripts/pr-evidence-summary.sh'
+      - 'scripts/test-tier1-progress.sh'
+      - 'scripts/test-real-lisp-bootstrap.sh'
+      - 'scripts/run-substrate-parity-smoke.sh'
+      - 'scripts/test-cold-start-no-rust.sh'
       - '.github/workflows/substrate-switch-proof.yml'
   push:
     branches:
@@ -14,6 +21,13 @@ on:
       - 'refs/substrate-switch-checklist.json'
       - 'scripts/run-substrate-switch-proof.sh'
       - 'scripts/write-substrate-switch-proof.py'
+      - 'scripts/check-evidence-freshness.sh'
+      - 'scripts/test-evidence-freshness-negative.sh'
+      - 'scripts/pr-evidence-summary.sh'
+      - 'scripts/test-tier1-progress.sh'
+      - 'scripts/test-real-lisp-bootstrap.sh'
+      - 'scripts/run-substrate-parity-smoke.sh'
+      - 'scripts/test-cold-start-no-rust.sh'
       - '.github/workflows/substrate-switch-proof.yml'
 
 permissions:
@@ -24,6 +38,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
 
       - name: Set up GraalVM
         uses: graalvm/setup-graalvm@v1
@@ -42,6 +59,21 @@ jobs:
           WSM_EVIDENCE_COMMIT: ${{ github.event.pull_request.head.sha || github.sha }}
         run: bash scripts/run-substrate-switch-proof.sh build/substrate-switch-proof.json
 
+      - name: Fail closed on stale evidence
+        env:
+          WSM_EVIDENCE_COMMIT: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: bash scripts/check-evidence-freshness.sh
+
+      - name: Prove stale evidence is rejected
+        env:
+          WSM_EVIDENCE_COMMIT: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: bash scripts/test-evidence-freshness-negative.sh
+
+      - name: Publish exact-pair summary
+        env:
+          WSM_EVIDENCE_COMMIT: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: bash scripts/pr-evidence-summary.sh --markdown >> "$GITHUB_STEP_SUMMARY"
+
       - name: Upload machine-readable proof
         uses: actions/upload-artifact@v4
         with:
@@ -49,3 +81,6 @@ jobs:
           path: |
             build/substrate-switch-proof.json
             build/substrate-parity-smoke.json
+            build/cold-start-no-rust.json
+            build/tier1-evidence.json
+            build/real-lisp-bootstrap-evidence.json
