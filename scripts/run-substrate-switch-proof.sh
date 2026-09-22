@@ -26,7 +26,8 @@ ACTUAL_PIN=$(git -C "$REPO/external/my-lisp" rev-parse HEAD)
 bash "$REPO/scripts/check-lisp-dependency-manifest.sh"
 bash "$REPO/scripts/check-graal-java-residue-inventory.sh"
 bash "$REPO/scripts/test-inventory-negative-regression.sh"
-G="$G" bash "$REPO/scripts/test-real-lisp-bootstrap.sh"
+WSM_EVIDENCE_COMMIT="$HEAD" G="$G"   bash "$REPO/scripts/test-real-tier1-inventory.sh"
+WSM_EVIDENCE_COMMIT="$HEAD" G="$G"   bash "$REPO/scripts/test-real-lisp-bootstrap.sh"
 WSM_EVIDENCE_COMMIT="$HEAD" JAVA_HOME="$G"   bash "$REPO/scripts/run-substrate-parity-smoke.sh" "$REPO/build/substrate-parity-smoke.json"
 WSM_EVIDENCE_COMMIT="$HEAD" G="$G"   bash "$REPO/scripts/test-cold-start-no-rust.sh"
 
