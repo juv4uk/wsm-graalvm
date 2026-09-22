@@ -9,9 +9,10 @@ import java.util.Map;
  * This class owns no language meaning. It only answers:
  * "which admitted semantic ID does this token spelling denote?"
  *
- * Two source schemas are accepted during the #230 cutover:
+ * Three source schemas are accepted during the #230 cutover:
  * - legacy (sr/1 ...) rows from the currently pinned v0.1 baseline;
- * - current ((binary 8) ...) rows whose exact eight-bit spelling IS identity.
+ * - explicit ((binary 8) ...) rows whose exact eight-bit spelling IS identity;
+ * - headerless (...) rows starting directly with an eight-bit SID row.
  *
  * There is intentionally no legacy-ID -> byte-SID translation table here.
  */
@@ -39,10 +40,13 @@ public final class CanonRegistry {
         if (isByteSidDescriptor(header)) {
             return loadByteSid(top);
         }
+        if (isByteSidRow(header)) {
+            return loadHeaderlessByteSid(top);
+        }
 
         throw new WsmError(
                 WsmError.Kind.PARSE,
-                "registry must start with sr/1 or (binary 8)");
+                "registry must start with sr/1, (binary 8), or a byte-SID row");
     }
 
     private static CanonRegistry loadLegacy(List<?> top) {
@@ -88,10 +92,18 @@ public final class CanonRegistry {
     }
 
     private static CanonRegistry loadByteSid(List<?> top) {
+        return loadHeaderlessByteSid(top, 1);
+    }
+
+    private static CanonRegistry loadHeaderlessByteSid(List<?> top) {
+        return loadHeaderlessByteSid(top, 0);
+    }
+
+    private static CanonRegistry loadHeaderlessByteSid(List<?> top, int startIndex) {
         CanonRegistry out = new CanonRegistry();
         out.legacyNumericIds = false;
 
-        for (int i = 1; i < top.size(); i++) {
+        for (int i = startIndex; i < top.size(); i++) {
             Object rowObject = top.get(i);
             if (!(rowObject instanceof List<?> row)
                     || row.isEmpty()
@@ -139,6 +151,13 @@ public final class CanonRegistry {
                 && descriptor.size() == 2
                 && "binary".equals(descriptor.get(0))
                 && "8".equals(descriptor.get(1));
+    }
+
+    private static boolean isByteSidRow(Object form) {
+        return form instanceof List<?> row
+                && !row.isEmpty()
+                && row.get(0) instanceof String id
+                && id.matches("[01]{8}");
     }
 
     private static void putRow(

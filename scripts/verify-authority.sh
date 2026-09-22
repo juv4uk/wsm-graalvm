@@ -8,7 +8,7 @@ cat > "${TMPDIR:-/tmp}/wsm-authority.$$.sha256" <<'EOF'
 615660828fe4a4abab73d910d095653d4dfe16b7c4143f140c0b9fcd5362e80c  PLACEHOLDER/language-contract.lisp
 aa3ce61ed29de928909281ca78767b10528574a5c9cbf877a4305097ff7957b4  PLACEHOLDER/my-lisp-constitution.lisp
 9b7b10861944b9b51d8b1a33aadb8109c7ee384b8e15d84485de71710007a991  PLACEHOLDER/lib/canon.lisp
-7f532c203be8a271f3f0a2a2b33dd12da92e3bd83fd414ea00e4842052a98208  PLACEHOLDER/lib/surface/semantic-registry.lisp
+17c6dbcbe01a6208d2cb2fdf10abaefb773a8060ed435c8eeba89b1c747beba7  PLACEHOLDER/lib/surface/semantic-registry.lisp
 19ee5b5752b05f7db53c43dffd89fa36edb2247ea02c5f9dc822a2026217f8d3  PLACEHOLDER/tests/fixtures/conformance.lisp
 EOF
 CHECK="${TMPDIR:-/tmp}/wsm-authority.$$.sha256"

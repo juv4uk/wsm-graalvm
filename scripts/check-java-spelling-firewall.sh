@@ -23,10 +23,18 @@ if grep -Fq '(binary 8)' "$REGISTRY"; then
     | grep -v '^$' \
     | LC_ALL=C sort -u > "$SURFACES"
 else
-  grep -oE '\((en|uk|ukr|sa|sym|compat) [^()[:space:]]+ (stable|compatibility-only)\)' "$REGISTRY" \
-    | awk '{print $2}' \
-    | grep -v '^—$' \
-    | LC_ALL=C sort -u > "$SURFACES"
+  python3 - "$REGISTRY" <<'PY' | LC_ALL=C sort -u > "$SURFACES"
+import re, sys
+with open(sys.argv[1], encoding='utf-8') as f:
+    text = f.read()
+for m in re.finditer(r'\((?:en|\u0443\u043a|uk|\u0443\u043a\u0440|ukr|sa|sym|compat)\s+((?:\(\)|"[^"]*"|[^()\s]+))', text):
+    surface = m.group(1)
+    if surface == '()':
+        continue
+    if surface.startswith('"') and surface.endswith('"'):
+        surface = surface[1:-1]
+    print(surface)
+PY
 fi
 
 awk -F'|' '
