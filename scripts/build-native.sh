@@ -36,4 +36,32 @@ printf '\n(canon-conforms?)\n' >> "$TMP"
 "$REPO/native-wsm"   "$TMP"   "$REGISTRY"   "$MYLISP" 2>&1 | tee "$REPO/native-canon.log"
 
 grep -q "(canon-conformance satisfied)" "$REPO/native-canon.log"
-echo "NATIVE-IMAGE-CANON-OK"
+
+WSM_COMMIT=${WSM_EVIDENCE_COMMIT:-$(git -C "$REPO" rev-parse HEAD)}
+MY_LISP_PIN=$(git -C "$REPO" ls-files -s external/my-lisp | awk '$1 == "160000" {print $2}')
+NATIVE_VERSION=$("$G/bin/native-image" --version 2>&1 | head -n 1)
+
+mkdir -p "$REPO/build"
+python3 - "$REPO/build/native-image-evidence.json" "$WSM_COMMIT" "$MY_LISP_PIN" "$NATIVE_VERSION" <<'PY'
+import json, sys
+from pathlib import Path
+
+out, head, pin, version = sys.argv[1:]
+doc = {
+    "schema": "wsm-native-image-evidence/1",
+    "exact_pair": {
+        "wsm_graalvm_head": head,
+        "my_lisp_pin": pin,
+    },
+    "gate": {
+        "id": "native-canon-witness",
+        "execution_mode": "native-image",
+        "native_image": version,
+        "corpus": "external/my-lisp/lib/canon.lisp",
+        "status": "green",
+    },
+}
+Path(out).write_text(json.dumps(doc, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+PY
+
+echo "NATIVE-IMAGE-CANON-OK head=$WSM_COMMIT pin=$MY_LISP_PIN"
