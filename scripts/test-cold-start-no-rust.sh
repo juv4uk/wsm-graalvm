@@ -38,16 +38,13 @@ trap 'rm -rf "$POISON" "$MARKER"' EXIT
 
 for tool in cargo rustc my-lisp my-lisp-cli; do
   cat > "$POISON/$tool" <<EOF
-#!/usr/bin/env bash
+#!/bin/sh
 echo "$tool invoked" >> "$MARKER"
 exit 97
 EOF
   chmod +x "$POISON/$tool"
 done
 
-# Runtime execution itself gets no normal PATH at all. Java is invoked by
-# absolute path; any accidental Rust/CLI subprocess lookup can only hit the
-# poison shims and will make the witness fail.
 set +e
 OUTPUT=$(
   env -i     PATH="$POISON"     HOME="${HOME:-/tmp}"     JAVA_HOME="$G"     WSM_COLD_START_NO_RUST=1     "$G/bin/java"       -cp "$TEST_CLASSES:$CP"       wsm.graalvm.ColdStartNoRustContract       "$REPO" "$WSM_COMMIT" "$MY_LISP_PIN" 2>&1
@@ -57,20 +54,50 @@ set -e
 
 printf '%s\n' "$OUTPUT"
 
-[ "$STATUS" -eq 0 ] || {
-  echo "cold-start witness failed with status $STATUS" >&2
-  exit "$STATUS"
-}
-
+[ "$STATUS" -eq 0 ] || { echo "cold-start witness failed with status $STATUS" >&2; exit "$STATUS"; }
 [ ! -e "$MARKER" ] || {
   echo "Rust/CLI poison shim was invoked:" >&2
   cat "$MARKER" >&2
   exit 1
 }
-
 grep -Fq "COLD-START-NO-RUST-GREEN" <<<"$OUTPUT" || {
   echo "missing cold-start GREEN marker" >&2
   exit 1
 }
+
+MISSING_OWNER=$(printf '%s\n' "$OUTPUT" | sed -n 's/.*missing-owner=\([^ ]*\).*/\1/p' | tail -n 1)
+ABS_VALUE=$(printf '%s\n' "$OUTPUT" | sed -n 's/.*abs=\([^ ]*\).*/\1/p' | tail -n 1)
+EQUAL_VALUE=$(printf '%s\n' "$OUTPUT" | sed -n 's/.*equal=\(.*\) macro-peers=.*/\1/p' | tail -n 1)
+MACRO_PEERS=$(printf '%s\n' "$OUTPUT" | sed -n 's/.*macro-peers=\([^ ]*\).*/\1/p' | tail -n 1)
+GRAAL_VERSION=$("$G/bin/java" --version 2>&1 | head -n 1)
+
+mkdir -p "$REPO/build"
+python3 - "$REPO/build/cold-start-no-rust.json" "$WSM_COMMIT" "$MY_LISP_PIN" "$GRAAL_VERSION" "$MISSING_OWNER" "$ABS_VALUE" "$EQUAL_VALUE" "$MACRO_PEERS" <<'PY'
+import json, sys
+from pathlib import Path
+
+out, head, pin, graal, missing, abs_value, equal_value, peers = sys.argv[1:]
+doc = {
+    "schema": "wsm-cold-start-evidence/1",
+    "exact_pair": {
+        "wsm_graalvm_head": head,
+        "my_lisp_pin": pin,
+    },
+    "gate": {
+        "id": "cold-start-no-rust",
+        "execution_mode": "jvm",
+        "graalvm": graal,
+        "rust_runtime_available": False,
+        "status": "green",
+    },
+    "observations": {
+        "missing_owner": missing,
+        "abs": abs_value,
+        "equal": equal_value,
+        "macro_peers": int(peers),
+    },
+}
+Path(out).write_text(json.dumps(doc, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+PY
 
 echo "COLD-START-RUST-UNAVAILABLE-GREEN wsm=$WSM_COMMIT my-lisp=$MY_LISP_PIN"
