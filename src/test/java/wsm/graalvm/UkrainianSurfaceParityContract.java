@@ -18,7 +18,13 @@ import java.util.List;
  *    (10101001 (en binary) (ук двійковий) (укр двійковий) (sa ()) (sym ())))
  * </pre>
  *
- * Every row carries exactly four surfaces. An empty list () marks an absent
+ * Headerless schema is also accepted (no (binary 8) descriptor):
+ * <pre>
+ *   (00000000 (en ()) (ук ()) (укр ()) (sa ()) (sym ()))
+ *   ...
+ * </pre>
+ *
+ * Every row carries exactly five surfaces. An empty list () marks an absent
  * surface. Every exact eight-bit SID is its own semantic identity, and every
  * non-empty surface spelling must resolve back to that same SID.
  */
@@ -52,11 +58,19 @@ public final class UkrainianSurfaceParityContract {
         require(top.size() >= 2, "registry must declare (binary 8) plus rows");
 
         Object headerObject = top.get(0);
-        require(headerObject instanceof List<?> header
-                        && header.size() == 2
-                        && "binary".equals(atom(header.get(0), "header marker"))
-                        && "8".equals(atom(header.get(1), "header width")),
-                "registry schema must be (binary 8)");
+        boolean headerless;
+        if (headerObject instanceof List<?> header
+                && header.size() == 2
+                && "binary".equals(atom(header.get(0), "header marker"))
+                && "8".equals(atom(header.get(1), "header width"))) {
+            headerless = false;
+        } else if (headerObject instanceof List<?> firstRow
+                && !firstRow.isEmpty()
+                && atom(firstRow.get(0), "first semantic id").matches("[01]{8}")) {
+            headerless = true;
+        } else {
+            throw new AssertionError("registry schema must be (binary 8) or headerless byte-SID rows");
+        }
 
         String[] markers = {"en", "ук", "укр", "sa", "sym"};
 
@@ -67,7 +81,7 @@ public final class UkrainianSurfaceParityContract {
         int ukrAbsent = 0;
         int roundtripChecked = 0;
 
-        for (int i = 1; i < top.size(); i++) {
+        for (int i = (headerless ? 0 : 1); i < top.size(); i++) {
             List<?> row = list(top.get(i), "registry row");
             require(!row.isEmpty(), "empty registry row");
             String id = atom(row.get(0), "semantic id");
@@ -146,7 +160,7 @@ public final class UkrainianSurfaceParityContract {
 
         System.out.println(
                 "(uk-surface-parity"
-                        + " (schema binary-8)"
+                        + " (schema " + (headerless ? "headerless" : "binary-8") + ")"
                         + " (rows " + rows + ")"
                         + " (ук-admitted " + ukAdmitted + ")"
                         + " (укр-admitted " + ukrAdmitted + ")"
