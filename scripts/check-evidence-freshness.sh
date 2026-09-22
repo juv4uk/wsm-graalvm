@@ -27,6 +27,7 @@ else
     cold-start-no-rust.json
     tier1-evidence.json
     real-lisp-bootstrap-evidence.json
+    live-binding-precedence.json
   )
 fi
 

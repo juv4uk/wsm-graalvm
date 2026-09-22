@@ -30,6 +30,7 @@ bash "$REPO/scripts/test-inventory-negative-regression.sh"
 WSM_EVIDENCE_COMMIT="$HEAD" \
 BOOTSTRAP_EVIDENCE_OUT="$REPO/build/real-lisp-bootstrap-evidence.json" \
 G="$G" bash "$REPO/scripts/test-real-lisp-bootstrap.sh"
+bash "$REPO/scripts/test-live-binding-precedence.sh"
 
 WSM_EVIDENCE_COMMIT="$HEAD" \
 TIER1_EVIDENCE_OUT="$REPO/build/tier1-evidence.json" \
