@@ -11,6 +11,12 @@ run_gate() {
   "$@"
 }
 
+WSM_HEAD=$(git -C "$REPO" rev-parse HEAD)
+MY_LISP_PIN=$(git -C "$REPO" ls-files -s external/my-lisp | awk '$1 == "160000" {print $2}')
+echo "RELEASE-GATE :: exact pair"
+echo "  wsm-graalvm HEAD: $WSM_HEAD"
+echo "  my-lisp pin:      $MY_LISP_PIN"
+
 run_gate "unexpected gitlinks" bash scripts/check-gitlink-topology.sh
 run_gate "Lisp-first mechanism budget" bash scripts/check-lisp-mechanism-budget.sh
 run_gate "Java public-surface spelling firewall" bash scripts/check-java-spelling-firewall.sh
@@ -35,5 +41,8 @@ run_gate "Canon self-verdict" bash scripts/run-canon.sh
 run_gate "Tier-1 progress ledger" bash scripts/test-tier1-progress.sh
 run_gate "write-to-string" bash scripts/test-write-to-string.sh
 run_gate "context persistence" bash scripts/test-context.sh
+
+run_gate "substrate-switch proof" env WSM_EVIDENCE_COMMIT="$WSM_HEAD"   bash scripts/run-substrate-switch-proof.sh build/substrate-switch-proof.json
+run_gate "evidence freshness" env WSM_EVIDENCE_COMMIT="$WSM_HEAD"   bash scripts/check-evidence-freshness.sh
 
 echo "RELEASE-GATE-OK"
