@@ -13,6 +13,8 @@ on:
       - 'scripts/test-real-lisp-bootstrap.sh'
       - 'scripts/run-substrate-parity-smoke.sh'
       - 'scripts/test-cold-start-no-rust.sh'
+      - 'scripts/test-live-binding-precedence.sh'
+      - 'src/test/java/wsm/graalvm/LiveBindingPrecedenceContract.java'
       - '.github/workflows/substrate-switch-proof.yml'
   push:
     branches:
@@ -28,6 +30,8 @@ on:
       - 'scripts/test-real-lisp-bootstrap.sh'
       - 'scripts/run-substrate-parity-smoke.sh'
       - 'scripts/test-cold-start-no-rust.sh'
+      - 'scripts/test-live-binding-precedence.sh'
+      - 'src/test/java/wsm/graalvm/LiveBindingPrecedenceContract.java'
       - '.github/workflows/substrate-switch-proof.yml'
 
 permissions:
@@ -84,3 +88,4 @@ jobs:
             build/cold-start-no-rust.json
             build/tier1-evidence.json
             build/real-lisp-bootstrap-evidence.json
+            build/live-binding-precedence.json

@@ -51,6 +51,13 @@
       "kind": "current-pair-guard",
       "command": "bash scripts/check-evidence-freshness.sh",
       "claim": "Semantic and release evidence is valid only for the exact wsm-graalvm head + my-lisp gitlink/manifest pin pair; stale records fail closed."
+    },
+    {
+      "id": "live-binding-precedence",
+      "source": "#196",
+      "kind": "replay-on-current-pair",
+      "command": "bash scripts/test-live-binding-precedence.sh",
+      "claim": "A live Lisp binding shadows an available registry route or substrate mechanism for the same identity."
     }
   ],
   "open_obligations": [
@@ -63,11 +70,6 @@
       "issue": 94,
       "id": "semantic-authority-firewall",
       "why": "Truthful inventory is complete, but the broader permanent duplication/source-ownership firewall policy remains open."
-    },
-    {
-      "issue": 196,
-      "id": "live-binding-precedence",
-      "why": "Dedicated proof that a live Lisp definition shadows an available registry/substrate mechanism is still open."
     },
     {
       "issue": 197,
