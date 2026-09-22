@@ -49,9 +49,20 @@ report = {
         "my_lisp_pin": args.my_lisp_pin,
         "graalvm": args.graal_version,
     },
+    "execution_mode": "jvm-proof-chain",
+    "toolchain": {
+        "graalvm": args.graal_version,
+    },
+    "evidence_artifacts": [
+        "build/tier1-evidence.json",
+        "build/real-lisp-bootstrap-evidence.json",
+        "build/substrate-parity-smoke.json",
+        "build/cold-start-no-rust.json"
+    ],
     "authority": checklist["authority"],
     "fresh_replay": {
         "dependency_manifest": "green",
+        "tier1": "green",
         "real_lisp_bootstrap": "green",
         "differential_parity": "green",
         "rust_free_cold_start": "green",

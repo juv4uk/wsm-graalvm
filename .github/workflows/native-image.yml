@@ -17,6 +17,7 @@ jobs:
     steps:
       - uses: actions/checkout@v5
         with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
           submodules: recursive
           fetch-depth: 0
 
@@ -38,3 +39,21 @@ jobs:
         run: |
           G=$(dirname "$(dirname "$(readlink -f "$(command -v java)")")")
           G=$G MYLISP=external/my-lisp bash scripts/build-native.sh
+
+      - name: Record exact-pair Native Image evidence
+        env:
+          WSM_EVIDENCE_COMMIT: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          G=$(dirname "$(dirname "$(readlink -f "$(command -v java)")")")
+          HEAD="$WSM_EVIDENCE_COMMIT"
+          PIN=$(git ls-files -s external/my-lisp | awk '$1 == "160000" {print $2}')
+          JAVA_VERSION=$("$G/bin/java" --version 2>&1 | head -n 1)
+          NATIVE_VERSION=$("$G/bin/native-image" --version 2>&1 | head -n 1)
+          python3 scripts/write-native-image-evidence.py             --wsm-head "$HEAD"             --my-lisp-pin "$PIN"             --java-version "$JAVA_VERSION"             --native-image-version "$NATIVE_VERSION"             --out build/native-image-evidence.json
+          EVIDENCE_ROOT=build           EVIDENCE_FILES="native-image-evidence.json"           WSM_EVIDENCE_COMMIT="$HEAD"             bash scripts/check-evidence-freshness.sh
+
+      - name: Upload Native Image provenance
+        uses: actions/upload-artifact@v4
+        with:
+          name: native-image-evidence
+          path: build/native-image-evidence.json

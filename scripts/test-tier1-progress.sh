@@ -18,7 +18,7 @@ ACTUAL_PIN=$(git -C "$MYLISP" rev-parse HEAD)
   exit 1
 }
 
-WSM_GRAALVM_COMMIT=$(git -C "$REPO" rev-parse HEAD)
+WSM_GRAALVM_COMMIT=${WSM_EVIDENCE_COMMIT:-$(git -C "$REPO" rev-parse HEAD)}
 CONTRACT="$MYLISP/language-contract.lisp"
 [ -f "$CONTRACT" ] || { echo "TIER1-LEDGER FAIL: missing language contract: $CONTRACT" >&2; exit 1; }
 ACTUAL_CONTRACT_MAJOR=$(sed -n 's/^((major \. \([0-9][0-9]*\)) (minor \. \([0-9][0-9]*\)).*/\1/p' "$CONTRACT" | head -1)
@@ -92,4 +92,35 @@ if [ "$FAIL" -eq 0 ] && [ "$VALUE_STATUS" -ne 0 ]; then
   echo "TIER1-LEDGER FAIL: value counter failed despite zero failures" >&2; exit 1
 fi
 
-printf 'TIER1-LEDGER-OK upstream-pin=%s wsm-commit=%s contract=%s.%s selected=%d value-pass=%d value-fail=%d error-pass=%d error-blocked=%d error-fail=%d\n' "$ACTUAL_PIN" "$WSM_GRAALVM_COMMIT" "$ACTUAL_CONTRACT_MAJOR" "$ACTUAL_CONTRACT_MINOR" "$TOTAL" "$PASS" "$FAIL" "$ERROR_PASS" "$ERROR_BLOCKED" "$ERROR_FAIL"
+GRAAL_VERSION=$("$JAVA_HOME/bin/java" --version 2>&1 | head -n 1)
+EVIDENCE_OUT=${TIER1_EVIDENCE_OUT:-"$REPO/build/tier1-evidence.json"}
+mkdir -p "$(dirname "$EVIDENCE_OUT")"
+python3 - "$EVIDENCE_OUT" "$WSM_GRAALVM_COMMIT" "$ACTUAL_PIN" "$GRAAL_VERSION" "$ACTUAL_CONTRACT_MAJOR.$ACTUAL_CONTRACT_MINOR" "$TOTAL" "$PASS" "$FAIL" "$ERROR_PASS" "$ERROR_BLOCKED" "$ERROR_FAIL" <<'PY'
+import json, sys
+from pathlib import Path
+out, head, pin, graal, contract = sys.argv[1:6]
+total, passed, failed, error_pass, error_blocked, error_fail = map(int, sys.argv[6:12])
+doc = {
+  "schema": "wsm-tier1-evidence/1",
+  "gate_id": "tier1-progress",
+  "exact_pair": {"wsm_graalvm_head": head, "my_lisp_pin": pin},
+  "execution_mode": "jvm",
+  "toolchain": {"graalvm": graal},
+  "corpus": {
+    "path": "external/my-lisp/tests/fixtures/conformance.lisp",
+    "language_contract": contract,
+    "selected": total
+  },
+  "results": {
+    "value_pass": passed,
+    "value_fail": failed,
+    "error_pass": error_pass,
+    "error_blocked": error_blocked,
+    "error_fail": error_fail
+  },
+  "status": "green"
+}
+Path(out).write_text(json.dumps(doc, indent=2) + "\n", encoding="utf-8")
+PY
+
+printf 'TIER1-LEDGER-OK upstream-pin=%s wsm-commit=%s contract=%s.%s selected=%d value-pass=%d value-fail=%d error-pass=%d error-blocked=%d error-fail=%d evidence=%s\n' "$ACTUAL_PIN" "$WSM_GRAALVM_COMMIT" "$ACTUAL_CONTRACT_MAJOR" "$ACTUAL_CONTRACT_MINOR" "$TOTAL" "$PASS" "$FAIL" "$ERROR_PASS" "$ERROR_BLOCKED" "$ERROR_FAIL" "$EVIDENCE_OUT"

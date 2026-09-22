@@ -64,6 +64,7 @@ RUST_STDOUT=$(
 )
 RUST_OBS=$(printf '%s\n' "$RUST_STDOUT" | awk 'NF {last=$0} END {print last}')
 [ -n "$RUST_OBS" ] || { echo "Rust observation empty" >&2; exit 1; }
+RUST_VERSION=$(cd "$RUST_TREE" && rustc --version)
 
 echo "parity: building/running Graal substrate at $WSM_COMMIT" >&2
 bash "$REPO/scripts/build.sh" >/dev/null
@@ -126,7 +127,9 @@ NEGATIVE_FAILURE=$(
   exit 1
 }
 
-export PIN WSM_COMMIT EXPECTED ABS_EXPECTED RUST_OBS GRAAL_OBS NEGATIVE_FAILURE OUT
+GRAAL_VERSION=$("$JAVA" --version 2>&1 | head -n 1)
+
+export PIN WSM_COMMIT EXPECTED ABS_EXPECTED RUST_OBS GRAAL_OBS NEGATIVE_FAILURE OUT RUST_VERSION GRAAL_VERSION
 python3 - <<'PY'
 import json
 import os
@@ -138,6 +141,20 @@ graal = os.environ["GRAAL_OBS"]
 
 doc = {
     "schema": "wsm-substrate-parity-evidence/1",
+    "gate_id": "differential-substrate-parity",
+    "exact_pair": {
+        "wsm_graalvm_head": os.environ["WSM_COMMIT"],
+        "my_lisp_pin": os.environ["PIN"],
+    },
+    "execution_mode": "rust-reference+jvm",
+    "toolchain": {
+        "rust": os.environ["RUST_VERSION"],
+        "graalvm": os.environ["GRAAL_VERSION"],
+    },
+    "corpus": {
+        "authority": "my-lisp-constitution.lisp",
+        "fixture": "(atom (quote radio))",
+    },
     "authority": {
         "semantic_owner": "juv4uk/my-lisp",
         "rule": "Lisp-owned expected evidence judges both substrates; Rust and GraalVM are witnesses, never each other's sole oracle.",
