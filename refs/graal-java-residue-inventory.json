@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "purpose": "Machine-readable audit of production Java paths at the Graal semantic/substrate boundary for #224.",
-  "authority_rule": "my-lisp remains semantic authority; Java entries are substrate, representation, bootstrap, diagnostic, or explicit temporary debt.",
+  "purpose": "Machine-readable audit of production Java paths at the Graal Sid8/substrate boundary.",
+  "authority_rule": "Function identity is exact Sid8 only; Java entries are substrate, representation, bootstrap, diagnostic, or explicit temporary debt.",
   "baseline_main": "858c9a588880d4d20ec181467d0ebcc963351516",
   "classifications": [
     "substrate-required",
@@ -20,25 +20,25 @@
         "SemanticMechanismTable",
         "supports",
         "invoke",
-        "invoke0002",
-        "invoke0003",
-        "invoke0004",
-        "invoke0005",
-        "invoke0006",
-        "invoke1001",
+        "invoke00000010",
+        "invoke00000011",
+        "invoke00000100",
+        "invoke00000101",
+        "invoke00000110",
+        "invoke00001101",
         "subtractExact",
-        "invoke1014",
-        "invoke1015",
-        "invoke1016",
+        "invoke00011010",
+        "invoke00011011",
+        "invoke00011100",
         "exactQComparison",
         "requireNumber",
         "compareExact",
-        "invoke1052",
-        "invoke1061",
-        "invoke1043"
+        "invoke01000011",
+        "invoke01001100",
+        "invoke00111010"
       ],
       "witness": "scripts/check-lisp-mechanism-budget.sh",
-      "note": "Numeric semantic IDs are the only public dispatch key. The table supplies irreducible host/runtime mechanisms; meaning is owned by pinned my-lisp contracts."
+      "note": "Exact Sid8 is the only dispatch key. Private Java mechanism methods are named by the exact eight-bit identity and do not define a second semantic key."
     },
     {
       "path": "src/main/java/wsm/graalvm/Compiler.java",
@@ -57,8 +57,8 @@
         "compileDefine",
         "defineBinderName",
         "ensureBinderAllowed",
-        "isCanonPrimitive",
-        "isCanonSyntax",
+        "isReservedPrimitiveSid",
+        "isSyntaxSid",
         "isSpecial",
         "compileEval",
         "compileCond",
@@ -68,7 +68,7 @@
         "items"
       ],
       "witness": "scripts/test-real-lisp-bootstrap.sh",
-      "note": "Parser-to-AST and special-form lowering are substrate compilation machinery. They must route by semantic ID and live bindings, not introduce Java-authored public meaning."
+      "note": "Parser-to-AST and special-form lowering are substrate machinery. Resolved functions stay Sid8 and never round-trip through names/strings."
     },
     {
       "path": "src/main/java/wsm/graalvm/WsmNode.java",
@@ -164,7 +164,7 @@
         "resolve"
       ],
       "witness": "src/test/java/wsm/graalvm/UkrainianSurfaceParityContract.java",
-      "note": "One-way frontend boundary from source token to numeric semantic ID or ordinary lexical spelling."
+      "note": "One-way frontend boundary from source spelling to exact Sid8 or ordinary lexical spelling."
     },
     {
       "path": "src/main/java/wsm/graalvm/BootstrapClosureLoader.java",
@@ -201,6 +201,24 @@
       ],
       "witness": "src/test/java/wsm/graalvm/RealLispBootstrapContract.java",
       "note": "Bootstrap plumbing invokes the normal reader/compiler/runtime in one WSM context. Authority peer projection is explicit and limited to pinned source loading."
+    },
+    {
+      "path": "src/main/java/wsm/graalvm/Sid8.java",
+      "class": "Sid8",
+      "classification": "representation-only",
+      "owner": "exact eight-bit function identity transport",
+      "methods": [
+        "Sid8",
+        "bits",
+        "parseBareToken",
+        "matchesBareToken",
+        "toString",
+        "equals",
+        "hashCode",
+        "compareTo"
+      ],
+      "witness": "src/test/java/wsm/graalvm/CurrentByteRegistryContract.java",
+      "note": "Opaque exact-width carrier. No public String/int/hex constructor; source token normalization is package-private and one-way."
     }
   ]
 }
