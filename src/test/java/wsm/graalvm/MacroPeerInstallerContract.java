@@ -28,7 +28,7 @@ public final class MacroPeerInstallerContract {
 
         Set<String> installed = MacroPeerInstaller.install(registry, globals, macro);
         Set<String> expected =
-                new LinkedHashSet<>(registry.row("00001010").surfaces().values());
+                new LinkedHashSet<>(registry.row(Sid8.bits(0,0,0,0,1,0,1,0)).surfaces().values());
         expected.remove("00001010");
 
         require(installed.equals(expected),
