@@ -10,8 +10,7 @@ public final class WriteToStringContract {
     }
 
     private static Object invoke(Object value) {
-        return SemanticMechanismTable.invoke(
-                "01001100",
+        return SemanticMechanismTable.invoke(Sid8.bits(0,1,0,0,1,1,0,0),
                 new Object[] { value });
     }
 
@@ -71,13 +70,13 @@ public final class WriteToStringContract {
                 "exact rational must be reduced canonically");
 
         try {
-            SemanticMechanismTable.invoke("01001100", new Object[0]);
+            SemanticMechanismTable.invoke(Sid8.bits(0,1,0,0,1,1,0,0), new Object[0]);
             throw new AssertionError("expected Arity");
         } catch (WsmError error) {
             require(error.kind == WsmError.Kind.ARITY,
                     "expected Arity, got " + error.contractKind());
         }
-        expectError(new Value.SemanticRef("00001000"), WsmError.Kind.TYPE);
+        expectError(new Value.SemanticRef(Sid8.bits(0,0,0,0,1,0,0,0)), WsmError.Kind.TYPE);
 
         System.out.println("WRITE-TO-STRING-1061-CONTRACT-OK");
     }
