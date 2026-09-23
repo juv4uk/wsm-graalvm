@@ -91,7 +91,7 @@ public final class LiveBindingPrecedenceContract {
         // the registry route (negative control: registry is still authority for
         // identity/admission, it just cannot override live bindings).
         require(
-                !SemanticMechanismTable.supports("00001001"),
+                !SemanticMechanismTable.supports(Sid8.bits(0,0,0,0,1,0,0,1)),
                 "Java mechanism for Lisp-owned define must not exist");
 
         System.out.println(
