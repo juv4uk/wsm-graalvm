@@ -16,9 +16,9 @@ public final class ColdStartNoRustContract {
         if (!ok) throw new AssertionError(message);
     }
 
-    private static String spelling(CanonRegistry registry, String id) {
+    private static String spelling(CanonRegistry registry, Sid8 id) {
         return registry.row(id).surfaces().values().stream()
-                .filter(s -> s != null && !s.isBlank() && !id.equals(s))
+                .filter(s -> s != null && !s.isBlank() && !id.matchesBareToken(s))
                 .sorted(Comparator.naturalOrder())
                 .findFirst()
                 .orElseThrow(() -> new AssertionError("no admitted surface for " + id));
@@ -96,7 +96,7 @@ public final class ColdStartNoRustContract {
                 !SemanticMechanismTable.supports(Sid8.bits(0,0,0,1,0,0,0,0)),
                 "cold start must not manufacture a Java abs mechanism");
 
-        String abs = spelling(context.registry(), "00010000");
+        String abs = spelling(context.registry(), Sid8.bits(0,0,0,1,0,0,0,0));
         require(
                 "00010000".equals(context.registry().semanticIdForToken(abs)),
                 "abs surface must resolve to exact SID 00010000");
@@ -112,7 +112,7 @@ public final class ColdStartNoRustContract {
                 !SemanticMechanismTable.supports(Sid8.bits(0,0,1,0,0,0,1,0)),
                 "Lisp-owned equal? unexpectedly has a Java mechanism");
 
-        String equal = spelling(context.registry(), "00100010");
+        String equal = spelling(context.registry(), Sid8.bits(0,0,1,0,0,0,1,0));
         Object equalValue = BootstrapRuntime.execute(
                 context,
                 "(" + equal + " (quote (1 2)) (quote (1 2)))");
