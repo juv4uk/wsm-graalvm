@@ -98,7 +98,7 @@ public final class ColdStartNoRustContract {
 
         String abs = spelling(context.registry(), Sid8.bits(0,0,0,1,0,0,0,0));
         require(
-                "00010000".equals(context.registry().semanticIdForToken(abs)),
+                Sid8.bits(0,0,0,1,0,0,0,0).equals(context.registry().semanticIdForToken(abs)),
                 "abs surface must resolve to exact SID 00010000");
 
         Object absValue = BootstrapRuntime.execute(context, "(" + abs + " -5)");
