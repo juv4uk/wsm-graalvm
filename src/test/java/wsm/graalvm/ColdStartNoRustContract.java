@@ -42,7 +42,7 @@ public final class ColdStartNoRustContract {
         // Negative owner-selection witness before Lisp bootstrap:
         // abs / SID 00010000 is Lisp-owned and must have no Java mechanism.
         require(
-                !SemanticMechanismTable.supports("00010000"),
+                !SemanticMechanismTable.supports(Sid8.bits(0,0,0,1,0,0,0,0)),
                 "Lisp-owned abs unexpectedly has a Java mechanism");
 
         WsmContext unbootstrapped = new WsmContext(closure.registryPath().toString());
@@ -93,7 +93,7 @@ public final class ColdStartNoRustContract {
         // The same identity that failed before bootstrap must now execute
         // through the live Lisp binding, still with no Java abs mechanism.
         require(
-                !SemanticMechanismTable.supports("00010000"),
+                !SemanticMechanismTable.supports(Sid8.bits(0,0,0,1,0,0,0,0)),
                 "cold start must not manufacture a Java abs mechanism");
 
         String abs = spelling(context.registry(), "00010000");
@@ -109,7 +109,7 @@ public final class ColdStartNoRustContract {
         // Existing higher-level Lisp-owned witness: equal? also has no Java
         // mechanism but must work after core bootstrap.
         require(
-                !SemanticMechanismTable.supports("00100010"),
+                !SemanticMechanismTable.supports(Sid8.bits(0,0,1,0,0,0,1,0)),
                 "Lisp-owned equal? unexpectedly has a Java mechanism");
 
         String equal = spelling(context.registry(), "00100010");
