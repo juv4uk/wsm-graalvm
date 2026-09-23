@@ -74,7 +74,7 @@ public final class RealLispBootstrapContract {
         // while the pinned Lisp-owned equal? definition remains executable.
         // Keep this on the real bootstrap path so host fallback cannot return silently.
         require(
-                !SemanticMechanismTable.supports("00100010"),
+                !SemanticMechanismTable.supports(Sid8.bits(0,0,1,0,0,0,1,0)),
                 "Java 1022 mechanism must remain retired");
         Object equalSame = BootstrapRuntime.execute(
                 context,
