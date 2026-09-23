@@ -65,7 +65,7 @@ public final class RegistryPeerInstallerContract {
                         registry, macroGlobals, "00001010", macro);
 
         Set<String> expectedMacroPeers =
-                new LinkedHashSet<>(registry.row("00001010").surfaces().values());
+                new LinkedHashSet<>(registry.row(Sid8.bits(0,0,0,0,1,0,1,0)).surfaces().values());
         expectedMacroPeers.remove("00001010");
 
         require(macroPeers.equals(expectedMacroPeers),
