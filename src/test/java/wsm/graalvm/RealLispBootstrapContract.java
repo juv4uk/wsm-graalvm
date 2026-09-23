@@ -15,9 +15,9 @@ public final class RealLispBootstrapContract {
         if (!ok) throw new AssertionError(message);
     }
 
-    private static String spelling(CanonRegistry registry, String id) {
+    private static String spelling(CanonRegistry registry, Sid8 id) {
         return registry.row(id).surfaces().values().stream()
-                .filter(s -> s != null && !s.isBlank() && !id.equals(s))
+                .filter(s -> s != null && !s.isBlank() && !id.matchesBareToken(s))
                 .sorted(Comparator.naturalOrder())
                 .findFirst()
                 .orElseThrow(() -> new AssertionError("no admitted surface for " + id));
@@ -63,9 +63,9 @@ public final class RealLispBootstrapContract {
 
         BootstrapRuntime.execute(context, coreSource.text());
 
-        String defmacro = spelling(context.registry(), "00001010");
-        String let = spelling(context.registry(), "10011100");
-        String equal = spelling(context.registry(), "00100010");
+        String defmacro = spelling(context.registry(), Sid8.bits(0,0,0,0,1,0,1,0));
+        String let = spelling(context.registry(), Sid8.bits(1,0,0,1,1,1,0,0));
+        String equal = spelling(context.registry(), Sid8.bits(0,0,1,0,0,0,1,0));
         require(
                 peers.contains(defmacro),
                 "registry-selected defmacro peer was not installed: " + defmacro);
