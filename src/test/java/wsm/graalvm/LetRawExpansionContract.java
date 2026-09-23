@@ -10,9 +10,9 @@ public final class LetRawExpansionContract {
         if (!ok) throw new AssertionError(message);
     }
 
-    private static String spelling(CanonRegistry registry, String id) {
+    private static String spelling(CanonRegistry registry, Sid8 id) {
         return registry.row(id).surfaces().values().stream()
-                .filter(s -> s != null && !s.isBlank() && !id.equals(s))
+                .filter(s -> s != null && !s.isBlank() && !id.matchesBareToken(s))
                 .sorted(Comparator.naturalOrder())
                 .findFirst()
                 .orElseThrow(() -> new AssertionError("no admitted surface for " + id));
@@ -58,7 +58,7 @@ public final class LetRawExpansionContract {
                 .orElseThrow();
         BootstrapRuntime.executeAuthoritySource(context, coreSource.text());
 
-        String let = spelling(context.registry(), "10011100");
+        String let = spelling(context.registry(), Sid8.bits(1,0,0,1,1,1,0,0));
         GlobalBindings.MacroValue letMacro = context.globals().macro(let);
 
         Object bindings = ReaderDatum.toValue(oneForm("((cutover-value 42))"));

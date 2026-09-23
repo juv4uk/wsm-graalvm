@@ -17,13 +17,13 @@ final class RegistryPeerInstaller {
     static Set<String> installValue(
             CanonRegistry registry,
             GlobalBindings globals,
-            String semanticId,
+            Sid8 semanticId,
             Object liveValue) {
         CanonRegistry.Row row = registry.row(semanticId);
         LinkedHashSet<String> peers = new LinkedHashSet<>();
 
         for (String spelling : row.surfaces().values()) {
-            if (spelling == null || spelling.isBlank() || semanticId.equals(spelling)) {
+            if (spelling == null || spelling.isBlank() || semanticId.matchesBareToken(spelling)) {
                 continue;
             }
             if (!semanticId.equals(registry.semanticIdForToken(spelling))) {
@@ -67,12 +67,12 @@ final class RegistryPeerInstaller {
      * admitted binding. Missing peers receive that exact object. This is called
      * only after pinned authority source loads, never after ordinary user eval.
      */
-    static Set<String> materializeBoundValuePeers(
+    static Set<Sid8> materializeBoundValuePeers(
             CanonRegistry registry,
             GlobalBindings globals) {
-        LinkedHashSet<String> materializedIds = new LinkedHashSet<>();
+        LinkedHashSet<Sid8> materializedIds = new LinkedHashSet<>();
 
-        for (String semanticId : registry.ids()) {
+        for (Sid8 semanticId : registry.ids()) {
             CanonRegistry.Row row = registry.row(semanticId);
             Object liveValue = null;
             boolean found = false;

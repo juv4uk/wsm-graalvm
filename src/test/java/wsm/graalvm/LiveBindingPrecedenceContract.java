@@ -16,9 +16,9 @@ public final class LiveBindingPrecedenceContract {
         if (!ok) throw new AssertionError(message);
     }
 
-    private static String spelling(CanonRegistry registry, String id) {
+    private static String spelling(CanonRegistry registry, Sid8 id) {
         return registry.row(id).surfaces().values().stream()
-                .filter(s -> s != null && !s.isBlank() && !id.equals(s))
+                .filter(s -> s != null && !s.isBlank() && !id.matchesBareToken(s))
                 .sorted(Comparator.naturalOrder())
                 .findFirst()
                 .orElseThrow(() -> new AssertionError("no admitted surface for " + id));
@@ -47,11 +47,11 @@ public final class LiveBindingPrecedenceContract {
         BootstrapRuntime.execute(context, macroSource.text());
 
         // Use registry-derived spellings, not hard-coded aliases.
-        String define = spelling(context.registry(), "00001001");
-        String cond = spelling(context.registry(), "00000111");
-        String cons = spelling(context.registry(), "00000100");
-        String cdr = spelling(context.registry(), "00000110");
-        String atom = spelling(context.registry(), "00000010");
+        String define = spelling(context.registry(), Sid8.bits(0,0,0,0,1,0,0,1));
+        String cond = spelling(context.registry(), Sid8.bits(0,0,0,0,0,1,1,1));
+        String cons = spelling(context.registry(), Sid8.bits(0,0,0,0,0,1,0,0));
+        String cdr = spelling(context.registry(), Sid8.bits(0,0,0,0,0,1,1,0));
+        String atom = spelling(context.registry(), Sid8.bits(0,0,0,0,0,0,1,0));
 
         // 1. Define an ordinary Lisp function via live global binding.
         String identity = "identity-196";
@@ -91,7 +91,7 @@ public final class LiveBindingPrecedenceContract {
         // the registry route (negative control: registry is still authority for
         // identity/admission, it just cannot override live bindings).
         require(
-                !SemanticMechanismTable.supports("00001001"),
+                !SemanticMechanismTable.supports(Sid8.bits(0,0,0,0,1,0,0,1)),
                 "Java mechanism for Lisp-owned define must not exist");
 
         System.out.println(

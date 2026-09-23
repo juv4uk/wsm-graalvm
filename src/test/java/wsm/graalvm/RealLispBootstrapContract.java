@@ -15,9 +15,9 @@ public final class RealLispBootstrapContract {
         if (!ok) throw new AssertionError(message);
     }
 
-    private static String spelling(CanonRegistry registry, String id) {
+    private static String spelling(CanonRegistry registry, Sid8 id) {
         return registry.row(id).surfaces().values().stream()
-                .filter(s -> s != null && !s.isBlank() && !id.equals(s))
+                .filter(s -> s != null && !s.isBlank() && !id.matchesBareToken(s))
                 .sorted(Comparator.naturalOrder())
                 .findFirst()
                 .orElseThrow(() -> new AssertionError("no admitted surface for " + id));
@@ -63,9 +63,9 @@ public final class RealLispBootstrapContract {
 
         BootstrapRuntime.execute(context, coreSource.text());
 
-        String defmacro = spelling(context.registry(), "00001010");
-        String let = spelling(context.registry(), "10011100");
-        String equal = spelling(context.registry(), "00100010");
+        String defmacro = spelling(context.registry(), Sid8.bits(0,0,0,0,1,0,1,0));
+        String let = spelling(context.registry(), Sid8.bits(1,0,0,1,1,1,0,0));
+        String equal = spelling(context.registry(), Sid8.bits(0,0,1,0,0,0,1,0));
         require(
                 peers.contains(defmacro),
                 "registry-selected defmacro peer was not installed: " + defmacro);
@@ -74,7 +74,7 @@ public final class RealLispBootstrapContract {
         // while the pinned Lisp-owned equal? definition remains executable.
         // Keep this on the real bootstrap path so host fallback cannot return silently.
         require(
-                !SemanticMechanismTable.supports("00100010"),
+                !SemanticMechanismTable.supports(Sid8.bits(0,0,1,0,0,0,1,0)),
                 "Java 1022 mechanism must remain retired");
         Object equalSame = BootstrapRuntime.execute(
                 context,

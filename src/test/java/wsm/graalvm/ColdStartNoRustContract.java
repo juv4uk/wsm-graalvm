@@ -16,9 +16,9 @@ public final class ColdStartNoRustContract {
         if (!ok) throw new AssertionError(message);
     }
 
-    private static String spelling(CanonRegistry registry, String id) {
+    private static String spelling(CanonRegistry registry, Sid8 id) {
         return registry.row(id).surfaces().values().stream()
-                .filter(s -> s != null && !s.isBlank() && !id.equals(s))
+                .filter(s -> s != null && !s.isBlank() && !id.matchesBareToken(s))
                 .sorted(Comparator.naturalOrder())
                 .findFirst()
                 .orElseThrow(() -> new AssertionError("no admitted surface for " + id));
@@ -42,7 +42,7 @@ public final class ColdStartNoRustContract {
         // Negative owner-selection witness before Lisp bootstrap:
         // abs / SID 00010000 is Lisp-owned and must have no Java mechanism.
         require(
-                !SemanticMechanismTable.supports("00010000"),
+                !SemanticMechanismTable.supports(Sid8.bits(0,0,0,1,0,0,0,0)),
                 "Lisp-owned abs unexpectedly has a Java mechanism");
 
         WsmContext unbootstrapped = new WsmContext(closure.registryPath().toString());
@@ -93,12 +93,12 @@ public final class ColdStartNoRustContract {
         // The same identity that failed before bootstrap must now execute
         // through the live Lisp binding, still with no Java abs mechanism.
         require(
-                !SemanticMechanismTable.supports("00010000"),
+                !SemanticMechanismTable.supports(Sid8.bits(0,0,0,1,0,0,0,0)),
                 "cold start must not manufacture a Java abs mechanism");
 
-        String abs = spelling(context.registry(), "00010000");
+        String abs = spelling(context.registry(), Sid8.bits(0,0,0,1,0,0,0,0));
         require(
-                "00010000".equals(context.registry().semanticIdForToken(abs)),
+                Sid8.bits(0,0,0,1,0,0,0,0).equals(context.registry().semanticIdForToken(abs)),
                 "abs surface must resolve to exact SID 00010000");
 
         Object absValue = BootstrapRuntime.execute(context, "(" + abs + " -5)");
@@ -109,10 +109,10 @@ public final class ColdStartNoRustContract {
         // Existing higher-level Lisp-owned witness: equal? also has no Java
         // mechanism but must work after core bootstrap.
         require(
-                !SemanticMechanismTable.supports("00100010"),
+                !SemanticMechanismTable.supports(Sid8.bits(0,0,1,0,0,0,1,0)),
                 "Lisp-owned equal? unexpectedly has a Java mechanism");
 
-        String equal = spelling(context.registry(), "00100010");
+        String equal = spelling(context.registry(), Sid8.bits(0,0,1,0,0,0,1,0));
         Object equalValue = BootstrapRuntime.execute(
                 context,
                 "(" + equal + " (quote (1 2)) (quote (1 2)))");

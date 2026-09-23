@@ -13,7 +13,7 @@ import java.util.Set;
  * list before guest execution begins.
  */
 public final class DeepRecursionProbe {
-    private static String spelling(CanonRegistry registry, String id) {
+    private static String spelling(CanonRegistry registry, Sid8 id) {
         CanonRegistry.Row row = registry.row(id);
         for (String key : new String[] {"en", "sym", "uk", "ukr", "sa"}) {
             String value = row.surfaces().get(key);
@@ -22,7 +22,7 @@ public final class DeepRecursionProbe {
             }
         }
         return row.surfaces().values().stream()
-                .filter(s -> s != null && !s.isBlank() && !id.equals(s) && !"—".equals(s))
+                .filter(s -> s != null && !s.isBlank() && !id.matchesBareToken(s) && !"—".equals(s))
                 .sorted(Comparator.naturalOrder())
                 .findFirst()
                 .orElseThrow(() -> new AssertionError("no admitted surface for " + id));
@@ -60,13 +60,13 @@ public final class DeepRecursionProbe {
 
     private static String definition(WsmContext context, String mode) {
         CanonRegistry r = context.registry();
-        String define = spelling(r, "00001001");
-        String lambda = spelling(r, "00001000");
-        String cond = spelling(r, "00000111");
-        String eq = spelling(r, "00000011");
-        String cons = spelling(r, "00000100");
-        String quote = spelling(r, "00000001");
-        String subtract = spelling(r, "00001101");
+        String define = spelling(r, Sid8.bits(0,0,0,0,1,0,0,1));
+        String lambda = spelling(r, Sid8.bits(0,0,0,0,1,0,0,0));
+        String cond = spelling(r, Sid8.bits(0,0,0,0,0,1,1,1));
+        String eq = spelling(r, Sid8.bits(0,0,0,0,0,0,1,1));
+        String cons = spelling(r, Sid8.bits(0,0,0,0,0,1,0,0));
+        String quote = spelling(r, Sid8.bits(0,0,0,0,0,0,0,1));
+        String subtract = spelling(r, Sid8.bits(0,0,0,0,1,1,0,1));
 
         String recursive = "tail".equals(mode)
                 ? "(deep-loop (" + subtract + " n 1))"

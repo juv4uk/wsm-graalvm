@@ -2,7 +2,7 @@ package wsm.graalvm;
 
 import java.math.BigInteger;
 
-/** Contract for pinned exact-Q comparison mechanisms 1014/1015/1016. */
+/** Contract for exact-Q comparison mechanisms keyed by exact Sid8. */
 public final class ExactQComparisonContract {
     private static void require(boolean ok, String message) {
         if (!ok) throw new AssertionError(message);
@@ -18,7 +18,7 @@ public final class ExactQComparisonContract {
                 BigInteger.valueOf(denominator));
     }
 
-    private static long decision(String id, Object... args) {
+    private static long decision(Sid8 id, Object... args) {
         Object value = SemanticMechanismTable.invoke(id, args);
         require(value instanceof Value.NumberValue,
                 id + " must return exact NumberValue, got: " + value);
@@ -28,7 +28,7 @@ public final class ExactQComparisonContract {
         return number.numerator().longValueExact();
     }
 
-    private static void expectKind(String id, WsmError.Kind kind, Object... args) {
+    private static void expectKind(Sid8 id, WsmError.Kind kind, Object... args) {
         try {
             SemanticMechanismTable.invoke(id, args);
             throw new AssertionError(id + " must fail with " + kind);
@@ -39,25 +39,25 @@ public final class ExactQComparisonContract {
     }
 
     public static void main(String[] args) {
-        require(decision("00011010", n(1), n(2), n(3)) == 1, "1014 chained true");
-        require(decision("00011010", n(1), n(3), n(2)) == 0, "1014 chained false");
-        require(decision("00011011", n(3), n(2), n(1)) == 1, "1015 chained true");
-        require(decision("00011011", n(3), n(1), n(2)) == 0, "1015 chained false");
-        require(decision("00011100", q(2, 4), q(1, 2), q(3, 6)) == 1,
-                "1016 exact rational equality");
-        require(decision("00011100", n(1), n(1), n(2)) == 0,
-                "1016 chained false");
+        require(decision(Sid8.bits(0,0,0,1,1,0,1,0), n(1), n(2), n(3)) == 1, "00011010 chained true");
+        require(decision(Sid8.bits(0,0,0,1,1,0,1,0), n(1), n(3), n(2)) == 0, "00011010 chained false");
+        require(decision(Sid8.bits(0,0,0,1,1,0,1,1), n(3), n(2), n(1)) == 1, "00011011 chained true");
+        require(decision(Sid8.bits(0,0,0,1,1,0,1,1), n(3), n(1), n(2)) == 0, "00011011 chained false");
+        require(decision(Sid8.bits(0,0,0,1,1,1,0,0), q(2, 4), q(1, 2), q(3, 6)) == 1,
+                "00011100 exact rational equality");
+        require(decision(Sid8.bits(0,0,0,1,1,1,0,0), n(1), n(1), n(2)) == 0,
+                "00011100 chained false");
 
-        for (String id : new String[] {"00011010", "00011011", "00011100"}) {
+        for (Sid8 id : new Sid8[] {Sid8.bits(0,0,0,1,1,0,1,0), Sid8.bits(0,0,0,1,1,0,1,1), Sid8.bits(0,0,0,1,1,1,0,0)}) {
             require(decision(id, q(7, 9)) == 1,
                     id + " one-argument comparison must be true");
             expectKind(id, WsmError.Kind.ARITY);
             expectKind(id, WsmError.Kind.TYPE, n(1), Value.symbol("not-a-number"));
         }
 
-        require(!SemanticMechanismTable.supports("00011101"),
+        require(!SemanticMechanismTable.supports(Sid8.bits(0,0,0,1,1,1,0,1)),
                 "derived <= must remain Lisp-owned");
-        require(!SemanticMechanismTable.supports("00011110"),
+        require(!SemanticMechanismTable.supports(Sid8.bits(0,0,0,1,1,1,1,0)),
                 "derived >= must remain Lisp-owned");
 
         System.out.println("EXACT-Q-COMPARISON-CONTRACT-OK");

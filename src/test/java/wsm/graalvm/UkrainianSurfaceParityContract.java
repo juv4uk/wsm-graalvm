@@ -25,7 +25,7 @@ import java.util.List;
  * </pre>
  *
  * Every row carries exactly five surfaces. An empty list () marks an absent
- * surface. Every exact eight-bit SID is its own semantic identity, and every
+ * surface. Every exact eight-bit SID is its own SIDentity, and every
  * non-empty surface spelling must resolve back to that same SID.
  */
 public final class UkrainianSurfaceParityContract {
@@ -66,7 +66,7 @@ public final class UkrainianSurfaceParityContract {
             headerless = false;
         } else if (headerObject instanceof List<?> firstRow
                 && !firstRow.isEmpty()
-                && atom(firstRow.get(0), "first semantic id").matches("[01]{8}")) {
+                && atom(firstRow.get(0), "first SID").matches("[01]{8}")) {
             headerless = true;
         } else {
             throw new AssertionError("registry schema must be (binary 8) or headerless byte-SID rows");
@@ -84,13 +84,14 @@ public final class UkrainianSurfaceParityContract {
         for (int i = (headerless ? 0 : 1); i < top.size(); i++) {
             List<?> row = list(top.get(i), "registry row");
             require(!row.isEmpty(), "empty registry row");
-            String id = atom(row.get(0), "semantic id");
+            String idText = atom(row.get(0), "SID source token");
+            require(idText.matches("[01]{8}"),
+                    "SID source token must be exactly 8 bits: " + idText);
+            Sid8 id = Sid8.parseBareToken(idText);
             rows++;
 
-            require(id.matches("[01]{8}"),
-                    "semantic id must be exactly 8 bits: " + id);
-            require(id.equals(registry.semanticIdForToken(id)),
-                    "exact byte identity route missing: " + id);
+            require(id.equals(registry.semanticIdForToken(idText)),
+                    "exact SID route missing: " + id);
 
             require(row.size() == 1 + markers.length,
                     "registry row must carry exactly four surfaces: " + id);

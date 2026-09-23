@@ -11,7 +11,7 @@ public final class Printer {
         if (v instanceof Value.StringValue s) return '"' + escape(s.value) + '"';
         if (v instanceof Value.NumberValue n) return n.toString();
         if (v instanceof Value.SemanticRef semantic) {
-            return "#<semantic-ref " + semantic.id() + ">";
+            return semantic.id().toString();
         }
 
         if (v instanceof Value.Pair p) {

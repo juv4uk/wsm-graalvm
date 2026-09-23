@@ -25,22 +25,22 @@ public final class CurrentByteRegistryContract {
         require(registry.usesExactByteSids(), "current registry must be exact byte-SID mode");
         require(registry.ids().size() == 4, "expected four registry rows");
 
-        require("00000001".equals(registry.semanticIdForToken("quote")),
+        require(Sid8.bits(0,0,0,0,0,0,0,1).equals(registry.semanticIdForToken("quote")),
                 "English quote surface must resolve to exact SID");
-        require("00000001".equals(registry.semanticIdForToken("як-є")),
+        require(Sid8.bits(0,0,0,0,0,0,0,1).equals(registry.semanticIdForToken("як-є")),
                 "Ukrainian quote surface must resolve to exact SID");
-        require("00000001".equals(registry.semanticIdForToken("'")),
+        require(Sid8.bits(0,0,0,0,0,0,0,1).equals(registry.semanticIdForToken("'")),
                 "quoted symbol spelling must decode as registry data");
-        require("00000010".equals(registry.semanticIdForToken("атом?")),
+        require(Sid8.bits(0,0,0,0,0,0,1,0).equals(registry.semanticIdForToken("атом?")),
                 "Ukrainian atom surface must resolve to exact SID");
-        require("00000010".equals(registry.semanticIdForToken(".?")),
+        require(Sid8.bits(0,0,0,0,0,0,1,0).equals(registry.semanticIdForToken(".?")),
                 "symbol surface must resolve to exact SID");
-        require("00111010".equals(registry.semanticIdForToken("string-append")),
+        require(Sid8.bits(0,0,1,1,1,0,1,0).equals(registry.semanticIdForToken("string-append")),
                 "string-append must preserve exact byte identity");
-        require("00000010".equals(registry.semanticIdForToken("00000010")),
+        require(Sid8.bits(0,0,0,0,0,0,1,0).equals(registry.semanticIdForToken("00000010")),
                 "exact byte spelling itself must remain an admitted route");
 
-        require(registry.semanticIdForNumeric(10) == null,
+        require(registry.semanticIdForToken("10") == null,
                 "byte SIDs must not be reconstructed from decimal numeric values");
 
         String malformed = """

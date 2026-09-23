@@ -17,9 +17,21 @@ LEDGER_ROWS=$(mktemp)
 DEBT_IDS=$(mktemp)
 trap 'rm -f "$TABLE_IDS" "$LEDGER_ROWS" "$DEBT_IDS"' EXIT
 
-grep -oE '"[01]{8}"' "$TABLE" | tr -d '"' | LC_ALL=C sort -u > "$TABLE_IDS"
+python3 - "$TABLE" > "$TABLE_IDS" <<'PY'
+import re, sys
+text = open(sys.argv[1], encoding="utf-8").read()
+out = set()
+for body in re.findall(r"Sid8\.bits\(([^)]*)\)", text):
+    bits = [part.strip() for part in body.split(",")]
+    if len(bits) == 8 and all(bit in {"0", "1"} for bit in bits):
+        out.add("".join(bits))
+for sid in sorted(out):
+    print(sid)
+PY
 
-sed -n 's/^[[:space:]]*(mechanism "\([01][01][01][01][01][01][01][01]\)" \([^[:space:]]*\).*/\1 \2/p' "$LEDGER"   | LC_ALL=C sort -u > "$LEDGER_ROWS"
+grep -Eq '"[01]{8}"' "$LEDGER" && fail "quoted/string SID found in mechanism ledger"
+sed -n 's/^[[:space:]]*(mechanism \([01][01][01][01][01][01][01][01]\) \([^[:space:]]*\).*/\1 \2/p' "$LEDGER" \
+  | LC_ALL=C sort -u > "$LEDGER_ROWS"
 
 [ -s "$TABLE_IDS" ] || fail "no semantic IDs discovered in SemanticMechanismTable"
 [ -s "$LEDGER_ROWS" ] || fail "no mechanism rows discovered in ledger"
