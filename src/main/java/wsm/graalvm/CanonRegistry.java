@@ -4,24 +4,17 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Mechanical projection from the Lisp-owned semantic registry to semantic IDs.
+ * Mechanical projection from the Lisp-owned surface registry to exact Sid8.
  *
- * This class owns no language meaning. It only answers:
- * "which admitted semantic ID does this token spelling denote?"
- *
- * Three source schemas are accepted during the #230 cutover:
- * - legacy (sr/1 ...) rows from the currently pinned v0.1 baseline;
- * - explicit ((binary 8) ...) rows whose exact eight-bit spelling IS identity;
- * - headerless (...) rows starting directly with an eight-bit SID row.
- *
- * There is intentionally no legacy-ID -> byte-SID translation table here.
+ * Surface spellings exist only on the reader side of this boundary. Every
+ * admitted function identity stored or returned here is Sid8. Legacy decimal
+ * IDs, quoted/string SID identities and name-based backend keys are rejected.
  */
 public final class CanonRegistry {
-    public record Row(String id, Map<String, String> surfaces) {}
+    public record Row(Sid8 id, Map<String, String> surfaces) {}
 
-    private final Map<String, Row> rows = new java.util.TreeMap<>();
-    private final Map<String, String> spellingToId = new java.util.HashMap<>();
-    private boolean legacyNumericIds;
+    private final Map<Sid8, Row> rows = new java.util.TreeMap<>();
+    private final Map<String, Sid8> spellingToId = new java.util.HashMap<>();
 
     public CanonRegistry() {}
 
@@ -34,88 +27,38 @@ public final class CanonRegistry {
         }
 
         Object header = top.get(0);
-        if (header instanceof String marker && "sr/1".equals(marker)) {
-            return loadLegacy(top);
-        }
         if (isByteSidDescriptor(header)) {
-            return loadByteSid(top);
+            return loadHeaderlessByteSid(top, 1);
         }
         if (isByteSidRow(header)) {
-            return loadHeaderlessByteSid(top);
+            return loadHeaderlessByteSid(top, 0);
         }
 
         throw new WsmError(
                 WsmError.Kind.PARSE,
-                "registry must start with sr/1, (binary 8), or a byte-SID row");
-    }
-
-    private static CanonRegistry loadLegacy(List<?> top) {
-        CanonRegistry out = new CanonRegistry();
-        out.legacyNumericIds = true;
-
-        for (int i = 1; i < top.size(); i++) {
-            Object rowObject = top.get(i);
-            if (!(rowObject instanceof List<?> row)
-                    || row.isEmpty()
-                    || !(row.get(0) instanceof String id)
-                    || !id.matches("\\d+")) {
-                throw new WsmError(WsmError.Kind.PARSE, "malformed legacy registry row");
-            }
-
-            Map<String, String> faceMap = new java.util.LinkedHashMap<>();
-            putMapping(out.spellingToId, id, id);
-
-            for (int j = 1; j < row.size(); j++) {
-                Object surfaceObject = row.get(j);
-                if (!(surfaceObject instanceof List<?> surface)
-                        || surface.size() < 3
-                        || !(surface.get(0) instanceof String marker)
-                        || !(surface.get(1) instanceof String spelling)
-                        || !(surface.get(surface.size() - 1) instanceof String statusRaw)) {
-                    throw new WsmError(
-                            WsmError.Kind.PARSE,
-                            "malformed legacy registry surface for " + id);
-                }
-
-                String status = statusRaw.toLowerCase();
-                if ("—".equals(spelling) || !isAdmitted(status)) {
-                    continue;
-                }
-
-                faceMap.put(marker, spelling);
-                putMapping(out.spellingToId, spelling, id);
-            }
-
-            putRow(out, id, faceMap);
-        }
-        return out;
-    }
-
-    private static CanonRegistry loadByteSid(List<?> top) {
-        return loadHeaderlessByteSid(top, 1);
-    }
-
-    private static CanonRegistry loadHeaderlessByteSid(List<?> top) {
-        return loadHeaderlessByteSid(top, 0);
+                "registry must start with (binary 8) or a bare eight-bit SID row");
     }
 
     private static CanonRegistry loadHeaderlessByteSid(List<?> top, int startIndex) {
         CanonRegistry out = new CanonRegistry();
-        out.legacyNumericIds = false;
 
         for (int i = startIndex; i < top.size(); i++) {
             Object rowObject = top.get(i);
             if (!(rowObject instanceof List<?> row)
                     || row.isEmpty()
-                    || !(row.get(0) instanceof String id)
-                    || !id.matches("[01]{8}")) {
+                    || !(row.get(0) instanceof String token)
+                    || !token.matches("[01]{8}")) {
                 throw new WsmError(
                         WsmError.Kind.PARSE,
-                        "malformed byte-SID registry row");
+                        "malformed bare-SID registry row");
             }
 
+            Sid8 id = Sid8.parseBareToken(token);
             Map<String, String> faceMap = new java.util.LinkedHashMap<>();
-            putMapping(out.spellingToId, id, id);
+
+            // The Java reader transports an unquoted source atom as String.
+            // Normalize it here once; downstream identity is Sid8 only.
+            putMapping(out.spellingToId, token, id);
 
             for (int j = 1; j < row.size(); j++) {
                 Object surfaceObject = row.get(j);
@@ -124,7 +67,7 @@ public final class CanonRegistry {
                         || !(surface.get(0) instanceof String marker)) {
                     throw new WsmError(
                             WsmError.Kind.PARSE,
-                            "malformed byte-SID registry surface for " + id);
+                            "malformed SID surface for " + id);
                 }
 
                 Object spellingObject = surface.get(1);
@@ -134,7 +77,7 @@ public final class CanonRegistry {
                 if (!(spellingObject instanceof String spelling)) {
                     throw new WsmError(
                             WsmError.Kind.PARSE,
-                            "byte-SID surface must be an atom/string or () for " + id);
+                            "SID surface must be an atom/string or () for " + id);
                 }
 
                 faceMap.put(marker, spelling);
@@ -156,91 +99,63 @@ public final class CanonRegistry {
     private static boolean isByteSidRow(Object form) {
         return form instanceof List<?> row
                 && !row.isEmpty()
-                && row.get(0) instanceof String id
-                && id.matches("[01]{8}");
+                && row.get(0) instanceof String token
+                && token.matches("[01]{8}");
     }
 
     private static void putRow(
             CanonRegistry out,
-            String id,
+            Sid8 id,
             Map<String, String> faceMap) {
         if (out.rows.putIfAbsent(id, new Row(id, faceMap)) != null) {
             throw new WsmError(
                     WsmError.Kind.PARSE,
-                    "duplicate semantic id: " + id);
+                    "duplicate SID: " + id);
         }
     }
 
     public static CanonRegistry registry(
-            Map<String, Row> rowsIn,
-            Map<String, String> spellIn) {
+            Map<Sid8, Row> rowsIn,
+            Map<String, Sid8> spellIn) {
         CanonRegistry reg = new CanonRegistry();
-        reg.legacyNumericIds =
-                !rowsIn.isEmpty()
-                        && rowsIn.keySet().stream().allMatch(id -> id.matches("\\d{4}"));
-
-        for (Map.Entry<String, Row> e : rowsIn.entrySet()) {
+        for (Map.Entry<Sid8, Row> e : rowsIn.entrySet()) {
             reg.rows.put(e.getKey(), e.getValue());
-            putMapping(reg.spellingToId, e.getKey(), e.getKey());
+            putMapping(reg.spellingToId, e.getKey().toString(), e.getKey());
         }
-        for (Map.Entry<String, String> e : spellIn.entrySet()) {
+        for (Map.Entry<String, Sid8> e : spellIn.entrySet()) {
             putMapping(reg.spellingToId, e.getKey(), e.getValue());
         }
         return reg;
     }
 
-    public Row row(String id) {
+    public Row row(Sid8 id) {
         Row r = rows.get(id);
         if (r == null) {
             throw new WsmError(
                     WsmError.Kind.INVALID_FORM,
-                    "unknown semantic id " + id);
+                    "unknown SID " + id);
         }
         return r;
     }
 
-    /**
-     * Resolve an admitted language surface OR the exact machine ID itself.
-     * Returns null for ordinary user-level symbols.
-     */
-    public String semanticIdForToken(String spelling) {
+    /** Resolve one admitted source spelling or one exact bare SID token. */
+    public Sid8 semanticIdForToken(String spelling) {
         return spellingToId.get(spelling);
     }
 
-    /**
-     * Legacy issue #47 bridge only.
-     *
-     * Current exact eight-bit SIDs contain leading zeroes and remain Reader
-     * tokens, so they must never be reconstructed from a decimal numeric value.
-     */
-    public String semanticIdForNumeric(long value) {
-        if (!legacyNumericIds) return null;
-        String id = String.format("%04d", value);
-        return rows.containsKey(id) ? id : null;
-    }
-
-    @Deprecated
-    public String idForSpelling(String spelling) {
-        return semanticIdForToken(spelling);
-    }
-
-    public java.util.Set<String> ids() {
+    public java.util.Set<Sid8> ids() {
         return java.util.Collections.unmodifiableSet(rows.keySet());
     }
 
     public boolean usesExactByteSids() {
-        return !legacyNumericIds;
-    }
-
-    private static boolean isAdmitted(String status) {
-        return status.equals("stable") || status.equals("compatibility-only");
+        return true;
     }
 
     private static void putMapping(
-            Map<String, String> index,
+            Map<String, Sid8> index,
             String spelling,
-            String id) {
-        String previous = index.putIfAbsent(spelling, id);
+            Sid8 id) {
+        Sid8 previous = index.putIfAbsent(spelling, id);
         if (previous != null && !previous.equals(id)) {
             throw new WsmError(
                     WsmError.Kind.PARSE,
