@@ -104,10 +104,10 @@ public final class Value {
         public Pair(Object car, Object cdr) { this.car = car; this.cdr = cdr; }
     }
 
-    public record SemanticRef(String id) implements com.oracle.truffle.api.interop.TruffleObject {
+    public record SemanticRef(Sid8 id) implements com.oracle.truffle.api.interop.TruffleObject {
         public SemanticRef {
-            if (id == null || id.isBlank()) {
-                throw new IllegalArgumentException("semantic id must be non-empty");
+            if (id == null) {
+                throw new IllegalArgumentException("Sid8 must be non-null");
             }
         }
     }
