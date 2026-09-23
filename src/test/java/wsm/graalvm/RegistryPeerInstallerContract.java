@@ -31,18 +31,18 @@ public final class RegistryPeerInstallerContract {
         CanonRegistry registry =
                 CanonRegistryLoader.fromText(Files.readString(Path.of(args[0])));
 
-        // 1022 is Lisp-owned on the current Graal substrate: the Java mechanism
-        // is retired, so it is a suitable identity for live-value peer plumbing.
+        // Exact SID 00100010 has no Java mechanism on the current substrate,
+        // so it is a suitable identity for live-value peer plumbing.
         Sid8 id = Sid8.bits(0,0,1,0,0,0,1,0);
         String en = requiredSurface(registry, id, "en");
         String uk = requiredSurface(registry, id, "ук");
-        require(!en.equals(uk), "1022 EN/UK witness requires distinct spellings");
+        require(!en.equals(uk), "00100010 EN/UK witness requires distinct spellings");
 
         GlobalBindings globals = new GlobalBindings();
         Object liveValue = new Object();
         globals.define(en, liveValue);
 
-        Set<String> peers =
+        Set<Sid8> peers =
                 RegistryPeerInstaller.materializeBoundValuePeers(registry, globals);
 
         require(peers.contains(id), "materializer did not report semantic " + id);
@@ -56,7 +56,7 @@ public final class RegistryPeerInstallerContract {
         require(globals.lookup(uk) == laterShadow, "later UK shadow did not take effect");
         require(globals.lookup(en) == liveValue, "later UK shadow retargeted EN peer");
 
-        // 0012 macro installation must use the same generic peer machinery.
+        // Exact SID 00001010 macro installation uses the same peer machinery.
         GlobalBindings macroGlobals = new GlobalBindings();
         GlobalBindings.MacroValue macro =
                 new GlobalBindings.MacroValue(args2 -> Value.NIL);
@@ -68,14 +68,14 @@ public final class RegistryPeerInstallerContract {
                 new LinkedHashSet<>(registry.row(Sid8.bits(0,0,0,0,1,0,1,0)).surfaces().values());
 
         require(macroPeers.equals(expectedMacroPeers),
-                "generic 0012 peer set differs from registry");
+                "generic 00001010 peer set differs from registry");
         for (String spelling : expectedMacroPeers) {
             require(macroGlobals.lookup(spelling) == macro,
-                    "0012 value peer is not exact same MacroValue: " + spelling);
+                    "00001010 value peer is not exact same MacroValue: " + spelling);
             require(macroGlobals.isMacro(spelling),
-                    "0012 macro dispatch peer missing: " + spelling);
+                    "00001010 macro dispatch peer missing: " + spelling);
             require(macroGlobals.macro(spelling) == macro,
-                    "0012 macro peer is not exact same MacroValue: " + spelling);
+                    "00001010 macro peer is not exact same MacroValue: " + spelling);
         }
 
         System.out.println(
