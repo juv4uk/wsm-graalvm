@@ -72,22 +72,22 @@ public final class Compiler {
     private WsmNode symbolNode(String spelling, LexicalScope scope) {
         Sid8 id = registry.semanticIdForToken(spelling);
 
-        // Contract 6.0: Canon 0+7 identity wins before any lexical binding.
-        if (id != null && isCanonPrimitive(id)) {
-            if (isCanonSyntax(id)) {
+        // Reserved function SID resolution precedes lexical binding.
+        if (id != null && isReservedPrimitiveSid(id)) {
+            if (isSyntaxSid(id)) {
                 throw new WsmError(
                         WsmError.Kind.INVALID_FORM,
-                        "canonical special form is syntax-only: " + id);
+                        "reserved syntax SID is syntax-only: " + id);
             }
             if (SemanticMechanismTable.supports(id)) {
                 return new WsmNode.ConstantNode(new Value.SemanticRef(id));
             }
             throw new WsmError(
                     WsmError.Kind.INVALID_FORM,
-                    "canonical identity has no substrate mechanism: " + id);
+                    "reserved SID has no substrate mechanism: " + id);
         }
 
-        // Ordinary/non-Canon names remain lexically shadowable.
+        // Ordinary unresolved names remain lexically shadowable.
         LexicalScope.Binding local = scope.resolveLocal(spelling);
         if (local != null) {
             return new WsmNode.LocalReadNode(
@@ -157,12 +157,12 @@ public final class Compiler {
 
         Sid8 id = registry.semanticIdForToken(spelling);
 
-        // Canon resolution is immutable and precedes lexical lookup.
-        if (id != null && isCanonPrimitive(id)) {
+        // Reserved SID resolution precedes lexical lookup.
+        if (id != null && isReservedPrimitiveSid(id)) {
             return dispatchSemanticHead(id, args, scope);
         }
 
-        // Non-Canon names are ordinary lexical names when bound.
+        // Unresolved names are ordinary lexical names when bound.
         if (scope.resolveLocal(spelling) != null || globals.isDeclared(spelling)) {
             return new WsmNode.CallNode(
                     symbolNode(spelling, scope),
@@ -292,15 +292,15 @@ public final class Compiler {
 
     private void ensureBinderAllowed(String spelling) {
         Sid8 id = registry.semanticIdForToken(spelling);
-        if (id != null && isCanonPrimitive(id)) {
+        if (id != null && isReservedPrimitiveSid(id)) {
             throw new WsmError(
                     WsmError.Kind.INVALID_FORM,
-                    "Canon 0+7 spelling is immutable (binder refused): "
+                    "reserved function spelling is immutable (binder refused): "
                             + spelling);
         }
     }
 
-    private static boolean isCanonPrimitive(Sid8 id) {
+    private static boolean isReservedPrimitiveSid(Sid8 id) {
         return ID_00000001.equals(id)
                 || ID_00000010.equals(id)
                 || ID_00000011.equals(id)
@@ -310,12 +310,12 @@ public final class Compiler {
                 || ID_00000111.equals(id);
     }
 
-    private static boolean isCanonSyntax(Sid8 id) {
+    private static boolean isSyntaxSid(Sid8 id) {
         return ID_00000001.equals(id) || ID_00000111.equals(id);
     }
 
     private static boolean isSpecial(Sid8 id) {
-        return isCanonSyntax(id)
+        return isSyntaxSid(id)
                 || ID_00001000.equals(id)
                 || ID_00001001.equals(id)
                 || ID_00001011.equals(id);
