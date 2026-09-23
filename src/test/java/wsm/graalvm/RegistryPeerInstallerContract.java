@@ -13,7 +13,7 @@ public final class RegistryPeerInstallerContract {
 
     private static String requiredSurface(
             CanonRegistry registry,
-            String id,
+            Sid8 id,
             String marker) {
         String spelling = registry.row(id).surfaces().get(marker);
         if (spelling == null || spelling.isBlank()) {
