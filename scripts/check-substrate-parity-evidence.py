@@ -68,13 +68,13 @@ def validate_common(row: dict[str, Any], index: int) -> None:
 
     source = row.get("source_owner")
     require(isinstance(source, dict), f"{p}.source_owner: expected object")
-    require(source.get("repository") == "juv4uk/my-lisp",
-            f"{p}.source_owner.repository: semantic authority must be juv4uk/my-lisp")
+    require(source.get("repository") == "juv4uk/sens",
+            f"{p}.source_owner.repository: semantic authority must be juv4uk/sens")
     nonempty(source.get("path"), f"{p}.source_owner.path")
 
     expected = row.get("expected")
     require(isinstance(expected, dict), f"{p}.expected: expected object")
-    require(expected.get("repository") == "juv4uk/my-lisp",
+    require(expected.get("repository") == "juv4uk/sens",
             f"{p}.expected.repository: expected datum must be Lisp-owned")
     nonempty(expected.get("path"), f"{p}.expected.path")
     normalized_observation(expected, f"{p}.expected")
@@ -138,8 +138,8 @@ def validate(doc: Any, require_ready: bool) -> tuple[int, int, int]:
 
     authority = doc.get("authority")
     require(isinstance(authority, dict), "authority: expected object")
-    require(authority.get("semantic_owner") == "juv4uk/my-lisp",
-            "authority.semantic_owner must be juv4uk/my-lisp")
+    require(authority.get("semantic_owner") == "juv4uk/sens",
+            "authority.semantic_owner must be juv4uk/sens")
     nonempty(authority.get("rule"), "authority.rule")
 
     rows = doc.get("rows")
