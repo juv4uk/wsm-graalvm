@@ -23,7 +23,7 @@ WSM = "1111111111111111111111111111111111111111"
 BASE = {
     "schema": "wsm-substrate-parity-evidence/1",
     "authority": {
-        "semantic_owner": "juv4uk/my-lisp",
+        "semantic_owner": "juv4uk/sens",
         "rule": "Lisp-owned expected evidence judges both substrates.",
     },
     "rows": [],
@@ -38,10 +38,10 @@ PARITY = {
     "contract_id": "canon-atom-observation",
     "fixture_path": "tests/fixtures/example.lisp",
     "sid": "00000010",
-    "source_owner": {"repository": "juv4uk/my-lisp", "path": "lib/canon.lisp"},
+    "source_owner": {"repository": "juv4uk/sens", "path": "lib/canon.lisp"},
     "normalization_rule": "canonical-sexpr",
     "expected": {
-        "repository": "juv4uk/my-lisp",
+        "repository": "juv4uk/sens",
         "path": "tests/fixtures/example.expected",
         "normalized": "(structural-kind atom)",
     },
@@ -68,10 +68,10 @@ NEGATIVE = {
     "contract_id": "fail-closed-owner-selection",
     "fixture_path": "tests/fixtures/example.lisp",
     "sid": "00000010",
-    "source_owner": {"repository": "juv4uk/my-lisp", "path": "language-contract.lisp"},
+    "source_owner": {"repository": "juv4uk/sens", "path": "language-contract.lisp"},
     "normalization_rule": "error-kind",
     "expected": {
-        "repository": "juv4uk/my-lisp",
+        "repository": "juv4uk/sens",
         "path": "language-contract.lisp",
         "normalized": "MechanismUnavailable",
     },
