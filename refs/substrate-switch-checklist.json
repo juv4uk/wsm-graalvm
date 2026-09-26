@@ -3,7 +3,7 @@
   "theorem_issue": 92,
   "operational_gate_issue": 98,
   "authority": {
-    "repository": "juv4uk/my-lisp",
+    "repository": "juv4uk/sens",
     "rule": "Rust and GraalVM are execution substrates; neither owns Lisp meaning."
   },
   "required_evidence": [
