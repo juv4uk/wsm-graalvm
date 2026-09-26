@@ -5,7 +5,7 @@
 
 (
   (schema . 1)
-  (upstream . "juv4uk/my-lisp")
+  (upstream . "juv4uk/sens")
   (pin . "eb9ab098eba2a39002c969debe45223f157e6835")
 
   (authority
