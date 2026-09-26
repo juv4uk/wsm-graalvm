@@ -3,7 +3,7 @@
 ;; The semantic meaning remains owned by external/my-lisp.
 (
   (schema . 1)
-  (upstream . "juv4uk/my-lisp")
+  (upstream . "juv4uk/sens")
   (pin . "9ce5101853c0a9f43aacb32a98bb2bc9ab2eec3b")
   (generator
     (path . "scripts/build-dependency-classification.lisp")
