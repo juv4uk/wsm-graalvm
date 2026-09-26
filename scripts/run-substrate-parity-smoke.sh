@@ -156,7 +156,7 @@ doc = {
         "fixture": "(atom (quote radio))",
     },
     "authority": {
-        "semantic_owner": "juv4uk/my-lisp",
+        "semantic_owner": "juv4uk/sens",
         "rule": "Lisp-owned expected evidence judges both substrates; Rust and GraalVM are witnesses, never each other's sole oracle.",
     },
     "rows": [
@@ -170,12 +170,12 @@ doc = {
             "fixture_path": "my-lisp-constitution.lisp",
             "sid": "00000010",
             "source_owner": {
-                "repository": "juv4uk/my-lisp",
+                "repository": "juv4uk/sens",
                 "path": "my-lisp-constitution.lisp",
             },
             "normalization_rule": "exact canonical S-expression text",
             "expected": {
-                "repository": "juv4uk/my-lisp",
+                "repository": "juv4uk/sens",
                 "path": "my-lisp-constitution.lisp",
                 "normalized": expected,
             },
@@ -202,12 +202,12 @@ doc = {
             "fixture_path": "my-lisp-constitution.lisp",
             "sid": "00010000",
             "source_owner": {
-                "repository": "juv4uk/my-lisp",
+                "repository": "juv4uk/sens",
                 "path": "lib/core.lisp",
             },
             "normalization_rule": "named failure class after deliberate Lisp-owner suppression",
             "expected": {
-                "repository": "juv4uk/my-lisp",
+                "repository": "juv4uk/sens",
                 "path": "my-lisp-constitution.lisp",
                 "normalized": os.environ["ABS_EXPECTED"],
             },
