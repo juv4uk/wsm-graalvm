@@ -1,0 +1,25 @@
+{
+  "schema": "wsm-live-binding-precedence-evidence/1",
+  "exact_pair": {
+    "wsm_graalvm_head": "250d00b9b3b3b3753b2a703ab94af5243d0fc2e8",
+    "my_lisp_pin": "eb9ab098eba2a39002c969debe45223f157e6835"
+  },
+  "witnesses": {
+    "global_live_binding": {
+      "status": "green",
+      "claim": "Ordinary Lisp definition installs callable in global environment"
+    },
+    "lexical_shadow": {
+      "status": "green",
+      "claim": "Lexical binding shadows global/registry route for same name"
+    },
+    "self_recursion": {
+      "status": "green",
+      "claim": "Recursive top-level definition resolves through live binding"
+    },
+    "no_java_mechanism": {
+      "status": "green",
+      "claim": "Lisp-owned identity has no Java substrate mechanism"
+    }
+  }
+}

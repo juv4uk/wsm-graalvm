@@ -1,0 +1,25 @@
+{
+  "schema": "wsm-tier1-evidence/1",
+  "gate_id": "tier1-progress",
+  "exact_pair": {
+    "wsm_graalvm_head": "250d00b9b3b3b3753b2a703ab94af5243d0fc2e8",
+    "my_lisp_pin": "eb9ab098eba2a39002c969debe45223f157e6835"
+  },
+  "execution_mode": "jvm",
+  "toolchain": {
+    "graalvm": "openjdk 25.0.4.1 2026-08-18"
+  },
+  "corpus": {
+    "path": "external/sens/tests/fixtures/conformance.lisp",
+    "language_contract": "8.0",
+    "selected": 36
+  },
+  "results": {
+    "value_pass": 27,
+    "value_fail": 0,
+    "error_pass": 8,
+    "error_blocked": 1,
+    "error_fail": 0
+  },
+  "status": "green"
+}

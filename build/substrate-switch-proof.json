@@ -1,0 +1,84 @@
+{
+  "schema": "wsm-substrate-switch-proof/1",
+  "theorem_issue": 92,
+  "operational_gate_issue": 98,
+  "exact_pair": {
+    "wsm_graalvm_head": "250d00b9b3b3b3753b2a703ab94af5243d0fc2e8",
+    "my_lisp_pin": "eb9ab098eba2a39002c969debe45223f157e6835",
+    "graalvm": "openjdk 25.0.4.1 2026-08-18"
+  },
+  "execution_mode": "jvm-proof-chain",
+  "toolchain": {
+    "graalvm": "openjdk 25.0.4.1 2026-08-18"
+  },
+  "evidence_artifacts": [
+    "build/tier1-evidence.json",
+    "build/real-lisp-bootstrap-evidence.json",
+    "build/substrate-parity-smoke.json",
+    "build/cold-start-no-rust.json"
+  ],
+  "authority": {
+    "repository": "juv4uk/my-lisp",
+    "rule": "Rust and GraalVM are execution substrates; neither owns Lisp meaning."
+  },
+  "fresh_replay": {
+    "dependency_manifest": "green",
+    "tier1": "green",
+    "real_lisp_bootstrap": "green",
+    "differential_parity": "green",
+    "rust_free_cold_start": "green",
+    "java_residue_inventory": "green",
+    "java_residue_negative_regression": "green"
+  },
+  "parity": {
+    "green_parity_rows": 1,
+    "green_negative_rows": 1,
+    "status": "ready"
+  },
+  "migration_classes": {
+    "upstream-owned": {
+      "status": "evidenced",
+      "evidence": [
+        "my-lisp constitution expected datum",
+        "lib/core.lisp abs/equal? live bindings"
+      ]
+    },
+    "substrate-required": {
+      "inventory_entries": 7,
+      "mechanism_budget_entries": 12
+    },
+    "temporary-bootstrap": {
+      "inventory_entries": 1
+    },
+    "retired-from-Graal": {
+      "mechanism_budget_entries": 2
+    },
+    "representation-only": {
+      "inventory_entries": 1
+    }
+  },
+  "open_obligations": [
+    {
+      "issue": 78,
+      "id": "provider-edge-derived-bootstrap",
+      "why": "Load order still needs provider-edge graph/topological derivation, cycle detection, and missing/multiple-provider evidence."
+    },
+    {
+      "issue": 94,
+      "id": "semantic-authority-firewall",
+      "why": "Truthful inventory is complete, but the broader permanent duplication/source-ownership firewall policy remains open."
+    },
+    {
+      "issue": 197,
+      "id": "post-selection-fail-closed-owner",
+      "why": "Parity/cold-start prove important no-fallback cases, but the full execution-owner provenance law remains open."
+    },
+    {
+      "issue": 98,
+      "id": "operational-cutover-gate",
+      "why": "Final cutover report cannot close until all mandatory open obligations are discharged."
+    }
+  ],
+  "ratification_ready": false,
+  "status": "proved-current-but-ratification-blocked"
+}

@@ -1,0 +1,19 @@
+{
+  "schema": "wsm-real-lisp-bootstrap-evidence/1",
+  "gate_id": "real-lisp-bootstrap",
+  "exact_pair": {
+    "wsm_graalvm_head": "250d00b9b3b3b3753b2a703ab94af5243d0fc2e8",
+    "my_lisp_pin": "eb9ab098eba2a39002c969debe45223f157e6835"
+  },
+  "execution_mode": "jvm",
+  "toolchain": {
+    "graalvm": "openjdk 25.0.4.1 2026-08-18"
+  },
+  "source_closure": [
+    "external/sens/lib/surface/semantic-registry.lisp",
+    "external/sens/lib/canon.lisp",
+    "external/sens/lib/macro.lisp",
+    "external/sens/lib/core.lisp"
+  ],
+  "status": "green"
+}

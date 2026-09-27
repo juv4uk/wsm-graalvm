@@ -1,0 +1,40 @@
+{
+  "schema": "wsm-cold-start-evidence/1",
+  "gate_id": "cold-start-no-rust",
+  "exact_pair": {
+    "wsm_graalvm_head": "250d00b9b3b3b3753b2a703ab94af5243d0fc2e8",
+    "my_lisp_pin": "eb9ab098eba2a39002c969debe45223f157e6835"
+  },
+  "execution_mode": "jvm",
+  "toolchain": {
+    "graalvm": "openjdk 25.0.4.1 2026-08-18"
+  },
+  "witnesses": {
+    "missing_abs_mechanism": {
+      "status": "green",
+      "expected_failure": "Type"
+    },
+    "macro_bootstrap": {
+      "status": "green",
+      "admitted_peer_count": 2
+    },
+    "core_bootstrap": {
+      "status": "green"
+    },
+    "abs_execution": {
+      "status": "green",
+      "result": "5"
+    },
+    "equal_execution": {
+      "status": "green",
+      "result": "(structural-relation same)"
+    },
+    "rust_runtime_unavailable": {
+      "status": "green"
+    },
+    "java_subprocess_bridge_absent": {
+      "status": "green"
+    }
+  },
+  "status": "green"
+}
