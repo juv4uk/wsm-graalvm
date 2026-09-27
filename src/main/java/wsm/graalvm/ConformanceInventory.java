@@ -69,7 +69,7 @@ public final class ConformanceInventory {
      * Project the immutable historical corpus through the pinned Lisp-owned
      * transition overlay. Java owns only generic transport keyed by the
      * overlay's `supersedes-expr`; current expressions/outcomes remain data
-     * from external/my-lisp.
+     * from external/sens.
      */
     public static List<Fixture> selectTierCurrent(
             String source,

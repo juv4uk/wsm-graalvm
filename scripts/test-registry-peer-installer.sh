@@ -7,7 +7,7 @@ if [ -z "${G:-}" ]; then
   G=$(dirname "$(dirname "$JBIN")")
 fi
 
-REGISTRY="$REPO/external/my-lisp/lib/surface/semantic-registry.lisp"
+REGISTRY="$REPO/external/sens/lib/surface/semantic-registry.lisp"
 [ -f "$REGISTRY" ] || {
   echo "missing pinned registry: $REGISTRY" >&2
   exit 1

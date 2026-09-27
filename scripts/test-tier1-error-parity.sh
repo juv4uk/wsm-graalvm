@@ -6,8 +6,8 @@ if [ -z "${G:-}" ]; then
   G=$(dirname "$(dirname "$JBIN")")
 fi
 
-CORPUS="$REPO/external/my-lisp/tests/fixtures/conformance.lisp"
-REGISTRY="$REPO/external/my-lisp/lib/surface/semantic-registry.lisp"
+CORPUS="$REPO/external/sens/tests/fixtures/conformance.lisp"
+REGISTRY="$REPO/external/sens/lib/surface/semantic-registry.lisp"
 [ -f "$CORPUS" ] || { echo "missing pinned corpus: $CORPUS" >&2; exit 1; }
 [ -f "$REGISTRY" ] || { echo "missing pinned registry: $REGISTRY" >&2; exit 1; }
 

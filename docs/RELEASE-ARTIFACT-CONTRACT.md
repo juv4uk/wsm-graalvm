@@ -4,7 +4,7 @@ This is the packaging contract for the first production releases of WSM/GraalVM.
 
 ## Semantic authority
 
-The release MUST be built from one immutable WSM commit and one exact `external/my-lisp` gitlink commit.
+The release MUST be built from one immutable WSM commit and one exact `external/sens` gitlink commit.
 
 The gitlink is the authority reference. Release jobs MUST NOT silently replace it with a moving branch such as `origin/main`. A release build fails closed when the checked-out submodule HEAD differs from the gitlink recorded by the WSM commit.
 

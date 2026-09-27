@@ -9,7 +9,7 @@ fail() {
   exit 1
 }
 
-EXPECTED="external/my-lisp"
+EXPECTED="external/sens"
 
 mapfile -t GITLINKS < <(git ls-files -s | awk '$1 == "160000" {print $4}' | LC_ALL=C sort)
 

@@ -3,7 +3,7 @@ set -euo pipefail
 
 REPO=$(cd "$(dirname "$0")/.." && pwd)
 BASELINE="$REPO/refs/tier1-baseline.properties"
-MYLISP="$REPO/external/my-lisp"
+MYLISP="$REPO/external/sens"
 CORPUS="$MYLISP/tests/fixtures/conformance.lisp"
 REGISTRY="$MYLISP/lib/surface/semantic-registry.lisp"
 
@@ -107,7 +107,7 @@ doc = {
   "execution_mode": "jvm",
   "toolchain": {"graalvm": graal},
   "corpus": {
-    "path": "external/my-lisp/tests/fixtures/conformance.lisp",
+    "path": "external/sens/tests/fixtures/conformance.lisp",
     "language_contract": contract,
     "selected": total
   },

@@ -12,11 +12,11 @@ if [ -z "$G" ]; then
 fi
 
 HEAD=${WSM_EVIDENCE_COMMIT:-$(git -C "$REPO" rev-parse HEAD)}
-PIN=$(git -C "$REPO" ls-files -s external/my-lisp | awk '$1 == "160000" {print $2}')
-[ -n "$PIN" ] || { echo "cannot read external/my-lisp gitlink pin" >&2; exit 1; }
+PIN=$(git -C "$REPO" ls-files -s external/sens | awk '$1 == "160000" {print $2}')
+[ -n "$PIN" ] || { echo "cannot read external/sens gitlink pin" >&2; exit 1; }
 
 bash "$REPO/scripts/sync-authority.sh"
-ACTUAL_PIN=$(git -C "$REPO/external/my-lisp" rev-parse HEAD)
+ACTUAL_PIN=$(git -C "$REPO/external/sens" rev-parse HEAD)
 [ "$PIN" = "$ACTUAL_PIN" ] || {
   echo "gitlink/submodule mismatch: $PIN != $ACTUAL_PIN" >&2
   exit 1

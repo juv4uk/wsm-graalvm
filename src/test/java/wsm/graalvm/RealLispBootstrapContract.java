@@ -37,7 +37,7 @@ public final class RealLispBootstrapContract {
 
         Object canonResult = BootstrapRuntime.execute(
                 context,
-                Files.readString(repo.resolve("external/my-lisp/lib/canon.lisp")));
+                Files.readString(repo.resolve("external/sens/lib/canon.lisp")));
         require(canonResult != null, "canon bootstrap returned no value");
 
         BootstrapClosureLoader.Source macroSource = closure.executableSources().stream()

@@ -24,7 +24,7 @@ public final class ConformanceMain {
         Path repo = Path.of(args[2]).toAbsolutePath().normalize();
         String fixturesSource = Files.readString(Path.of(args[0]));
         Path transitionPath =
-                repo.resolve("external/my-lisp/tests/fixtures/conformance-transition-witness.lisp");
+                repo.resolve("external/sens/tests/fixtures/conformance-transition-witness.lisp");
         String transitionSource = Files.readString(transitionPath);
         List<ConformanceInventory.Fixture> fixtures =
                 ConformanceInventory.selectTierCurrent(fixturesSource, transitionSource, 1);
@@ -98,7 +98,7 @@ public final class ConformanceMain {
 
         BootstrapRuntime.executeAuthoritySource(
                 context,
-                Files.readString(repo.resolve("external/my-lisp/lib/canon.lisp")));
+                Files.readString(repo.resolve("external/sens/lib/canon.lisp")));
 
         BootstrapClosureLoader.Source macroSource =
                 closure.executableSources().stream()

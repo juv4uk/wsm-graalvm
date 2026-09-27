@@ -170,7 +170,7 @@
       "path": "src/main/java/wsm/graalvm/BootstrapClosureLoader.java",
       "class": "BootstrapClosureLoader",
       "classification": "substrate-required",
-      "owner": "refs/lisp-dependency-manifest.lisp + external/my-lisp",
+      "owner": "refs/lisp-dependency-manifest.lisp + external/sens",
       "methods": [
         "Source",
         "Closure",

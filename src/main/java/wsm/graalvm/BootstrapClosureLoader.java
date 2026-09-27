@@ -11,7 +11,7 @@ import java.util.regex.Pattern;
 /**
  * Transport-only loader for the pinned my-lisp bootstrap closure.
  *
- * Semantic authority remains in external/my-lisp. This class only reads the
+ * Semantic authority remains in external/sens. This class only reads the
  * consumer manifest, validates that selected sources stay inside that submodule,
  * and preserves the declared source order.
  */
@@ -32,7 +32,7 @@ final class BootstrapClosureLoader {
     static Closure load(Path repositoryRoot) throws IOException {
         Path repo = repositoryRoot.toAbsolutePath().normalize();
         Path manifest = repo.resolve("refs/lisp-dependency-manifest.lisp");
-        Path authorityRoot = repo.resolve("external/my-lisp");
+        Path authorityRoot = repo.resolve("external/sens");
         return load(manifest, authorityRoot);
     }
 

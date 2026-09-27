@@ -2,7 +2,7 @@
 set -euo pipefail
 
 REPO=$(cd "$(dirname "$0")/.." && pwd)
-REGISTRY="$REPO/external/my-lisp/lib/surface/semantic-registry.lisp"
+REGISTRY="$REPO/external/sens/lib/surface/semantic-registry.lisp"
 SRC="$REPO/src/main/java"
 EXCEPTIONS="$REPO/refs/java-surface-spelling-exceptions.txt"
 

@@ -104,7 +104,7 @@ jobs:
       - name: Verify authority and toolchain
         shell: bash
         run: |
-          bash scripts/verify-authority.sh external/my-lisp
+          bash scripts/verify-authority.sh external/sens
           java --version
           javac --version
           native-image --version
@@ -117,7 +117,7 @@ jobs:
       - name: Build native Linux payload
         shell: bash
         env:
-          MYLISP: external/my-lisp
+          MYLISP: external/sens
         run: |
           bash scripts/build-native.sh
           test -x native-wsm
@@ -180,7 +180,7 @@ jobs:
       - name: Verify authority and toolchain
         shell: bash
         run: |
-          bash scripts/verify-authority.sh external/my-lisp
+          bash scripts/verify-authority.sh external/sens
           java --version
           javac --version
           G_POSIX="$(cygpath -u "$GRAALVM_HOME")"
@@ -194,7 +194,7 @@ jobs:
       - name: Build native Windows payload
         shell: bash
         env:
-          MYLISP: external/my-lisp
+          MYLISP: external/sens
         run: |
           bash scripts/build-native.sh
           test -f native-wsm.exe

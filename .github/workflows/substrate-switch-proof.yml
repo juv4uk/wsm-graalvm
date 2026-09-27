@@ -55,7 +55,7 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Initialize pinned my-lisp authority
-        run: git submodule update --init external/my-lisp
+        run: git submodule update --init external/sens
 
       - name: Replay substrate-switch proof on exact pair
         env:

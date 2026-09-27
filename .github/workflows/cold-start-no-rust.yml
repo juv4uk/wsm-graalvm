@@ -34,7 +34,7 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Initialize pinned Lisp authority
-        run: git submodule update --init external/my-lisp
+        run: git submodule update --init external/sens
 
       - name: Prove cold start with Rust unavailable
         env:

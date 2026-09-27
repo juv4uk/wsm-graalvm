@@ -6,7 +6,7 @@ VERSION=$1
 PLATFORM=$2
 BINARY=$3
 OUT=$4
-MYLISP=${MYLISP:-$REPO/external/my-lisp}
+MYLISP=${MYLISP:-$REPO/external/sens}
 RELEASE_VERSION=$(printf '%s' "$VERSION" | sed 's/^v//')
 
 [ "$#" -eq 4 ] || { echo "usage: stage-release-payload.sh VERSION PLATFORM NATIVE_BINARY OUTPUT_DIR" >&2; exit 2; }
@@ -22,15 +22,15 @@ esac
 [ -f "$BINARY" ] || { echo "native binary missing: $BINARY" >&2; exit 1; }
 [ -d "$MYLISP" ] || { echo "pinned my-lisp checkout missing: $MYLISP" >&2; exit 1; }
 
-PIN=$(git -C "$REPO" ls-tree HEAD external/my-lisp | awk '{print $3}')
+PIN=$(git -C "$REPO" ls-tree HEAD external/sens | awk '{print $3}')
 HEAD=$(git -C "$MYLISP" rev-parse HEAD)
 [ -n "$PIN" ] && [ "$PIN" = "$HEAD" ] || {
   echo "FAIL-CLOSED: my-lisp HEAD $HEAD differs from gitlink $PIN" >&2
   exit 1
 }
-MODE=$(git -C "$REPO" ls-tree HEAD external/my-lisp | awk '{print $1}')
+MODE=$(git -C "$REPO" ls-tree HEAD external/sens | awk '{print $1}')
 [ "$MODE" = "160000" ] || {
-  echo "FAIL-CLOSED: external/my-lisp is not a gitlink in release source: $MODE" >&2
+  echo "FAIL-CLOSED: external/sens is not a gitlink in release source: $MODE" >&2
   exit 1
 }
 

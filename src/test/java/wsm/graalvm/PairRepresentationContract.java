@@ -46,7 +46,7 @@ public final class PairRepresentationContract {
         context.initialize();
         BootstrapRuntime.executeAuthoritySource(
                 context,
-                Files.readString(repo.resolve("external/my-lisp/lib/canon.lisp")));
+                Files.readString(repo.resolve("external/sens/lib/canon.lisp")));
 
         Object result = BootstrapRuntime.execute(
                 context,

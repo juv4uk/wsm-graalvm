@@ -6,7 +6,7 @@ if [ -z "${G:-}" ]; then
   G=$(dirname "$(dirname "$JBIN")")
 fi
 
-CORPUS="$REPO/external/my-lisp/tests/fixtures/conformance.lisp"
+CORPUS="$REPO/external/sens/tests/fixtures/conformance.lisp"
 [ -f "$CORPUS" ] || {
   echo "missing pinned corpus: $CORPUS" >&2
   exit 1

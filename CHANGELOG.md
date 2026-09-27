@@ -17,7 +17,7 @@ polyglot-side interpreter).
 - **Truffle language `wsm`** (`WsmLanguage`) — з Reader, Compiler, `CanonRegistry`
   у first-class mechanisms (dispatch via `SemanticMechanismTable`).
 - **Gate 5 self-verdict**: `(canon-conformance satisfied)` з pinned
-  `external/my-lisp/lib/canon.lisp` — у JVM-lane (`scripts/run-canon.sh`) і в
+  `external/sens/lib/canon.lisp` — у JVM-lane (`scripts/run-canon.sh`) і в
   CI у Native-image-lane (`.github/workflows/native-image.yml`).
 - **11 RED/green contract classes** в `src/test/java/wsm/graalvm/`:
   ReaderString · ConformanceInventory · RealTier1Inventory (selected=35) ·

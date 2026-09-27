@@ -2,7 +2,7 @@
 set -euo pipefail
 
 REPO=$(cd "$(dirname "$0")/.." && pwd)
-MYLISP="$REPO/external/my-lisp"
+MYLISP="$REPO/external/sens"
 OUT=${1:-"$REPO/build/substrate-parity-smoke.json"}
 TMP=$(mktemp -d)
 trap 'rm -rf "$TMP"' EXIT

@@ -23,8 +23,8 @@ jobs:
 
       - name: Fetch my-lisp authority pin
         run: |
-          git -C external/my-lisp fetch origin --quiet
-          SHA=$(git -C external/my-lisp rev-parse HEAD)
+          git -C external/sens fetch origin --quiet
+          SHA=$(git -C external/sens rev-parse HEAD)
           echo "my-lisp pinned at $SHA"
 
       - name: Set up GraalVM CE + Native Image
@@ -38,7 +38,7 @@ jobs:
       - name: Build and run native Canon witness
         run: |
           G=$(dirname "$(dirname "$(readlink -f "$(command -v java)")")")
-          G=$G MYLISP=external/my-lisp bash scripts/build-native.sh
+          G=$G MYLISP=external/sens bash scripts/build-native.sh
 
       - name: Record exact-pair Native Image evidence
         env:
@@ -46,7 +46,7 @@ jobs:
         run: |
           G=$(dirname "$(dirname "$(readlink -f "$(command -v java)")")")
           HEAD="$WSM_EVIDENCE_COMMIT"
-          PIN=$(git ls-files -s external/my-lisp | awk '$1 == "160000" {print $2}')
+          PIN=$(git ls-files -s external/sens | awk '$1 == "160000" {print $2}')
           JAVA_VERSION=$("$G/bin/java" --version 2>&1 | head -n 1)
           NATIVE_VERSION=$("$G/bin/native-image" --version 2>&1 | head -n 1)
           python3 scripts/write-native-image-evidence.py             --wsm-head "$HEAD"             --my-lisp-pin "$PIN"             --java-version "$JAVA_VERSION"             --native-image-version "$NATIVE_VERSION"             --out build/native-image-evidence.json

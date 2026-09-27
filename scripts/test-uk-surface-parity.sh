@@ -7,7 +7,7 @@ if [ -z "${G:-}" ]; then
   G=$(dirname "$(dirname "$JBIN")")
 fi
 
-REGISTRY="$REPO/external/my-lisp/lib/surface/semantic-registry.lisp"
+REGISTRY="$REPO/external/sens/lib/surface/semantic-registry.lisp"
 [ -f "$REGISTRY" ] || {
   echo "missing pinned registry: $REGISTRY" >&2
   exit 1
@@ -24,7 +24,7 @@ CP="$REPO/classes:$REPO/third_party/truffle-api.jar:$REPO/third_party/polyglot.j
 "$G/bin/javac" --release 25 -cp "$CP" -d "$TEST_CLASSES" \
   "$REPO/src/test/java/wsm/graalvm/UkrainianSurfaceParityContract.java"
 
-PIN=$(git -C "$REPO/external/my-lisp" rev-parse HEAD)
+PIN=$(git -C "$REPO/external/sens" rev-parse HEAD)
 REPORT=$("$G/bin/java" -cp "$TEST_CLASSES:$CP" \
   wsm.graalvm.UkrainianSurfaceParityContract "$REGISTRY")
 

@@ -6,8 +6,8 @@ if [ -z "${G:-}" ]; then
   G=$(dirname "$(dirname "$JBIN")")
 fi
 
-CORPUS="$REPO/external/my-lisp/tests/fixtures/conformance.lisp"
-REGISTRY="$REPO/external/my-lisp/lib/surface/semantic-registry.lisp"
+CORPUS="$REPO/external/sens/tests/fixtures/conformance.lisp"
+REGISTRY="$REPO/external/sens/lib/surface/semantic-registry.lisp"
 
 bash "$REPO/scripts/build.sh"
 

@@ -4,15 +4,15 @@ set -euo pipefail
 REPO=$(cd "$(dirname "$0")/.." && pwd)
 ROOT=${EVIDENCE_ROOT:-"$REPO/build"}
 EXPECTED_HEAD=${WSM_EVIDENCE_COMMIT:-$(git -C "$REPO" rev-parse HEAD)}
-GITLINK_PIN=$(git -C "$REPO" ls-files -s external/my-lisp | awk '$1 == "160000" {print $2}')
-ACTUAL_PIN=$(git -C "$REPO/external/my-lisp" rev-parse HEAD)
+GITLINK_PIN=$(git -C "$REPO" ls-files -s external/sens | awk '$1 == "160000" {print $2}')
+ACTUAL_PIN=$(git -C "$REPO/external/sens" rev-parse HEAD)
 MANIFEST="$REPO/refs/lisp-dependency-manifest.lisp"
 MANIFEST_PIN=$(sed -n 's/^[[:space:]]*(pin[[:space:]]\+\.[[:space:]]*"\([0-9a-f]\{40\}\)")[[:space:]]*$/\1/p' "$MANIFEST" | head -1)
 
 fail() { echo "EVIDENCE-FRESHNESS FAIL-CLOSED: $*" >&2; exit 1; }
 
 [[ "$EXPECTED_HEAD" =~ ^[0-9a-f]{40}$ ]] || fail "expected WSM head is not exact 40-hex: $EXPECTED_HEAD"
-[[ "$GITLINK_PIN" =~ ^[0-9a-f]{40}$ ]] || fail "cannot read exact external/my-lisp gitlink pin"
+[[ "$GITLINK_PIN" =~ ^[0-9a-f]{40}$ ]] || fail "cannot read exact external/sens gitlink pin"
 [[ "$MANIFEST_PIN" =~ ^[0-9a-f]{40}$ ]] || fail "cannot parse exact manifest pin"
 
 [ "$GITLINK_PIN" = "$ACTUAL_PIN" ] || fail "gitlink/submodule mismatch: $GITLINK_PIN != $ACTUAL_PIN"

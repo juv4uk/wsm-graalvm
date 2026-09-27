@@ -2,13 +2,13 @@
 # Bootstrap + fail-closed refresh of the approved sparse my-lisp authority checkout.
 #
 # Owner rule:
-#   external/my-lisp is a pinned Git submodule. Its working tree exposes only
+#   external/sens is a pinned Git submodule. Its working tree exposes only
 #   the Lisp authority/runtime/witness paths derived from
 #   refs/lisp-dependency-manifest.lisp.
 set -euo pipefail
 
 REPO=$(cd "$(dirname "$0")/.." && pwd)
-E="$REPO/external/my-lisp"
+E="$REPO/external/sens"
 ALLOWLIST="$REPO/refs/sparse-authority-paths.txt"
 GENERATOR="$REPO/scripts/build-sparse-authority-allowlist.sh"
 
@@ -48,13 +48,13 @@ for f in "${FILES[@]}"; do
   esac
 done
 
-[ -d "$E" ] || fail "submodule external/my-lisp missing"
+[ -d "$E" ] || fail "submodule external/sens missing"
 [ -f "$E/.git" ] || fail "submodule not initialized (no .git file)"
-[ -n "$(ls -A "$E" 2>/dev/null)" ]   || fail "submodule empty; run: git submodule update --init external/my-lisp"
+[ -n "$(ls -A "$E" 2>/dev/null)" ]   || fail "submodule empty; run: git submodule update --init external/sens"
 
 git -C "$E" fetch origin --quiet   || fail "git fetch inside submodule failed"
 
-PIN=$(git -C "$REPO" ls-files -s external/my-lisp | awk '{print $2}')
+PIN=$(git -C "$REPO" ls-files -s external/sens | awk '{print $2}')
 HEAD=$(git -C "$E" rev-parse HEAD)
 [ -n "$PIN" ] || fail "cannot read submodule gitlink pin"
 [ "$HEAD" = "$PIN" ]   || fail "submodule HEAD $HEAD differs from superproject pin $PIN"

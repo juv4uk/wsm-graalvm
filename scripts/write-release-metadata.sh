@@ -13,8 +13,8 @@ case "$RELEASE_VERSION" in
   *) echo "invalid release version: $VERSION" >&2; exit 1 ;;
 esac
 
-PIN=$(git -C "$REPO" ls-tree HEAD external/my-lisp | awk '{print $3}')
-HEAD=$(git -C "$REPO/external/my-lisp" rev-parse HEAD)
+PIN=$(git -C "$REPO" ls-tree HEAD external/sens | awk '{print $3}')
+HEAD=$(git -C "$REPO/external/sens" rev-parse HEAD)
 [ -n "$PIN" ] && [ "$PIN" = "$HEAD" ] || {
   echo "FAIL-CLOSED: my-lisp HEAD $HEAD differs from gitlink $PIN" >&2
   exit 1
@@ -34,7 +34,7 @@ wsm-commit: $(git -C "$REPO" rev-parse HEAD)
 my-lisp-commit: $PIN
 platform: $PLATFORM
 graalvm: ${GRAALVM_VERSION:-unknown}
-semantic-authority: external/my-lisp@$PIN
+semantic-authority: external/sens@$PIN
 bootstrap: canon -> macro -> core -> user Lisp
 EOF
 printf '%s\n' "$PIN" > "$OUT/MY_LISP_PIN.txt"
@@ -46,7 +46,7 @@ cat > "$OUT/RELEASE.json" <<EOF
   "my_lisp_commit": "$PIN",
   "platform": "$PLATFORM",
   "graalvm": "${GRAALVM_VERSION:-unknown}",
-  "semantic_authority": "external/my-lisp@$PIN",
+  "semantic_authority": "external/sens@$PIN",
   "bootstrap": ["canon", "macro", "core", "user-lisp"]
 }
 EOF

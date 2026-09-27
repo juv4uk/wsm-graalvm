@@ -4,13 +4,13 @@ set -euo pipefail
 REPO=$(cd "$(dirname "$0")/.." && pwd)
 TABLE="$REPO/src/main/java/wsm/graalvm/SemanticMechanismTable.java"
 LEDGER="$REPO/refs/lisp-mechanism-budget.lisp"
-UPSTREAM="$REPO/external/my-lisp"
+UPSTREAM="$REPO/external/sens"
 
 fail() { echo "lisp-mechanism-budget FAIL-CLOSED: $*" >&2; exit 1; }
 
 [ -f "$TABLE" ] || fail "missing mechanism table"
 [ -f "$LEDGER" ] || fail "missing mechanism ledger"
-[ -d "$UPSTREAM" ] || fail "missing external/my-lisp authority"
+[ -d "$UPSTREAM" ] || fail "missing external/sens authority"
 
 TABLE_IDS=$(mktemp)
 LEDGER_ROWS=$(mktemp)

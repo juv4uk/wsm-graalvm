@@ -35,7 +35,7 @@ public final class DeepRecursionProbe {
 
         BootstrapRuntime.execute(
                 context,
-                Files.readString(repo.resolve("external/my-lisp/lib/canon.lisp")));
+                Files.readString(repo.resolve("external/sens/lib/canon.lisp")));
 
         BootstrapClosureLoader.Source macroSource = closure.executableSources().stream()
                 .filter(s -> s.path().endsWith("lib/macro.lisp"))

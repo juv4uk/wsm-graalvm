@@ -6,8 +6,8 @@ MARKDOWN=false
 [ "${1:-}" = "--markdown" ] && MARKDOWN=true
 
 HEAD=${WSM_EVIDENCE_COMMIT:-$(git -C "$REPO" rev-parse HEAD)}
-PIN=$(git -C "$REPO" ls-files -s external/my-lisp | awk '$1 == "160000" {print $2}')
-ACTUAL=$(git -C "$REPO/external/my-lisp" rev-parse HEAD)
+PIN=$(git -C "$REPO" ls-files -s external/sens | awk '$1 == "160000" {print $2}')
+ACTUAL=$(git -C "$REPO/external/sens" rev-parse HEAD)
 MANIFEST_PIN=$(sed -n 's/^[[:space:]]*(pin[[:space:]]\+\.[[:space:]]*"\([0-9a-f]\{40\}\)")[[:space:]]*$/\1/p' "$REPO/refs/lisp-dependency-manifest.lisp" | head -1)
 
 if $MARKDOWN; then

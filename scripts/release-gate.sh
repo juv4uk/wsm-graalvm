@@ -12,7 +12,7 @@ run_gate() {
 }
 
 WSM_HEAD=$(git -C "$REPO" rev-parse HEAD)
-MY_LISP_PIN=$(git -C "$REPO" ls-files -s external/my-lisp | awk '$1 == "160000" {print $2}')
+MY_LISP_PIN=$(git -C "$REPO" ls-files -s external/sens | awk '$1 == "160000" {print $2}')
 echo "RELEASE-GATE :: exact pair head=$WSM_HEAD my-lisp=$MY_LISP_PIN"
 
 run_gate "unexpected gitlinks" bash scripts/check-gitlink-topology.sh

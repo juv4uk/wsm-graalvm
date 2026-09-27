@@ -22,8 +22,8 @@ CP="$REPO/classes:$REPO/third_party/truffle-api.jar:$REPO/third_party/polyglot.j
 "$G/bin/javac" --release 25 -cp "$CP" -d "$TEST_CLASSES"   "$REPO/src/test/java/wsm/graalvm/ColdStartNoRustContract.java"
 
 WSM_COMMIT=${WSM_EVIDENCE_COMMIT:-$(git -C "$REPO" rev-parse HEAD)}
-MY_LISP_PIN=$(git -C "$REPO" ls-files -s external/my-lisp | awk '$1 == "160000" {print $2}')
-MY_LISP_HEAD=$(git -C "$REPO/external/my-lisp" rev-parse HEAD)
+MY_LISP_PIN=$(git -C "$REPO" ls-files -s external/sens | awk '$1 == "160000" {print $2}')
+MY_LISP_HEAD=$(git -C "$REPO/external/sens" rev-parse HEAD)
 
 [ -n "$MY_LISP_PIN" ] || { echo "cannot read my-lisp gitlink pin" >&2; exit 1; }
 [ "$MY_LISP_PIN" = "$MY_LISP_HEAD" ] || {

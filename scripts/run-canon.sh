@@ -10,7 +10,7 @@ fi
 REPO=$(cd "$(dirname "$0")/.." && pwd)
 bash "$REPO/scripts/fetch-third-party.sh"
 
-MYLISP=${MYLISP:-"$REPO/external/my-lisp"}
+MYLISP=${MYLISP:-"$REPO/external/sens"}
 CANON="$MYLISP/lib/canon.lisp"
 REGISTRY="$MYLISP/lib/surface/semantic-registry.lisp"
 

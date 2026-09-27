@@ -18,7 +18,7 @@ rm -f "$REPO/native-wsm"
 
 "$G/bin/native-image"   --module-path "$MODULE_PATH"   --no-fallback   --initialize-at-build-time=wsm.graalvm.providers.WsmLanguageProvider   -H:IncludeResources='META-INF/services/com[.]oracle[.]truffle[.]api[.]provider[.]TruffleLanguageProvider'   -cp "$CP"   wsm.graalvm.Main   "$REPO/native-wsm"
 
-MYLISP=${MYLISP:-$REPO/external/my-lisp}
+MYLISP=${MYLISP:-$REPO/external/sens}
 CANON="$MYLISP/lib/canon.lisp"
 REGISTRY="$MYLISP/lib/surface/semantic-registry.lisp"
 

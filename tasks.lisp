@@ -36,7 +36,7 @@
   ((priority . 9.0) (capabilities . (truffle conformance lisp fixtures java)) (origin . wsm-graalvm)
    (depends-on . (GRAALVM-M1-CONTEXT-OWNED-RUNTIME-STATE))
    (issue . 27)
-   (description . "Run pinned external/my-lisp/tests/fixtures/conformance.lisp tier-1 fixtures through the substrate's own reader+eval. Report each fixture and fail closed on any expected-value or ErrorKind divergence.")))
+   (description . "Run pinned external/sens/tests/fixtures/conformance.lisp tier-1 fixtures through the substrate's own reader+eval. Report each fixture and fail closed on any expected-value or ErrorKind divergence.")))
 
  ("GRAALVM-M1-ERRORKIND-PARITY" .
   ((priority . 8.8) (capabilities . (java truffle lisp errors contract)) (origin . my-lisp)
@@ -47,7 +47,7 @@
   ((priority . 8.7) (capabilities . (graalvm native-image truffle polyglot lisp)) (origin . wsm-graalvm)
    (depends-on . (GRAALVM-M0-READER-SEVEN-PRIMITIVES))
    (issue . 28)
-   (description . "Build a native executable containing the WSM Truffle provider, run the real external/my-lisp/lib/canon.lisp witness, and fail if language discovery or Canon conformance diverges.")))
+   (description . "Build a native executable containing the WSM Truffle provider, run the real external/sens/lib/canon.lisp witness, and fail if language discovery or Canon conformance diverges.")))
 
  ("GRAALVM-M1-LET-LEXICAL-CUTOVER" .
   ((priority . 10.0) (capabilities . (graalvm truffle compiler frames macro-bootstrap)) (origin . wsm-graalvm)

@@ -24,13 +24,13 @@ jobs:
 
       - name: Fetch my-lisp authority pin
         run: |
-          git -C external/my-lisp fetch origin --quiet
-          SHA=$(git -C external/my-lisp rev-parse HEAD)
+          git -C external/sens fetch origin --quiet
+          SHA=$(git -C external/sens rev-parse HEAD)
           echo "my-lisp pinned at $SHA"
 
       - name: Verify pinned my-lisp authority
         run: |
-          bash scripts/verify-authority.sh external/my-lisp
+          bash scripts/verify-authority.sh external/sens
 
       - name: P0 — release artifact contract smoke
         run: |
@@ -120,7 +120,7 @@ jobs:
 
       - name: Gate 5 — (canon-conforms?) → current conformance record
         run: |
-          MYLISP=external/my-lisp bash scripts/run-canon.sh 2>&1 | tee gate5.log
+          MYLISP=external/sens bash scripts/run-canon.sh 2>&1 | tee gate5.log
           grep -q "(canon-conformance satisfied)" gate5.log
 
       - name: M1 — monotonic Tier-1 progress ledger
@@ -139,14 +139,14 @@ jobs:
           G="$G" "$G/bin/javac" --release 25 -cp "$CP" -d "$TEST_CLASSES"             src/test/java/wsm/graalvm/ReaderStringContract.java             src/test/java/wsm/graalvm/ConformanceInventoryContract.java             src/test/java/wsm/graalvm/RealTier1InventoryContract.java             src/test/java/wsm/graalvm/TruffleFrameContract.java
           java -cp "$TEST_CLASSES:$CP" wsm.graalvm.ReaderStringContract
           java -cp "$TEST_CLASSES:$CP" wsm.graalvm.ConformanceInventoryContract
-          java -cp "$TEST_CLASSES:$CP" wsm.graalvm.RealTier1InventoryContract external/my-lisp/tests/fixtures/conformance.lisp
-          java -cp "$TEST_CLASSES:$CP" wsm.graalvm.TruffleFrameContract external/my-lisp/lib/surface/semantic-registry.lisp
+          java -cp "$TEST_CLASSES:$CP" wsm.graalvm.RealTier1InventoryContract external/sens/tests/fixtures/conformance.lisp
+          java -cp "$TEST_CLASSES:$CP" wsm.graalvm.TruffleFrameContract external/sens/lib/surface/semantic-registry.lisp
 
       - name: Gate 6 evidence — full Tier-1 shared-session run
         continue-on-error: true
         run: |
           G=$(dirname "$(dirname "$(readlink -f "$(command -v java)")")")
-          G=$G MYLISP=external/my-lisp bash scripts/test-tier1.sh
+          G=$G MYLISP=external/sens bash scripts/test-tier1.sh
 
       - name: Gate 6 evidence status
         if: always()
@@ -156,4 +156,4 @@ jobs:
       - name: M1 — shared definition frame across Context.eval
         run: |
           G=$(dirname "$(dirname "$(readlink -f "$(command -v java)")")")
-          G=$G bash scripts/test-context.sh external/my-lisp/lib/surface/semantic-registry.lisp
+          G=$G bash scripts/test-context.sh external/sens/lib/surface/semantic-registry.lisp

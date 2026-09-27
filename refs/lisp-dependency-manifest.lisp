@@ -5,8 +5,8 @@
 
 (
   (schema . 1)
-  (upstream . "juv4uk/my-lisp")
-  (pin . "eb9ab098eba2a39002c969debe45223f157e6835")
+  (upstream . "juv4uk/sens")
+  (pin . "d3e5b93d06cdc2889c214509f825b099c8a2c89e")
 
   (authority
     ("language-contract.lisp")

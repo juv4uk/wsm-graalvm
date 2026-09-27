@@ -31,7 +31,7 @@ jobs:
           submodules: recursive
           fetch-depth: 0
       - name: Verify pinned my-lisp authority
-        run: bash scripts/verify-authority.sh external/my-lisp
+        run: bash scripts/verify-authority.sh external/sens
       - name: Set up GraalVM
         uses: graalvm/setup-graalvm@v1
         with:

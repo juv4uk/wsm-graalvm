@@ -16,13 +16,13 @@ public final class BootstrapClosureLoaderContract {
         }
 
         Path repo = Path.of(args[0]).toAbsolutePath().normalize();
-        Path authority = repo.resolve("external/my-lisp").normalize();
+        Path authority = repo.resolve("external/sens").normalize();
         BootstrapClosureLoader.Closure closure = BootstrapClosureLoader.load(repo);
 
         require(
                 closure.registryPath().equals(
                         authority.resolve("lib/surface/semantic-registry.lisp").normalize()),
-                "registry must come from pinned external/my-lisp authority");
+                "registry must come from pinned external/sens authority");
 
         List<Path> executable =
                 closure.executableSources().stream()
@@ -40,7 +40,7 @@ public final class BootstrapClosureLoaderContract {
 
         for (BootstrapClosureLoader.Source source : closure.executableSources()) {
             require(source.path().startsWith(authority),
-                    "bootstrap source escaped external/my-lisp: " + source.path());
+                    "bootstrap source escaped external/sens: " + source.path());
             require(!source.text().isBlank(),
                     "bootstrap source is empty: " + source.path());
         }

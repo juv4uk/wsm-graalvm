@@ -29,8 +29,8 @@ doc = {
         "native_image": args.native_image_version,
     },
     "corpus": {
-        "source": "external/my-lisp/lib/canon.lisp",
-        "registry": "external/my-lisp/lib/surface/semantic-registry.lisp",
+        "source": "external/sens/lib/canon.lisp",
+        "registry": "external/sens/lib/surface/semantic-registry.lisp",
         "expected": "(canon-conformance satisfied)",
     },
     "status": "green",

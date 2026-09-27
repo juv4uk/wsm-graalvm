@@ -3,7 +3,7 @@
 set -euo pipefail
 
 REPO=$(cd "$(dirname "$0")/.." && pwd)
-E="$REPO/external/my-lisp"
+E="$REPO/external/sens"
 MANIFEST="$REPO/refs/lisp-dependency-manifest.lisp"
 
 fail() { echo "dependency-manifest FAIL-CLOSED: $*" >&2; exit 1; }
@@ -27,9 +27,9 @@ cmp -s "$GENERATED" "$ALLOWLIST" || {
   fail "manifest-derived sparse allowlist drift"
 }
 
-PIN=$(git -C "$REPO" ls-files -s external/my-lisp | awk '{print $2}')
+PIN=$(git -C "$REPO" ls-files -s external/sens | awk '{print $2}')
 HEAD=$(git -C "$E" rev-parse HEAD)
-[ -n "$PIN" ] || fail "cannot read external/my-lisp gitlink pin"
+[ -n "$PIN" ] || fail "cannot read external/sens gitlink pin"
 [ "$HEAD" = "$PIN" ] || fail "authority HEAD $HEAD differs from gitlink pin $PIN"
 
 MANIFEST_PIN=$(sed -n 's/^[[:space:]]*(pin[[:space:]]\+\.[[:space:]]*"\([0-9a-f]\{40\}\)")[[:space:]]*$/\1/p' "$MANIFEST")

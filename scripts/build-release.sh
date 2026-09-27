@@ -37,11 +37,11 @@ JAVA=$JAVA_HOME/bin/java
 [ -x "$JAVA" ] || JAVA=$(command -v java)
 exec "$JAVA" --enable-native-access=ALL-UNNAMED \
   -Dpolyglot.engine.WarnInterpreterOnly=false \
-  -Dwsm.registryPath="$SELF/external/my-lisp/lib/surface/semantic-registry.lisp" \
+  -Dwsm.registryPath="$SELF/external/sens/lib/surface/semantic-registry.lisp" \
   -Dtruffle.class.path.append="$SELF/classes" \
   -cp "$SELF/classes:$SELF/third_party/truffle-api.jar:$SELF/third_party/polyglot.jar:$SELF/third_party/truffle-runtime.jar:$SELF/third_party/graalvm-collections.jar:$SELF/third_party/nativeimage.jar:$SELF/third_party/truffle-compiler.jar" \
-  wsm.graalvm.Main "${1:-$SELF/external/my-lisp/lib/canon.lisp}" \
-                   "$SELF/external/my-lisp/lib/surface/semantic-registry.lisp" \
+  wsm.graalvm.Main "${1:-$SELF/external/sens/lib/canon.lisp}" \
+                   "$SELF/external/sens/lib/surface/semantic-registry.lisp" \
                    "$SELF"
 INNER
 chmod +x "$STAGE/launch.sh"

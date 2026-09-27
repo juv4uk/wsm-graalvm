@@ -30,7 +30,7 @@ grep -Fq "REAL-LISP-BOOTSTRAP-GREEN" <<<"$OUTPUT" || {
 }
 
 HEAD=${WSM_EVIDENCE_COMMIT:-$(git -C "$REPO" rev-parse HEAD)}
-PIN=$(git -C "$REPO" ls-files -s external/my-lisp | awk '$1 == "160000" {print $2}')
+PIN=$(git -C "$REPO" ls-files -s external/sens | awk '$1 == "160000" {print $2}')
 GRAAL_VERSION=$("$G/bin/java" --version 2>&1 | head -n 1)
 EVIDENCE_OUT=${BOOTSTRAP_EVIDENCE_OUT:-"$REPO/build/real-lisp-bootstrap-evidence.json"}
 mkdir -p "$(dirname "$EVIDENCE_OUT")"
@@ -46,10 +46,10 @@ doc = {
   "execution_mode": "jvm",
   "toolchain": {"graalvm": graal},
   "source_closure": [
-    "external/my-lisp/lib/surface/semantic-registry.lisp",
-    "external/my-lisp/lib/canon.lisp",
-    "external/my-lisp/lib/macro.lisp",
-    "external/my-lisp/lib/core.lisp"
+    "external/sens/lib/surface/semantic-registry.lisp",
+    "external/sens/lib/canon.lisp",
+    "external/sens/lib/macro.lisp",
+    "external/sens/lib/core.lisp"
   ],
   "status": "green"
 }

@@ -3,16 +3,16 @@ set -euo pipefail
 
 REPO=$(cd "$(dirname "$0")/.." && pwd)
 MANIFEST="$REPO/refs/lisp-dependency-manifest.lisp"
-MYLISP="$REPO/external/my-lisp"
+MYLISP="$REPO/external/sens"
 
 for script in scripts/stage-release-payload.sh scripts/package-deb.sh scripts/package-rpm.sh scripts/write-release-metadata.sh; do
   bash -n "$REPO/$script"
 done
 
-PIN=$(git -C "$REPO" ls-tree HEAD external/my-lisp | awk '{print $3}')
+PIN=$(git -C "$REPO" ls-tree HEAD external/sens | awk '{print $3}')
 HEAD=$(git -C "$MYLISP" rev-parse HEAD)
-MODE=$(git -C "$REPO" ls-tree HEAD external/my-lisp | awk '{print $1}')
-[ "$MODE" = "160000" ] || { echo "FAIL-CLOSED: external/my-lisp is not a gitlink: $MODE" >&2; exit 1; }
+MODE=$(git -C "$REPO" ls-tree HEAD external/sens | awk '{print $1}')
+[ "$MODE" = "160000" ] || { echo "FAIL-CLOSED: external/sens is not a gitlink: $MODE" >&2; exit 1; }
 [ -n "$PIN" ] && [ "$PIN" = "$HEAD" ] || {
   echo "FAIL-CLOSED: gitlink/submodule mismatch: $PIN != $HEAD" >&2
   exit 1
@@ -28,7 +28,7 @@ trap 'rm -rf "$TMP"' EXIT
 GRAALVM_VERSION=${GRAALVM_VERSION:-25.3.4.1} bash "$REPO/scripts/write-release-metadata.sh" v0.1.0 "$TMP/release" linux-x86_64
 
 grep -Fq "my-lisp-commit: $PIN" "$TMP/release/RELEASE.txt"
-grep -Fq "semantic-authority: external/my-lisp@$PIN" "$TMP/release/RELEASE.txt"
+grep -Fq "semantic-authority: external/sens@$PIN" "$TMP/release/RELEASE.txt"
 grep -Fqx "$PIN" "$TMP/release/MY_LISP_PIN.txt"
 grep -Fq 'Package: wsm-graalvm' "$REPO/scripts/package-deb.sh"
 grep -Fq 'License:        WSM-VOLNIST' "$REPO/scripts/package-rpm.sh"
