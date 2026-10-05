@@ -72,19 +72,32 @@ public final class Compiler {
     private WsmNode symbolNode(String spelling, LexicalScope scope) {
         Sid8 id = registry.semanticIdForToken(spelling);
 
-        // Reserved function SID resolution precedes lexical binding.
+        // Reserved semantic resolution precedes lexical binding. Current
+        // identities use exact (domain,bits); the Sid8 value survives only as
+        // an explicitly typed historical compatibility reference.
         if (id != null && isReservedPrimitiveSid(id)) {
             if (isSyntaxSid(id)) {
                 throw new WsmError(
                         WsmError.Kind.INVALID_FORM,
-                        "reserved syntax SID is syntax-only: " + id);
+                        "reserved syntax identity is syntax-only: " + id);
             }
+
+            DomainIdentity current = LegacySid8Projection.toCurrentDomainIdentity(id);
+            if (current != null) {
+                if (SemanticMechanismTable.supports(current)) {
+                    return new WsmNode.ConstantNode(new Value.SemanticRef(current));
+                }
+                throw new WsmError(
+                        WsmError.Kind.INVALID_FORM,
+                        "exact-domain identity has no substrate mechanism: " + current);
+            }
+
             if (SemanticMechanismTable.supports(id)) {
-                return new WsmNode.ConstantNode(new Value.SemanticRef(id));
+                return new WsmNode.ConstantNode(new Value.LegacySemanticRef(id));
             }
             throw new WsmError(
                     WsmError.Kind.INVALID_FORM,
-                    "reserved SID has no substrate mechanism: " + id);
+                    "historical SID has no substrate mechanism: " + id);
         }
 
         // Ordinary unresolved names remain lexically shadowable.
@@ -103,9 +116,16 @@ public final class Compiler {
                         WsmError.Kind.INVALID_FORM,
                         "special form is syntax-only: " + id);
             }
-            // Preserve upstream semantic identity through compilation even
-            // when this substrate has not materialized its mechanism yet.
-            return new WsmNode.ConstantNode(new Value.SemanticRef(id));
+
+            DomainIdentity current = LegacySid8Projection.toCurrentDomainIdentity(id);
+            if (current != null) {
+                return new WsmNode.ConstantNode(new Value.SemanticRef(current));
+            }
+
+            // Unmigrated historical identities stay explicit compatibility
+            // values. They cannot silently enter the current DomainIdentity
+            // route.
+            return new WsmNode.ConstantNode(new Value.LegacySemanticRef(id));
         }
 
         return new WsmNode.GlobalReadNode(spelling, globals);
@@ -135,7 +155,9 @@ public final class Compiler {
             // turning syntax heads into computed calls.
             spelling = symbol.name;
         } else if (head instanceof Value.SemanticRef semanticHead) {
-            return dispatchSemanticHead(semanticHead.id(), args, scope);
+            return dispatchCurrentDomainHead(semanticHead.id(), args, scope);
+        } else if (head instanceof Value.LegacySemanticRef legacyHead) {
+            return dispatchSemanticHead(legacyHead.id(), args, scope);
         } else if (head instanceof Value.NumberValue) {
             // Numeric values are ordinary data and can never mint Sid8.
             return new WsmNode.CallNode(
@@ -182,6 +204,9 @@ public final class Compiler {
             Sid8 id,
             List<Object> args,
             LexicalScope scope) {
+        // Historical surface/reader IDs for special forms are still recognized
+        // here while their current exact-domain semantics are migrated in
+        // separate lanes.
         if (ID_00000001.equals(id)) {
             if (args.size() != 1) {
                 throw new WsmError(
@@ -196,10 +221,37 @@ public final class Compiler {
         if (ID_00000111.equals(id)) return compileCond(args, scope);
         if (ID_01001101.equals(id)) return compileEval(args, scope);
 
-        // The exact Sid8 stays the function key. Runtime mechanism selection
-        // receives the same Sid8 and has no name/string fallback.
+        DomainIdentity current = LegacySid8Projection.toCurrentDomainIdentity(id);
+        if (current != null) {
+            return dispatchCurrentDomainHead(current, args, scope);
+        }
+
+        // Historical-only identity remains explicitly typed. It is never
+        // silently converted to current exact-domain identity.
         return new WsmNode.CallNode(
-                new WsmNode.ConstantNode(new Value.SemanticRef(id)),
+                new WsmNode.ConstantNode(new Value.LegacySemanticRef(id)),
+                compileAll(args, scope));
+    }
+
+    private WsmNode dispatchCurrentDomainHead(
+            DomainIdentity identity,
+            List<Object> args,
+            LexicalScope scope) {
+        if (identity.equals(LegacySid8Projection.d3("001"))
+                || identity.equals(LegacySid8Projection.d3("110"))) {
+            throw new WsmError(
+                    WsmError.Kind.INVALID_FORM,
+                    "exact-domain syntax identity is syntax-only: " + identity);
+        }
+
+        if (!SemanticMechanismTable.supports(identity)) {
+            throw new WsmError(
+                    WsmError.Kind.TYPE,
+                    "exact-domain identity is not currently callable: " + identity);
+        }
+
+        return new WsmNode.CallNode(
+                new WsmNode.ConstantNode(new Value.SemanticRef(identity)),
                 compileAll(args, scope));
     }
 
