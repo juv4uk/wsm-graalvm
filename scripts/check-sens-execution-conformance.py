@@ -17,11 +17,9 @@ from pathlib import Path
 SCHEMA = "sens-execution-conformance/v1"
 
 
-def validator_path(repo: Path) -> Path:
+def validator_path(sens_dir: Path) -> Path:
     path = (
-        repo
-        / "external"
-        / "sens"
+        sens_dir
         / "benchmarks"
         / "execution-ladder-conformance"
         / "validate.py"
@@ -85,11 +83,15 @@ def consume_oracles(jsonl: Path) -> list[dict[str, object]]:
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("jsonl", type=Path)
+    parser.add_argument(
+        "--sens-dir",
+        type=Path,
+        default=Path(__file__).resolve().parents[1] / "external" / "sens",
+    )
     args = parser.parse_args()
 
-    repo = Path(__file__).resolve().parents[1]
     jsonl = args.jsonl.resolve()
-    validator = validator_path(repo)
+    validator = validator_path(args.sens_dir.resolve())
 
     validate_upstream(validator, jsonl)
     rows = consume_oracles(jsonl)
