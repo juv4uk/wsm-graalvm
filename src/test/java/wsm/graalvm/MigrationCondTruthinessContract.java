@@ -3,7 +3,13 @@ package wsm.graalvm;
 import java.math.BigInteger;
 import org.graalvm.polyglot.Context;
 
-/** Focused witness for the migration-only two-part cond bridge. */
+/**
+ * Historical compatibility witness for the migration-only COND bridge.
+ *
+ * This is not current D3:110 authority. Current exact PredicateBit/COND work is
+ * tracked by #272/#273. Human spellings are projected mechanically from the
+ * pinned transitional registry so surface renames cannot redefine this test.
+ */
 public final class MigrationCondTruthinessContract {
     private static final Object SELECTED = Value.symbol("selected");
 
@@ -13,6 +19,17 @@ public final class MigrationCondTruthinessContract {
 
     private static Value.NumberValue exact(long value) {
         return Value.NumberValue.integer(BigInteger.valueOf(value));
+    }
+
+    private static String spelling(CanonRegistry registry, Sid8 id) {
+        CanonRegistry.Row row = registry.row(id);
+        for (String key : new String[] {"en", "sym", "uk", "ukr", "sa"}) {
+            String surface = row.surfaces().get(key);
+            if (surface != null && !surface.isBlank() && !id.matchesBareToken(surface)) {
+                return surface;
+            }
+        }
+        throw new AssertionError("no admitted legacy surface for " + id);
     }
 
     private static boolean twoPartSelects(Object testValue) {
@@ -44,11 +61,11 @@ public final class MigrationCondTruthinessContract {
                         new boolean[] {false});
         try {
             node.executeGeneric(null);
-            throw new AssertionError("canonical three-part cond must fail on exhaustion");
+            throw new AssertionError("historical three-part cond must fail on exhaustion");
         } catch (WsmError error) {
             require(
                     error.kind == WsmError.Kind.UNSATISFIED_CONDITIONAL,
-                    "canonical exhaustion must be UnsatisfiedConditional, got "
+                    "historical three-part exhaustion must be UnsatisfiedConditional, got "
                             + error.contractKind());
         }
     }
@@ -58,6 +75,11 @@ public final class MigrationCondTruthinessContract {
             throw new IllegalArgumentException(
                     "usage: MigrationCondTruthinessContract <semantic-registry.lisp>");
         }
+
+        CanonRegistry registry = CanonRegistryLoader.load(args[0]);
+        String quote = spelling(registry, Sid8.bits(0,0,0,0,0,0,0,1));
+        String atom = spelling(registry, Sid8.bits(0,0,0,0,0,0,1,0));
+        String cond = spelling(registry, Sid8.bits(0,0,0,0,0,1,1,1));
 
         require(twoPartSelects(Value.record("structural-kind", "empty-list")),
                 "two-part cond: empty-list record must preserve historical truth");
@@ -86,25 +108,27 @@ public final class MigrationCondTruthinessContract {
 
         Object pairRecord = Value.record("structural-kind", "pair");
         require(threePartSelects(pairRecord, Value.record("structural-kind", "pair")),
-                "canonical three-part cond must match explicit pair record");
+                "historical three-part cond must match explicit pair record");
         requireThreePartUnsatisfied(
                 pairRecord,
                 Value.record("structural-kind", "atom"));
 
         require(threePartSelects(exact(0), exact(0)),
-                "canonical three-part cond must match explicit exact zero");
+                "historical three-part cond must match explicit exact zero");
         requireThreePartUnsatisfied(exact(0), exact(1));
 
         // Source-level witnesses prove the Reader -> Compiler -> CondNode path
-        // uses the same temporary bridge and that canonical three-part cond
-        // stays explicit-result matching.
+        // uses the same temporary bridge and that the historical three-part
+        // compatibility route stays explicit-result matching. Current D3:110
+        // is a separate exact-PredicateBit route (#272/#273).
         System.setProperty("wsm.registryPath", args[0]);
         try (Context context = Context.newBuilder("wsm").build()) {
             Object twoPart =
                     context.eval(
                             "wsm",
-                            "(cond ((atom (quote (a b))) (quote wrong)) "
-                                    + "((quote fallback) (quote right)))");
+                            "(" + cond + " ((" + atom + " (" + quote + " (a b))) "
+                                    + "(" + quote + " wrong)) ((" + quote + " fallback) "
+                                    + "(" + quote + " right)))");
             require(
                     "right".equals(twoPart.toString()),
                     "source two-part cond must treat structural-kind pair as false: "
@@ -113,8 +137,8 @@ public final class MigrationCondTruthinessContract {
             Object zero =
                     context.eval(
                             "wsm",
-                            "(cond (0 (quote zero-truthy)) "
-                                    + "((quote fallback) (quote wrong)))");
+                            "(" + cond + " (0 (" + quote + " zero-truthy)) "
+                                    + "((" + quote + " fallback) (" + quote + " wrong)))");
             require(
                     "zero-truthy".equals(zero.toString()),
                     "source two-part cond must preserve ordinary numeric zero truthiness: "
@@ -123,9 +147,9 @@ public final class MigrationCondTruthinessContract {
             Object canonical =
                     context.eval(
                             "wsm",
-                            "(cond ((atom (quote (a b))) (structural-kind pair) "
-                                    + "(quote canonical-pair)) "
-                                    + "((quote fallback) fallback (quote wrong)))");
+                            "(" + cond + " ((" + atom + " (" + quote + " (a b))) "
+                                    + "(structural-kind pair) (" + quote + " canonical-pair)) "
+                                    + "((" + quote + " fallback) fallback (" + quote + " wrong)))");
             require(
                     "canonical-pair".equals(canonical.toString()),
                     "source three-part cond must match explicit pair record: "
@@ -134,24 +158,24 @@ public final class MigrationCondTruthinessContract {
             try {
                 context.eval(
                         "wsm",
-                        "(cond ((quote radio) antenna (quote wrong)))");
+                        "(" + cond + " ((" + quote + " radio) antenna (" + quote + " wrong)))");
                 throw new AssertionError(
-                        "source canonical cond must fail on exhaustion");
+                        "historical source three-part cond must fail on exhaustion");
             } catch (org.graalvm.polyglot.PolyglotException error) {
                 require(
                         error.getMessage().contains("UnsatisfiedConditional"),
-                        "source canonical exhaustion must surface UnsatisfiedConditional: "
+                        "historical source three-part exhaustion must surface UnsatisfiedConditional: "
                                 + error.getMessage());
             }
 
             try {
-                context.eval("wsm", "(cond)");
+                context.eval("wsm", "(" + cond + ")");
                 throw new AssertionError(
-                        "empty canonical cond must fail on exhaustion");
+                        "empty historical three-part cond must fail on exhaustion");
             } catch (org.graalvm.polyglot.PolyglotException error) {
                 require(
                         error.getMessage().contains("UnsatisfiedConditional"),
-                        "empty canonical cond must surface UnsatisfiedConditional: "
+                        "empty historical three-part cond must surface UnsatisfiedConditional: "
                                 + error.getMessage());
             }
         }
