@@ -13,6 +13,9 @@ public final class Printer {
         if (v instanceof Value.SemanticRef semantic) {
             return semantic.id().toString();
         }
+        if (v instanceof Value.LegacySemanticRef legacy) {
+            return legacy.id().toString();
+        }
 
         if (v instanceof Value.Pair p) {
             StringBuilder sb = new StringBuilder("(");
