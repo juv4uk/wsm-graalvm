@@ -221,10 +221,15 @@ public final class Reader {
             throw new WsmError(WsmError.Kind.PARSE, "empty token at " + start);
         }
 
-        // Exact bare 8-bit spellings are semantic identities, never decimals.
-        // A token such as 10101001 must stay a Token so the Compiler can
-        // resolve it through CanonRegistry, not be reconstructed as a decimal
-        // NumberValue. This mirrors the upstream fixed-width binary reader.
+        // Current SENS D3 exact words are three bits. They are semantic
+        // identities, not decimal numbers, including D3:000 (which would
+        // otherwise be parsed as numeric zero).
+        if (token.matches("[01]{3}")) {
+            return new Token(token);
+        }
+
+        // Historical exact 8-bit compatibility spellings remain Tokens so
+        // their legacy projection can be kept explicit and separate.
         if (token.matches("[01]{8}")) {
             return new Token(token);
         }
