@@ -70,28 +70,28 @@ public final class Compiler {
     }
 
     private WsmNode symbolNode(String spelling, LexicalScope scope) {
+        // Canonical current D3 source words carry their exact domain identity
+        // directly. No legacy byte registry is consulted for this route.
+        if (spelling.matches("[01]{3}")) {
+            DomainIdentity current = DomainIdentity.exact(3, spelling);
+            if (current.equals(LegacySid8Projection.d3("001"))
+                    || current.equals(LegacySid8Projection.d3("110"))) {
+                throw new WsmError(
+                        WsmError.Kind.INVALID_FORM,
+                        "current D3 syntax identity is syntax-only: " + current);
+            }
+            return new WsmNode.ConstantNode(new Value.SemanticRef(current));
+        }
+
         Sid8 id = registry.semanticIdForToken(spelling);
 
-        // Reserved semantic resolution precedes lexical binding. Current
-        // identities use exact (domain,bits); the Sid8 value survives only as
-        // an explicitly typed historical compatibility reference.
+        // Historical surface registry resolution stays explicit compatibility.
         if (id != null && isReservedPrimitiveSid(id)) {
             if (isSyntaxSid(id)) {
                 throw new WsmError(
                         WsmError.Kind.INVALID_FORM,
                         "reserved syntax identity is syntax-only: " + id);
             }
-
-            DomainIdentity current = LegacySid8Projection.toCurrentDomainIdentity(id);
-            if (current != null) {
-                if (SemanticMechanismTable.supports(current)) {
-                    return new WsmNode.ConstantNode(new Value.SemanticRef(current));
-                }
-                throw new WsmError(
-                        WsmError.Kind.INVALID_FORM,
-                        "exact-domain identity has no substrate mechanism: " + current);
-            }
-
             if (SemanticMechanismTable.supports(id)) {
                 return new WsmNode.ConstantNode(new Value.LegacySemanticRef(id));
             }
@@ -117,14 +117,9 @@ public final class Compiler {
                         "special form is syntax-only: " + id);
             }
 
-            DomainIdentity current = LegacySid8Projection.toCurrentDomainIdentity(id);
-            if (current != null) {
-                return new WsmNode.ConstantNode(new Value.SemanticRef(current));
-            }
-
-            // Unmigrated historical identities stay explicit compatibility
-            // values. They cannot silently enter the current DomainIdentity
-            // route.
+            // Unmigrated surface identities remain explicitly historical. A
+            // current DomainIdentity is minted only from exact-width source
+            // words or an explicit reader/compiler current value.
             return new WsmNode.ConstantNode(new Value.LegacySemanticRef(id));
         }
 
@@ -221,13 +216,9 @@ public final class Compiler {
         if (ID_00000111.equals(id)) return compileCond(args, scope);
         if (ID_01001101.equals(id)) return compileEval(args, scope);
 
-        DomainIdentity current = LegacySid8Projection.toCurrentDomainIdentity(id);
-        if (current != null) {
-            return dispatchCurrentDomainHead(current, args, scope);
-        }
-
-        // Historical-only identity remains explicitly typed. It is never
-        // silently converted to current exact-domain identity.
+        // Surface/registry IDs are historical compatibility on this
+        // staged route. Current exact-domain calls arrive as DomainIdentity
+        // values and use the overload below.
         return new WsmNode.CallNode(
                 new WsmNode.ConstantNode(new Value.LegacySemanticRef(id)),
                 compileAll(args, scope));
