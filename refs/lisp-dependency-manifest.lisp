@@ -6,7 +6,7 @@
 (
   (schema . 1)
   (upstream . "juv4uk/sens")
-  (pin . "f854327b0ed50fa7253b2f092134ef4c730bfe32")
+  (pin . "4908506a94515ea2c88b509da3846c1bed034e89")
 
   (authority
     ("language-contract.lisp")
