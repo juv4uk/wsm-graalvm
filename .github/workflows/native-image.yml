@@ -13,7 +13,7 @@ concurrency:
 jobs:
   native-image:
     name: Native Image — real Canon witness
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, guix]
     steps:
       - uses: actions/checkout@v5
         with:
