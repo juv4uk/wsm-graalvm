@@ -15,7 +15,8 @@ public final class DomainIdentityContract {
 
         expectFailure(() -> new DomainIdentity(3, "00"), "width mismatch must fail closed");
         expectFailure(() -> new DomainIdentity(3, "00x"), "non-binary payload must fail closed");
-        expectFailure(() -> new DomainIdentity(0, ""), "non-positive domain must fail closed");
+        expectFailure(() -> new DomainIdentity(0, ""), "domain below W1 must fail closed");
+        expectFailure(() -> new DomainIdentity(9, "000000000"), "domain above W8 must fail closed");
 
         System.out.println("DOMAIN-IDENTITY-CONTRACT-GREEN");
     }
