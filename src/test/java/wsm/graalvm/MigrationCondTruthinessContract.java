@@ -1,7 +1,6 @@
 package wsm.graalvm;
 
 import java.math.BigInteger;
-import java.util.Comparator;
 import org.graalvm.polyglot.Context;
 
 /**
@@ -23,12 +22,14 @@ public final class MigrationCondTruthinessContract {
     }
 
     private static String spelling(CanonRegistry registry, Sid8 id) {
-        return registry.row(id).surfaces().values().stream()
-                .filter(surface ->
-                        surface != null && !surface.isBlank() && !id.matchesBareToken(surface))
-                .sorted(Comparator.naturalOrder())
-                .findFirst()
-                .orElseThrow(() -> new AssertionError("no admitted legacy surface for " + id));
+        CanonRegistry.Row row = registry.row(id);
+        for (String key : new String[] {"en", "sym", "uk", "ukr", "sa"}) {
+            String surface = row.surfaces().get(key);
+            if (surface != null && !surface.isBlank() && !id.matchesBareToken(surface)) {
+                return surface;
+            }
+        }
+        throw new AssertionError("no admitted legacy surface for " + id);
     }
 
     private static boolean twoPartSelects(Object testValue) {
