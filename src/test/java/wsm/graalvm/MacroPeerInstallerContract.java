@@ -33,7 +33,21 @@ public final class MacroPeerInstallerContract {
         require(installed.equals(expected),
                 "installed 0012 peers differ from registry: " + installed + " vs " + expected);
         require(!globals.isMacro(MacroPeerInstaller.DEFMACRO_ID.toString()),
-                "opaque machine ID 0012 must not become an ordinary macro binding");
+                "opaque machine ID 0012 must not become an ordinary String macro binding");
+        require(globals.isMacro(MacroPeerInstaller.DEFMACRO_ID),
+                "exact SID 00001010 must be installed as the macro identity key");
+        require(globals.macro(MacroPeerInstaller.DEFMACRO_ID) == macro,
+                "exact SID macro key must share the same Lisp-owned MacroValue");
+
+        Compiler idCompiler = new Compiler(registry, null, globals);
+        Object idForm = new Reader("(00001010 ignored)").readAll().get(0);
+        Object idResult =
+                idCompiler.compile(idForm, idCompiler.root()).executeGeneric(null);
+        require(
+                idResult instanceof Value.NumberValue idNumber
+                        && idNumber.numerator().equals(BigInteger.valueOf(42))
+                        && idNumber.denominator().equals(BigInteger.ONE),
+                "exact SID macro head must expand through the installed MacroValue");
 
         for (String spelling : expected) {
             require(globals.isMacro(spelling),
