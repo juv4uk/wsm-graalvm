@@ -15,6 +15,7 @@ import java.util.Set;
 final class GlobalBindings {
     private final Map<String, Object> values = new HashMap<>();
     private final Map<String, MacroValue> macros = new HashMap<>();
+    private final Map<Sid8, MacroValue> macrosById = new HashMap<>();
     private final Set<String> declared = new HashSet<>();
 
     GlobalBindings() {
@@ -69,6 +70,29 @@ final class GlobalBindings {
     void defineMacro(String name, MacroValue macro) {
         declared.add(name);
         macros.put(name, macro);
+    }
+
+    void defineMacro(Sid8 id, MacroValue macro) {
+        MacroValue existing = macrosById.putIfAbsent(id, macro);
+        if (existing != null && existing != macro) {
+            throw new WsmError(
+                    WsmError.Kind.INVALID_FORM,
+                    "macro identity already bound to a different MacroValue: " + id);
+        }
+    }
+
+    boolean isMacro(Sid8 id) {
+        return macrosById.containsKey(id);
+    }
+
+    MacroValue macro(Sid8 id) {
+        MacroValue macro = macrosById.get(id);
+        if (macro == null) {
+            throw new WsmError(
+                    WsmError.Kind.UNKNOWN_SYMBOL,
+                    "unknown macro identity: " + id);
+        }
+        return macro;
     }
 
     boolean isMacro(String name) {
