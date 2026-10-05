@@ -163,6 +163,14 @@ public final class Compiler {
                     compile(head, scope),
                     compileAll(args, scope));
         }
+        // Exact current D3 call heads bypass the transitional byte registry.
+        if (spelling.matches("[01]{3}")) {
+            return dispatchCurrentDomainHead(
+                    DomainIdentity.exact(3, spelling),
+                    args,
+                    scope);
+        }
+
         if (globals.isMacro(spelling)) {
             Object[] syntaxArgs = new Object[args.size()];
             for (int i = 0; i < args.size(); i++) {
@@ -228,11 +236,20 @@ public final class Compiler {
             DomainIdentity identity,
             List<Object> args,
             LexicalScope scope) {
-        if (identity.equals(LegacySid8Projection.d3("001"))
-                || identity.equals(LegacySid8Projection.d3("110"))) {
+        if (identity.equals(LegacySid8Projection.d3("001"))) {
+            if (args.size() != 1) {
+                throw new WsmError(
+                        WsmError.Kind.ARITY,
+                        identity + " expects 1 argument");
+            }
+            return new WsmNode.QuoteNode(
+                    ReaderDatum.toValue(args.get(0)));
+        }
+
+        if (identity.equals(LegacySid8Projection.d3("110"))) {
             throw new WsmError(
                     WsmError.Kind.INVALID_FORM,
-                    "exact-domain syntax identity is syntax-only: " + identity);
+                    identity + " current COND mechanism is not admitted in this migration slice");
         }
 
         if (!SemanticMechanismTable.supports(identity)) {
