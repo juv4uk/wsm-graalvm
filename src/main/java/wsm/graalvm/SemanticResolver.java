@@ -3,16 +3,19 @@ package wsm.graalvm;
 import wsm.graalvm.Reader.Token;
 
 /**
- * One-way frontend boundary: source token -> semantic ID or ordinary symbol.
+ * One-way frontend boundary: surface token -> current exact-domain identity,
+ * explicit historical compatibility identity, or ordinary lexical symbol.
  *
- * Once a token resolves to Semantic, downstream execution must use only the
- * exact Sid8. Ordinary user-level symbols preserve their exact spelling.
+ * Current execution uses DomainIdentity. Sid8 survives only as an explicitly
+ * typed legacy compatibility result.
  */
 public final class SemanticResolver {
 
-    public sealed interface Resolution permits Semantic, Lexical {}
+    public sealed interface Resolution permits Semantic, LegacySemantic, Lexical {}
 
-    public record Semantic(Sid8 id) implements Resolution {}
+    public record Semantic(DomainIdentity id) implements Resolution {}
+
+    public record LegacySemantic(Sid8 id) implements Resolution {}
 
     public record Lexical(String spelling) implements Resolution {}
 
@@ -24,7 +27,11 @@ public final class SemanticResolver {
 
     public Resolution resolve(Token token) {
         Sid8 id = registry.semanticIdForToken(token.spelling());
-        if (id != null) return new Semantic(id);
-        return new Lexical(token.spelling());
+        if (id == null) return new Lexical(token.spelling());
+
+        DomainIdentity current = LegacySid8Projection.toCurrentDomainIdentity(id);
+        if (current != null) return new Semantic(current);
+
+        return new LegacySemantic(id);
     }
 }
