@@ -26,6 +26,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
+        with:
+          token: ${{ secrets.SENS_READ_TOKEN || github.token }}
 
       - name: Validate parity evidence schema
         run: python3 scripts/check-substrate-parity-evidence.py refs/substrate-parity-evidence.json

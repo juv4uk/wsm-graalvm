@@ -17,6 +17,7 @@ jobs:
     steps:
       - uses: actions/checkout@v5
         with:
+          token: ${{ secrets.SENS_READ_TOKEN || github.token }}
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
           submodules: recursive
           fetch-depth: 0
