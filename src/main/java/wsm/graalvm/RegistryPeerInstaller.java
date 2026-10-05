@@ -22,6 +22,12 @@ final class RegistryPeerInstaller {
         CanonRegistry.Row row = registry.row(semanticId);
         LinkedHashSet<String> peers = new LinkedHashSet<>();
 
+        if (liveValue instanceof GlobalBindings.MacroValue macro) {
+            // The exact semantic identity is the macro key. Human surfaces
+            // are boundary aliases only; the bare SID never becomes a String binding.
+            globals.defineMacro(semanticId, macro);
+        }
+
         for (String spelling : row.surfaces().values()) {
             if (spelling == null || spelling.isBlank() || semanticId.matchesBareToken(spelling)) {
                 continue;
