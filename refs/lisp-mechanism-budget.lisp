@@ -31,7 +31,7 @@
     (identity-source . "lib/surface/semantic-registry.lisp"))
   (mechanism 00011100 substrate-required
     (meaning-source . "contracts/exact-q-binary-contract.lisp")
-    (evidence . "contracts/structural-query-inventory.lisp")
+    (evidence . "contracts/structural-observation-contract.lisp")
     (identity-source . "lib/surface/semantic-registry.lisp"))
 
   (retired "1017" lisp-defined
@@ -41,8 +41,8 @@
 
   (retired "1022" lisp-defined
     (meaning-source . "lib/core.lisp")
-    (evidence . "contracts/structural-query-inventory.lisp")
-    (note . "Java mechanism retired after current-main Lisp-owned equal? witness"))
+    (evidence . "contracts/structural-observation-contract.lisp")
+    (note . "Java mechanism retired after current-main Lisp-owned structural-observation witness"))
 
   (mechanism 00111010 substrate-required
     (meaning-source . "lib/core.lisp")

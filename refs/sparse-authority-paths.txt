@@ -1,6 +1,6 @@
 contracts/answer-contract.lisp
 contracts/exact-q-binary-contract.lisp
-contracts/structural-query-inventory.lisp
+contracts/structural-observation-contract.lisp
 knowledge/guard-reference.lisp
 language-contract.lisp
 lib/canon.lisp
