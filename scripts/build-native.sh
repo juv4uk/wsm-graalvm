@@ -16,7 +16,16 @@ MODULE_PATH="$REPO/third_party/truffle-api.jar:$REPO/third_party/truffle-runtime
 
 rm -f "$REPO/native-wsm"
 
-"$G/bin/native-image"   --module-path "$MODULE_PATH"   --no-fallback   --initialize-at-build-time=wsm.graalvm.providers.WsmLanguageProvider   -H:IncludeResources='META-INF/services/com[.]oracle[.]truffle[.]api[.]provider[.]TruffleLanguageProvider'   -cp "$CP"   wsm.graalvm.Main   "$REPO/native-wsm"
+NATIVE_CC_ARGS=()
+for cc in /usr/bin/x86_64-linux-gnu-gcc-13 /usr/bin/x86_64-linux-gnu-gcc-12 /usr/bin/gcc; do
+  if [ -x "$cc" ] && [ -r /usr/include/limits.h ]; then
+    NATIVE_CC_ARGS+=(--native-compiler-path="$cc")
+    echo "native-image C compiler: $cc"
+    break
+  fi
+done
+
+"$G/bin/native-image" "${NATIVE_CC_ARGS[@]}"   --module-path "$MODULE_PATH"   --no-fallback   --initialize-at-build-time=wsm.graalvm.providers.WsmLanguageProvider   -H:IncludeResources='META-INF/services/com[.]oracle[.]truffle[.]api[.]provider[.]TruffleLanguageProvider'   -cp "$CP"   wsm.graalvm.Main   "$REPO/native-wsm"
 
 MYLISP=${MYLISP:-$REPO/external/sens}
 CANON="$MYLISP/lib/canon.lisp"
