@@ -146,16 +146,24 @@ public final class Compiler {
                     compile(head, scope),
                     compileAll(args, scope));
         }
-        if (globals.isMacro(spelling)) {
+        Sid8 id = registry.semanticIdForToken(spelling);
+
+        // Macro dispatch is identity-first. The exact Sid8 key is authoritative;
+        // admitted human surfaces are aliases at the reader boundary only.
+        GlobalBindings.MacroValue macro = null;
+        if (id != null && globals.isMacro(id)) {
+            macro = globals.macro(id);
+        } else if (globals.isMacro(spelling)) {
+            macro = globals.macro(spelling);
+        }
+        if (macro != null) {
             Object[] syntaxArgs = new Object[args.size()];
             for (int i = 0; i < args.size(); i++) {
                 syntaxArgs[i] = ReaderDatum.toValue(args.get(i));
             }
-            Object expanded = globals.macro(spelling).expand(syntaxArgs);
+            Object expanded = macro.expand(syntaxArgs);
             return compile(expanded, scope);
         }
-
-        Sid8 id = registry.semanticIdForToken(spelling);
 
         // Reserved SID resolution precedes lexical lookup.
         if (id != null && isReservedPrimitiveSid(id)) {
