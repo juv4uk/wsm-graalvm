@@ -1,0 +1,45 @@
+name: current-domain-identity
+
+on:
+  pull_request:
+    paths:
+      - 'src/main/java/wsm/graalvm/DomainIdentity.java'
+      - 'src/main/java/wsm/graalvm/LegacySid8Projection.java'
+      - 'src/main/java/wsm/graalvm/SemanticMechanismTable.java'
+      - 'src/main/java/wsm/graalvm/Value.java'
+      - 'src/test/java/wsm/graalvm/DomainIdentityContract.java'
+      - 'src/test/java/wsm/graalvm/DomainIdentityMechanismContract.java'
+      - 'src/test/java/wsm/graalvm/LegacySid8ProjectionContract.java'
+      - 'scripts/test-current-domain-identity.sh'
+      - '.github/workflows/current-domain-identity.yml'
+  push:
+    branches: [ main ]
+    paths:
+      - 'src/main/java/wsm/graalvm/DomainIdentity.java'
+      - 'src/main/java/wsm/graalvm/LegacySid8Projection.java'
+      - 'src/main/java/wsm/graalvm/SemanticMechanismTable.java'
+      - 'src/main/java/wsm/graalvm/Value.java'
+      - 'src/test/java/wsm/graalvm/DomainIdentityContract.java'
+      - 'src/test/java/wsm/graalvm/DomainIdentityMechanismContract.java'
+      - 'src/test/java/wsm/graalvm/LegacySid8ProjectionContract.java'
+      - 'scripts/test-current-domain-identity.sh'
+      - '.github/workflows/current-domain-identity.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  identity-and-mechanism:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Set up GraalVM
+        uses: graalvm/setup-graalvm@v1
+        with:
+          java-version: '25'
+          distribution: 'graalvm-community'
+          version: '25.3.4.1'
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Current exact-domain mechanism witnesses
+        run: bash scripts/test-current-domain-identity.sh
