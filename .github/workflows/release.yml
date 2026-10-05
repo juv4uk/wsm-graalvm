@@ -235,7 +235,7 @@ jobs:
           retention-days: 14
 
   publish:
-    if: github.event_name == "push"
+    if: github.event_name == 'push'
     needs: [validate, linux, windows]
     runs-on: ubuntu-latest
     permissions:
