@@ -1,0 +1,39 @@
+name: current-canonical-source
+
+on:
+  pull_request:
+    paths:
+      - 'src/main/java/wsm/graalvm/CurrentCanonicalReader.java'
+      - 'src/main/java/wsm/graalvm/Compiler.java'
+      - 'src/main/java/wsm/graalvm/DomainIdentity.java'
+      - 'src/test/java/wsm/graalvm/CurrentCanonicalSourceContract.java'
+      - 'scripts/test-current-canonical-source.sh'
+      - '.github/workflows/current-canonical-source.yml'
+  push:
+    branches: [ main ]
+    paths:
+      - 'src/main/java/wsm/graalvm/CurrentCanonicalReader.java'
+      - 'src/main/java/wsm/graalvm/Compiler.java'
+      - 'src/main/java/wsm/graalvm/DomainIdentity.java'
+      - 'src/test/java/wsm/graalvm/CurrentCanonicalSourceContract.java'
+      - 'scripts/test-current-canonical-source.sh'
+      - '.github/workflows/current-canonical-source.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  d2-d3-front-end:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Set up GraalVM
+        uses: graalvm/setup-graalvm@v1
+        with:
+          java-version: '25'
+          distribution: 'graalvm-community'
+          version: '25.3.4.1'
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Exact D2/D3 current-source witness
+        run: bash scripts/test-current-canonical-source.sh

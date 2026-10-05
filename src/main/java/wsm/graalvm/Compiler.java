@@ -26,6 +26,9 @@ public final class Compiler {
     private static final Sid8 ID_00001011 = Sid8.bits(0,0,0,0,1,0,1,1);
     private static final Sid8 ID_01001101 = Sid8.bits(0,1,0,0,1,1,0,1);
 
+    private static final DomainIdentity CURRENT_D3_QUOTE = DomainIdentity.exact(3, "001");
+    private static final DomainIdentity CURRENT_D3_COND = DomainIdentity.exact(3, "110");
+
     private final WsmLanguage language;
     private final CanonRegistry registry;
     private final GlobalBindings globals;
@@ -228,11 +231,20 @@ public final class Compiler {
             DomainIdentity identity,
             List<Object> args,
             LexicalScope scope) {
-        if (identity.equals(LegacySid8Projection.d3("001"))
-                || identity.equals(LegacySid8Projection.d3("110"))) {
+        if (identity.equals(CURRENT_D3_QUOTE)) {
+            if (args.size() != 1) {
+                throw new WsmError(
+                        WsmError.Kind.ARITY,
+                        CURRENT_D3_QUOTE + " expects 1 argument");
+            }
+            return new WsmNode.QuoteNode(
+                    ReaderDatum.toValue(args.get(0)));
+        }
+        if (identity.equals(CURRENT_D3_COND)) {
             throw new WsmError(
                     WsmError.Kind.INVALID_FORM,
-                    "exact-domain syntax identity is syntax-only: " + identity);
+                    "current D3 COND syntax awaits exact PredicateBit clause lowering: "
+                            + identity);
         }
 
         if (!SemanticMechanismTable.supports(identity)) {
