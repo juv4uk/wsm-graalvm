@@ -142,8 +142,8 @@ jobs:
           set -euo pipefail
           VERSION="${GITHUB_REF_NAME#v}"
           bash scripts/test-linux-packages.sh "$GITHUB_REF_NAME" dist/linux-x86_64 \
-            "dist/deb/wsm-graalvm-$GITHUB_REF_NAME-linux-x86_64.deb" \
-            "dist/rpm/wsm-graalvm-$GITHUB_REF_NAME-linux-x86_64.rpm"
+            "dist/deb/wsm-graalvm-$VERSION-linux-x86_64.deb" \
+            "dist/rpm/wsm-graalvm-$VERSION-linux-x86_64.rpm"
 
       - name: Package portable Linux archive
         shell: bash
