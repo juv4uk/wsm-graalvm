@@ -33,8 +33,10 @@ public final class SemanticMechanismTable {
     private static final DomainIdentity D3_CONS = DomainIdentity.exact(3, "111");
 
     private static final Map<DomainIdentity, Mechanism> CURRENT_TABLE = Map.ofEntries(
-            Map.entry(D3_ATOM, SemanticMechanismTable::invoke00000010),
-            Map.entry(D3_EQ, SemanticMechanismTable::invoke00000011),
+            // These three mechanisms already preserve the current D3 structural
+            // law. ATOM/EQ require the exact D1 PredicateBit route and COND has
+            // its own current clause law; old record/truthiness implementations
+            // are deliberately not admitted here.
             Map.entry(D3_CONS, SemanticMechanismTable::invoke00000100),
             Map.entry(D3_CAR, SemanticMechanismTable::invoke00000101),
             Map.entry(D3_CDR, SemanticMechanismTable::invoke00000110)
