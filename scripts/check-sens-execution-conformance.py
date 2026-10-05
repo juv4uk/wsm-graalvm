@@ -175,11 +175,19 @@ def consume_oracles(jsonl: Path) -> list[dict[str, Any]]:
             raise ValueError(f"line {line_no}: invalid JSON: {exc}") from exc
         if not isinstance(row, dict):
             raise ValueError(f"line {line_no}: expected a JSON object")
+
+        # The current bounded upstream artifact contains both L0 ORACLE and
+        # L1 P1 rows for each case. The Graal adapter consumes only the L0
+        # oracle rows; the upstream validator remains authoritative for the
+        # complete file, including L1 rows.
+        if row.get("producer_layer") != "L0":
+            continue
+
         validate_row(row, line_no)
         rows.append(row)
 
     if not rows:
-        raise ValueError("oracle JSONL is empty")
+        raise ValueError("oracle JSONL contains no current L0/ORACLE rows")
 
     return rows
 
