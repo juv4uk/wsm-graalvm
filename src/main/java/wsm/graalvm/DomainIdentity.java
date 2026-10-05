@@ -6,14 +6,14 @@ import java.util.Objects;
  * Exact SENS semantic identity: the domain width and its payload bits are one
  * identity.  No decimal/hex coercion and no implicit Sid8 conversion exist.
  *
- * This carrier is intentionally domain-agnostic: admission of a domain for
- * execution (for example D1-D7 current versus D8 research) belongs to the
- * upstream contract/mechanism boundary, not to this value object.
+ * This carrier is intentionally admission-agnostic inside the current mechanical
+ * W1-W8 envelope: whether a represented domain is semantically current, research,
+ * resident, callable, or mechanism-backed belongs to the upstream contract boundary.
  */
 public record DomainIdentity(int domain, String bits) implements Comparable<DomainIdentity> {
     public DomainIdentity {
-        if (domain <= 0) {
-            throw new IllegalArgumentException("domain must be positive");
+        if (domain < 1 || domain > 8) {
+            throw new IllegalArgumentException("domain must be within mechanical W1..W8");
         }
         Objects.requireNonNull(bits, "bits");
         if (bits.length() != domain) {
