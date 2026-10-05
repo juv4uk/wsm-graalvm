@@ -3,7 +3,7 @@ package wsm.graalvm;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
-/** Executable evidence for #8: quote sugar and semantic identity 00000001. */
+/** Executable evidence for #8: quote sugar and current D3:001 identity. */
 public final class QuoteContract {
     private static void require(boolean ok, String message) {
         if (!ok) throw new AssertionError(message);
@@ -70,7 +70,7 @@ public final class QuoteContract {
                 "quoted proper list must preserve exact list shape");
 
         Object nested = eval(new Compiler(registry), "''x");
-        require(Printer.print(nested).equals("(00000001 x)"),
+        require(Printer.print(nested).equals("(D3:001 x)"),
                 "nested quote must materialize quote identity as data, not a human spelling");
 
         Object empty = eval(new Compiler(registry), "'()");
