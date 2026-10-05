@@ -26,12 +26,17 @@ public final class SemanticResolver {
     }
 
     public Resolution resolve(Token token) {
-        Sid8 id = registry.semanticIdForToken(token.spelling());
-        if (id == null) return new Lexical(token.spelling());
+        String spelling = token.spelling();
 
-        DomainIdentity current = LegacySid8Projection.toCurrentDomainIdentity(id);
-        if (current != null) return new Semantic(current);
+        // Canonical current D3 source carries its own exact three-bit identity.
+        // The domain is established by the source word width at the frontend
+        // boundary; downstream execution receives the explicit pair.
+        if (spelling.matches("[01]{3}")) {
+            return new Semantic(DomainIdentity.exact(3, spelling));
+        }
 
-        return new LegacySemantic(id);
+        Sid8 id = registry.semanticIdForToken(spelling);
+        if (id != null) return new LegacySemantic(id);
+        return new Lexical(spelling);
     }
 }
