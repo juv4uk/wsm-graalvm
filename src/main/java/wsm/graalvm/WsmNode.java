@@ -53,6 +53,9 @@ public abstract class WsmNode extends com.oracle.truffle.api.nodes.Node {
             if (f instanceof Value.SemanticRef semantic) {
                 return SemanticMechanismTable.invoke(semantic.id(), argv);
             }
+            if (f instanceof Value.LegacySemanticRef legacy) {
+                return SemanticMechanismTable.invoke(legacy.id(), argv);
+            }
             if (f instanceof WsmFunc func) {
                 return func.call(argv);
             }
@@ -234,6 +237,9 @@ public abstract class WsmNode extends com.oracle.truffle.api.nodes.Node {
                         && sx.name.equals(sy.name))
                     || (x instanceof Value.SemanticRef sx
                         && y instanceof Value.SemanticRef sy
+                        && sx.id().equals(sy.id()))
+                    || (x instanceof Value.LegacySemanticRef sx
+                        && y instanceof Value.LegacySemanticRef sy
                         && sx.id().equals(sy.id()))
                     || (x instanceof Value.NumberValue nx
                         && y instanceof Value.NumberValue ny
