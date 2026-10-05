@@ -1,3 +1,4 @@
+;; Upstream bounded D1-D3 corpus is published in SENS at the pinned merge commit.
 ;; GraalVM consumer manifest for the pinned my-lisp Lisp authority.
 ;;
 ;; This declares the current M0/M1 runtime slice. It is not a copy of Lisp
