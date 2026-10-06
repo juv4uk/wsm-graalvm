@@ -1,0 +1,60 @@
+name: compiler-artifact-graal-witness
+
+on:
+  pull_request:
+    paths:
+      - "external/sens"
+      - "scripts/compiler-artifact-witness.py"
+      - "scripts/run-compiler-artifact-witness.sh"
+      - "src/test/java/wsm/graalvm/CompilerArtifactWitnessContract.java"
+      - ".github/workflows/compiler-artifact-graal-witness.yml"
+  push:
+    branches: [main]
+    paths:
+      - "external/sens"
+      - "scripts/compiler-artifact-witness.py"
+      - "scripts/run-compiler-artifact-witness.sh"
+      - "src/test/java/wsm/graalvm/CompilerArtifactWitnessContract.java"
+      - ".github/workflows/compiler-artifact-graal-witness.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  witness:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          token: ${{ secrets.SENS_READ_TOKEN || github.token }}
+          submodules: true
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - name: Set up GraalVM
+        uses: graalvm/setup-graalvm@v1
+        with:
+          java-version: "25"
+          distribution: "graalvm-community"
+          version: "25.3.4.1"
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Verify canonical SENS artifact producer pin
+        run: |
+          set -euo pipefail
+          test "$(git -C external/sens rev-parse HEAD)" = "1869fd5e51f38565ca968abceaa4bc933ae7a114"
+          python3 -m py_compile scripts/compiler-artifact-witness.py
+
+      - name: Run independent Graal compiler-artifact witness
+        env:
+          WSM_EVIDENCE_COMMIT: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: bash scripts/run-compiler-artifact-witness.sh build/compiler-artifact-witness.json
+
+      - name: Validate machine-readable evidence
+        run: python3 scripts/compiler-artifact-witness.py evidence build/compiler-artifact-witness.json
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: compiler-artifact-graal-witness-${{ github.sha }}
+          path: build/compiler-artifact-witness.json
