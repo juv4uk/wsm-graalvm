@@ -43,7 +43,7 @@ PROBE="$TMP/oracle-probe.lisp"
 printf '%s\n' '(car (cons 7 9))' > "$PROBE"
 SENS_STDOUT=$(
   cd "$FULL_SENS"
-  cargo run -q -p my-lisp-cli --bin my-lisp -- "$PROBE"
+  cargo run -q -p sens-cli --bin sens -- "$PROBE"
 )
 SENS_OBS=$(printf '%s\n' "$SENS_STDOUT" | awk 'NF {last=$0} END {print last}')
 [ -n "$SENS_OBS" ] || {
