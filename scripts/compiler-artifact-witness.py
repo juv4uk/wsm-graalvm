@@ -16,6 +16,7 @@ from pathlib import Path
 from typing import Any
 
 SCHEMA = "compiler-compilation-artifact/1"
+REQUEST_SCHEMAS = {"compiler-semantic-input/1", "compiler-semantic-input/2"}
 EVIDENCE_SCHEMA = "wsm-compiler-artifact-witness/1"
 EXPECTED_SENS_COMMIT = "1869fd5e51f38565ca968abceaa4bc933ae7a114"
 EXPECTED_BUNDLE_SHA256 = "9fed905899983d1d3b2928002fcb60333c605344cf9cc449b2c0fc2264935fc6"
@@ -142,12 +143,19 @@ def validate_request(request: str) -> dict[str, str]:
         "wrong-request-envelope",
         "embedded form is not compiler-semantic-request",
     )
+    request_schema = dotted_symbol(request, "schema")
     require(
-        dotted_symbol(request, "schema") == "compiler-semantic-input/1",
+        request_schema in REQUEST_SCHEMAS,
         "artifact-validation",
         "wrong-request-schema",
-        dotted_symbol(request, "schema"),
+        request_schema,
     )
+    if request_schema == "compiler-semantic-input/1":
+        require("(identity . ((" in request, "artifact-validation", "malformed", "v1 identity container missing")
+        require("(provenance . ((" in request, "artifact-validation", "malformed", "v1 provenance container missing")
+    else:
+        require("(domain-coordinate . ((" in request, "artifact-validation", "malformed", "v2 domain-coordinate container missing")
+        require("(authority-chain . ((" in request, "artifact-validation", "malformed", "v2 authority-chain container missing")
     require(
         dotted_symbol(request, "semantic-status") == "current",
         "artifact-validation",
@@ -305,6 +313,17 @@ def expect_error(bundle: str, code: str) -> None:
 def self_test(bundle: str) -> None:
     validate_bundle(bundle)
 
+    # Consumer-first v2 readiness: only envelope/container spellings change.
+    first_artifact = split_artifacts(bundle)[0]
+    _, _, first_request = balanced_form_after(first_artifact, "(semantic-request . ")
+    v2_request = (
+        first_request
+        .replace("compiler-semantic-input/1", "compiler-semantic-input/2", 1)
+        .replace("(identity . ", "(domain-coordinate . ", 1)
+        .replace("(provenance . ", "(authority-chain . ", 1)
+    )
+    validate_request(v2_request)
+
     digest_mismatch = bundle.replace("(domain . D3) (bits . 100)", "(domain . D3) (bits . 101)", 1)
     expect_error(digest_mismatch, "artifact-digest-mismatch")
 
@@ -313,6 +332,10 @@ def self_test(bundle: str) -> None:
         lambda request: request.replace(
             "(identity . ((domain . D3) (bits . 100)))",
             "(identity . ((domain . D8) (bits . 00000100)))",
+            1,
+        ).replace(
+            "(domain-coordinate . ((domain . D3) (bits . 100)))",
+            "(domain-coordinate . ((domain . D8) (bits . 00000100)))",
             1,
         ),
     )
@@ -329,6 +352,10 @@ def self_test(bundle: str) -> None:
         lambda request: request.replace(
             "(provenance . ",
             "(target . graal)\n           (provenance . ",
+            1,
+        ).replace(
+            "(authority-chain . ",
+            "(target . graal)\n           (authority-chain . ",
             1,
         ),
     )
