@@ -104,8 +104,24 @@ public final class Value {
         public Pair(Object car, Object cdr) { this.car = car; this.cdr = cdr; }
     }
 
-    public record SemanticRef(Sid8 id) implements com.oracle.truffle.api.interop.TruffleObject {
+    /** Current SENS semantic reference: exact domain identity is the runtime key. */
+    public record SemanticRef(DomainIdentity id) implements com.oracle.truffle.api.interop.TruffleObject {
         public SemanticRef {
+            if (id == null) {
+                throw new IllegalArgumentException("DomainIdentity must be non-null");
+            }
+        }
+    }
+
+    /**
+     * Historical Function8/Sid8 compatibility value.
+     *
+     * This type is intentionally distinct from SemanticRef so a current
+     * execution path cannot silently fall back from exact-domain identity to
+     * an eight-bit language ontology.
+     */
+    public record LegacySemanticRef(Sid8 id) implements com.oracle.truffle.api.interop.TruffleObject {
+        public LegacySemanticRef {
             if (id == null) {
                 throw new IllegalArgumentException("Sid8 must be non-null");
             }

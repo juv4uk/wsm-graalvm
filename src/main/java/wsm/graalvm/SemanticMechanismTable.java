@@ -2,7 +2,7 @@ package wsm.graalvm;
 
 import java.util.Map;
 
-/** Graal/JVM mechanisms keyed only by exact Sid8 function identity. */
+/** Graal/JVM mechanisms: current SENS identity is exact-domain; Sid8 is legacy-only. */
 public final class SemanticMechanismTable {
 
     @FunctionalInterface
@@ -23,6 +23,25 @@ public final class SemanticMechanismTable {
     private static final Sid8 SID_01000011 = Sid8.bits(0,1,0,0,0,0,1,1);
     private static final Sid8 SID_01001100 = Sid8.bits(0,1,0,0,1,1,0,0);
 
+    private static final DomainIdentity D3_EMPTY = DomainIdentity.exact(3, "000");
+    private static final DomainIdentity D3_QUOTE = DomainIdentity.exact(3, "001");
+    private static final DomainIdentity D3_ATOM = DomainIdentity.exact(3, "010");
+    private static final DomainIdentity D3_CDR = DomainIdentity.exact(3, "011");
+    private static final DomainIdentity D3_CAR = DomainIdentity.exact(3, "100");
+    private static final DomainIdentity D3_EQ = DomainIdentity.exact(3, "101");
+    private static final DomainIdentity D3_COND = DomainIdentity.exact(3, "110");
+    private static final DomainIdentity D3_CONS = DomainIdentity.exact(3, "111");
+
+    private static final Map<DomainIdentity, Mechanism> CURRENT_TABLE = Map.ofEntries(
+            // These three mechanisms already preserve the current D3 structural
+            // law. ATOM/EQ require the exact D1 PredicateBit route and COND has
+            // its own current clause law; old record/truthiness implementations
+            // are deliberately not admitted here.
+            Map.entry(D3_CONS, SemanticMechanismTable::invoke00000100),
+            Map.entry(D3_CAR, SemanticMechanismTable::invoke00000101),
+            Map.entry(D3_CDR, SemanticMechanismTable::invoke00000110)
+    );
+
     private static final Map<Sid8, Mechanism> TABLE = Map.ofEntries(
             Map.entry(SID_00000010, SemanticMechanismTable::invoke00000010),
             Map.entry(SID_00000011, SemanticMechanismTable::invoke00000011),
@@ -40,6 +59,22 @@ public final class SemanticMechanismTable {
 
     private SemanticMechanismTable() {}
 
+    /** Current exact-domain support. Syntax-only D3 identities are excluded. */
+    public static boolean supports(DomainIdentity identity) {
+        return CURRENT_TABLE.containsKey(identity);
+    }
+
+    public static Object invoke(DomainIdentity identity, Object[] args) {
+        Mechanism mechanism = CURRENT_TABLE.get(identity);
+        if (mechanism == null) {
+            throw new WsmError(
+                    WsmError.Kind.TYPE,
+                    "exact-domain identity is not a callable substrate mechanism: " + identity);
+        }
+        return mechanism.invoke(args);
+    }
+
+    /** Historical Sid8 compatibility lane; never used by the current DomainIdentity route. */
     public static boolean supports(Sid8 sid) {
         return TABLE.containsKey(sid);
     }
