@@ -8,12 +8,19 @@ permissions:
 
 jobs:
   gpu-worker:
-    runs-on: [self-hosted, Linux, X64, gpu, gtx-1050-ti, cuda-12.6]
+    runs-on: ubuntu-24.04
     timeout-minutes: 5
     env:
       CML_GPU_WORKER_SOCKET: /run/cml-gpu-worker/worker.sock
 
     steps:
+      - name: Require GitHub-hosted CUDA runner (fail closed)
+        shell: bash
+        run: |
+          test "${RUNNER_ENVIRONMENT:-}" = github-hosted || { echo "::error::Self-hosted is forbidden"; exit 1; }
+          command -v nvidia-smi >/dev/null 2>&1 || { echo "::error::Hosted GPU larger runner required for CUDA parity"; exit 1; }
+          nvidia-smi
+
       - name: Probe shared GPU worker
         shell: bash
         run: |
